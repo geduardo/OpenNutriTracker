@@ -197,16 +197,6 @@
 			"color": "0"
 		},
 		{
-			"id": "5d86317e",
-			"type": "text",
-			"text": "## AL-02 Label photo extraction flow\nTriggered from: (1) unknown barcode scan, or (2) 'correct this item' action on a fetched product. Take photo of nutrition label â†’ send to AiProvider.extractFromLabel â†’ LLM extracts exact values â†’ save to local overrides DB â†’ proceed with logging. LLM may ask follow-up if label is unclear.",
-			"x": 3640,
-			"y": 1600,
-			"width": 420,
-			"height": 244,
-			"color": "1"
-		},
-		{
 			"id": "d20d9853",
 			"type": "text",
 			"text": "## CLU-04 Quick-log from search results\nSkip the full MealDetailScreen for known items. Tap item in search results â†’ inline quantity picker â†’ confirm. Detail screen accessible via long-press or info icon. Reduces logging from 6-7 taps to 3-4.",
@@ -220,10 +210,20 @@
 			"id": "186ef498",
 			"type": "text",
 			"text": "## AL-03 LLM clarification dialog\nReusable chat-like widget for LLM follow-up questions. When the LLM response includes a clarification request, show it to the user, collect answer, re-submit. Keeps the flow conversational without breaking the logging UX. Used by both photo estimation and label extraction.\n\n### Changes\nBuilt as part of AL-01 Magic screen. Clarification dialog shows LLM question + suggested answer chips + free text input. Recursive re-submit on answer.",
-			"x": 3640,
-			"y": 1202,
+			"x": 3680,
+			"y": 1148,
 			"width": 420,
 			"height": 228,
+			"color": "5"
+		},
+		{
+			"id": "5d86317e",
+			"type": "text",
+			"text": "## AL-02 Label photo extraction flow\nTriggered from: (1) unknown barcode scan, or (2) 'correct this item' action on a fetched product. Take photo of nutrition label â†’ send to AiProvider.extractFromLabel â†’ LLM extracts exact values â†’ save to local overrides DB â†’ proceed with logging. LLM may ask follow-up if label is unclear.\n\n### Changes\n- Scanner screen: barcode not found â†’ shows 'Photograph the label' (camera/gallery) instead of generic error\n- Extracts nutrition via AiProvider.extractFromLabel â†’ saves to LocalFoodDataSource keyed by barcode\n- MealDetailScreen: 'Correct with label photo' button for OFF/FDC items\n- Corrected items saved locally and meal updated in-place\n- Both flows reuse the same AI label extraction pipeline",
+			"x": 3620,
+			"y": 1656,
+			"width": 420,
+			"height": 244,
 			"color": "5"
 		}
 	],

@@ -49,10 +49,22 @@ class OFFDataSource {
           await httpClient.get(searchUrl).timeout(_timeoutDuration);
       log.fine('Fetching OFF result from: $searchUrl');
       if (response.statusCode == OFFConst.offHttpSuccessCode) {
-        final productResponse =
-            OFFProductResponseDTO.fromJson(jsonDecode(response.body));
-        log.fine('Successful response from OFF');
-        return productResponse;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is! Map<String, dynamic> ||
+              decoded['product'] == null ||
+              decoded['product'] is! Map) {
+            log.warning('OFF product data missing for barcode $barcode');
+            return Future.error(ProductNotFoundException);
+          }
+          final productResponse =
+              OFFProductResponseDTO.fromJson(decoded);
+          log.fine('Successful response from OFF');
+          return productResponse;
+        } on TypeError catch (e) {
+          log.warning('OFF product parse error for $barcode: $e');
+          return Future.error(ProductNotFoundException);
+        }
       } else if (response.statusCode == OFFConst.offProductNotFoundCode) {
         log.warning("404 OFF Product not found");
         return Future.error(ProductNotFoundException);

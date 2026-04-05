@@ -2,7 +2,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
+import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
+import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
 import 'package:opennutritracker/core/presentation/widgets/image_full_screen.dart';
@@ -250,6 +255,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     servingUnit: meal.servingUnit),
                 const SizedBox(height: 32.0),
                 MealInfoButton(url: meal.url, source: meal.source),
+                if (meal.source == MealSourceEntity.off ||
+                    meal.source == MealSourceEntity.fdc)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: TextButton.icon(
+                      onPressed: _correctWithLabelPhoto,
+                      icon: const Icon(Icons.camera_alt, size: 18),
+                      label: const Text('Correct with label photo'),
+                    ),
+                  ),
                 meal.source == MealSourceEntity.off
                     ? const Column(
                         children: [
@@ -300,6 +315,116 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     _mealDetailBloc.add(UpdateKcalEvent(
         meal: meal, totalQuantity: quantityString, selectedUnit: unit));
     _scrollToCalorieText();
+  }
+
+  Future<void> _correctWithLabelPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take photo'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pick from gallery'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+
+    // Show loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Extracting nutrition from label...')),
+    );
+
+    try {
+      final imageBytes = await picked.readAsBytes();
+      final mimeType = picked.mimeType ?? 'image/jpeg';
+      final aiProvider = locator<AiProvider>();
+
+      final response = await aiProvider.extractFromLabel(imageBytes, mimeType);
+
+      if (!mounted) return;
+
+      if (response.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not read label. Try a clearer photo.')),
+        );
+        return;
+      }
+
+      final item = response.items.first;
+      final correctedNutriments = MealNutrimentsEntity(
+        energyKcal100: item.per100g.energyKcal,
+        carbohydrates100: item.per100g.carbohydratesG,
+        fat100: item.per100g.fatG,
+        proteins100: item.per100g.proteinG,
+        sugars100: item.per100g.sugarsG,
+        saturatedFat100: item.per100g.saturatedFatG,
+        fiber100: item.per100g.fiberG,
+        sodiumMg100: item.per100g.sodiumMg,
+      );
+
+      final correctedMeal = MealEntity(
+        code: meal.code,
+        name: item.name.isNotEmpty ? item.name : meal.name,
+        brands: meal.brands,
+        url: meal.url,
+        thumbnailImageUrl: meal.thumbnailImageUrl,
+        mainImageUrl: meal.mainImageUrl,
+        mealQuantity: meal.mealQuantity,
+        mealUnit: meal.mealUnit,
+        servingQuantity: item.estimatedWeightG,
+        servingUnit: 'g',
+        servingSize: '${item.estimatedWeightG.toInt()}g',
+        nutriments: correctedNutriments,
+        source: MealSourceEntity.ai,
+      );
+
+      // Save to local overrides
+      if (meal.code != null && meal.code!.isNotEmpty) {
+        final localFoodDataSource = locator<LocalFoodDataSource>();
+        await localFoodDataSource.saveFood(
+            meal.code!, MealDBO.fromMealEntity(correctedMeal));
+      }
+
+      if (mounted) {
+        // Replace current screen with corrected meal
+        setState(() {
+          this.meal = correctedMeal;
+        });
+        _mealDetailBloc.add(UpdateKcalEvent(
+            meal: correctedMeal,
+            totalQuantity: quantityTextController.text));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nutrition data corrected and saved locally.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   void _scrollToCalorieText() {
