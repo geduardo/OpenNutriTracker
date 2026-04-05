@@ -8,6 +8,10 @@ Collected friction points from real usage. Each one becomes a task.
 **Current behavior:** Scanning a barcode not in OFF/FDC shows "Error while fetching product data" and stops.
 **Desired behavior:** Prompt to take a photo of the nutrition label → send to LLM → LLM extracts nutrition fields → save to local database as a new food item → proceed with logging the intake.
 
+## 1a. Add meal entry point needs redesign
+**Current behavior:** Tapping "Add to Lunch" goes straight to a search screen with 3 tabs (Products, Food, Recent).
+**Desired behavior:** Show a 4-option entry screen first: Camera (AI photo), Gallery (AI photo), Search/Barcode (existing flow), Recent/Presets (frequency-sorted one-tap logging). This is the main gateway to all food logging.
+
 ## 1b. Photo source: camera OR gallery upload
 **Current behavior:** (not yet implemented)
 **Desired behavior:** When triggering photo-based AI flows, present choice: take photo with camera OR pick from gallery. Use `image_picker` with `ImageSource.camera` / `ImageSource.gallery`.

@@ -1,14 +1,8 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'meal_preset_dbo.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class MealPresetDBOAdapter extends TypeAdapter<MealPresetDBO> {
   @override
-  final int typeId = 15;
+  final int typeId = 17;
 
   @override
   MealPresetDBO read(BinaryReader reader) {
@@ -48,7 +42,7 @@ class MealPresetDBOAdapter extends TypeAdapter<MealPresetDBO> {
 
 class MealPresetItemDBOAdapter extends TypeAdapter<MealPresetItemDBO> {
   @override
-  final int typeId = 16;
+  final int typeId = 18;
 
   @override
   MealPresetItemDBO read(BinaryReader reader) {

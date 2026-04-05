@@ -20,7 +20,7 @@ class FoodBloc extends Bloc<FoodEvent, FoodState> {
   FoodBloc(this._searchProductUseCase, this._getConfigUsecase)
       : super(FoodInitial()) {
     on<LoadFoodEvent>((event, emit) async {
-      if (event.searchString != _searchString) {
+      if (event.searchString != _searchString || state is FoodFailedState) {
         _searchString = event.searchString;
         emit(FoodLoadingState());
         try {

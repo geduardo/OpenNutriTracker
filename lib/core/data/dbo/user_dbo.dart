@@ -4,7 +4,7 @@ import 'package:opennutritracker/core/data/dbo/user_pal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_weight_goal_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
 
-part 'user_dbo.g.dart';
+part 'user_dbo_adapter.dart';
 
 @HiveType(typeId: 5)
 class UserDBO extends HiveObject {

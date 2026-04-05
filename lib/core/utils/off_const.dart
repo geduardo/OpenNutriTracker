@@ -1,7 +1,7 @@
 class OFFConst {
   static const offWebsiteUrl = "https://world.openfoodfacts.org/";
   static const _offBaseUrl = "world.openfoodfacts.org";
-  static const _offSearchTag = "/cgi/search.pl";
+  static const _offSearchTag = "/api/v2/search";
   static const _offProductSearchTag = "/api/v2/product";
 
   static const offHttpSuccessCode = 200;

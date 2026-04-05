@@ -5,6 +5,7 @@ import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 
 part 'intake_dbo.g.dart';
+part 'intake_dbo_adapter.dart';
 
 @HiveType(typeId: 0)
 @JsonSerializable()

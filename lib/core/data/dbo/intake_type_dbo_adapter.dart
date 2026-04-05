@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'intake_type_dbo.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class IntakeTypeDBOAdapter extends TypeAdapter<IntakeTypeDBO> {
   @override

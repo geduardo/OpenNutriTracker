@@ -3,6 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:opennutritracker/core/domain/entity/physical_activity_entity.dart';
 
 part 'physical_activity_dbo.g.dart';
+part 'physical_activity_dbo_adapter.dart';
 
 /// A physical activity with it's measured MET value by the
 /// '2011 Compendium of Physical Activities'

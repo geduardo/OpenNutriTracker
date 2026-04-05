@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'user_weight_goal_dbo.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class UserWeightGoalDBOAdapter extends TypeAdapter<UserWeightGoalDBO> {
   @override
@@ -20,7 +14,7 @@ class UserWeightGoalDBOAdapter extends TypeAdapter<UserWeightGoalDBO> {
       case 2:
         return UserWeightGoalDBO.gainWeight;
       default:
-        return UserWeightGoalDBO.loseWeight;
+        return UserWeightGoalDBO.maintainWeight;
     }
   }
 

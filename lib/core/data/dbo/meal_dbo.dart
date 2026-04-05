@@ -4,6 +4,7 @@ import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 
 part 'meal_dbo.g.dart';
+part 'meal_dbo_adapter.dart';
 
 @HiveType(typeId: 1)
 @JsonSerializable()

@@ -1,2 +1,3 @@
 - [User profile](user_profile.md) — Eduardo, building AI calorie tracker from OpenNutriTracker fork
 - [Project goals](project_goals.md) — Low-friction AI calorie tracking, VLLM integration, rapid iteration
+- [Build workflow](feedback_build_workflow.md) — Critical: hive_generator removed, adapters in _adapter.dart files, never delete .dart_tool/build

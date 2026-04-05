@@ -3,6 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 
 part 'tracked_day_dbo.g.dart';
+part 'tracked_day_dbo_adapter.dart';
 
 @HiveType(typeId: 9)
 @JsonSerializable()

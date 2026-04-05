@@ -4,6 +4,7 @@ import 'package:opennutritracker/core/data/dbo/app_theme_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/config_entity.dart';
 
 part 'config_dbo.g.dart';
+part 'config_dbo_adapter.dart';
 
 @HiveType(typeId: 13)
 @JsonSerializable() // Used for exporting to JSON

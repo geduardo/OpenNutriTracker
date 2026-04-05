@@ -1,9 +1,7 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'user_dbo.dart';
 
 // **************************************************************************
-// TypeAdapterGenerator
+// Hand-written Hive TypeAdapter — kept separate from build_runner output
 // **************************************************************************
 
 class UserDBOAdapter extends TypeAdapter<UserDBO> {

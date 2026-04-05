@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'user_pal_dbo.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class UserPALDBOAdapter extends TypeAdapter<UserPALDBO> {
   @override

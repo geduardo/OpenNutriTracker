@@ -1,7 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:opennutritracker/core/domain/entity/user_weight_goal_entity.dart';
 
-part 'user_weight_goal_dbo.g.dart';
+part 'user_weight_goal_dbo_adapter.dart';
 
 @HiveType(typeId: 7)
 enum UserWeightGoalDBO {

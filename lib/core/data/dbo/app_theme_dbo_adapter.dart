@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'app_theme_dbo.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class AppThemeDBOAdapter extends TypeAdapter<AppThemeDBO> {
   @override
@@ -20,7 +14,7 @@ class AppThemeDBOAdapter extends TypeAdapter<AppThemeDBO> {
       case 2:
         return AppThemeDBO.system;
       default:
-        return AppThemeDBO.light;
+        return AppThemeDBO.system;
     }
   }
 

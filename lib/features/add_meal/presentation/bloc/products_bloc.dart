@@ -20,7 +20,8 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
   ProductsBloc(this._searchProductUseCase, this._getConfigUsecase)
       : super(ProductsInitial()) {
     on<LoadProductsEvent>((event, emit) async {
-      if (event.searchString != _searchString) {
+      // Allow retry on same string if previous attempt failed
+      if (event.searchString != _searchString || state is ProductsFailedState) {
         _searchString = event.searchString;
         emit(ProductsLoadingState());
         try {

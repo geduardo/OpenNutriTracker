@@ -1,9 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 
-part 'meal_preset_dbo.g.dart';
+part 'meal_preset_dbo_adapter.dart';
 
-@HiveType(typeId: 15)
+@HiveType(typeId: 17)
 class MealPresetDBO extends HiveObject {
   @HiveField(0)
   final String id;
@@ -21,7 +21,7 @@ class MealPresetDBO extends HiveObject {
   });
 }
 
-@HiveType(typeId: 16)
+@HiveType(typeId: 18)
 class MealPresetItemDBO extends HiveObject {
   @HiveField(0)
   final MealDBO meal;

@@ -4,6 +4,7 @@ import 'package:opennutritracker/core/data/dbo/physical_activity_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 
 part 'user_activity_dbo.g.dart';
+part 'user_activity_dbo_adapter.dart';
 
 @HiveType(typeId: 10)
 @JsonSerializable()

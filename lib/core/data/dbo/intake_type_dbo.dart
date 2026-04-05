@@ -1,7 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 
-part 'intake_type_dbo.g.dart';
+part 'intake_type_dbo_adapter.dart';
 
 @HiveType(typeId: 4)
 enum IntakeTypeDBO {
