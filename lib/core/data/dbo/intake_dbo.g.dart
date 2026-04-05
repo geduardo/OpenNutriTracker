@@ -13,6 +13,8 @@ IntakeDBO _$IntakeDBOFromJson(Map<String, dynamic> json) => IntakeDBO(
       type: $enumDecode(_$IntakeTypeDBOEnumMap, json['type']),
       meal: MealDBO.fromJson(json['meal'] as Map<String, dynamic>),
       dateTime: DateTime.parse(json['dateTime'] as String),
+      groupId: json['groupId'] as String?,
+      groupName: json['groupName'] as String?,
     );
 
 Map<String, dynamic> _$IntakeDBOToJson(IntakeDBO instance) => <String, dynamic>{
@@ -22,6 +24,8 @@ Map<String, dynamic> _$IntakeDBOToJson(IntakeDBO instance) => <String, dynamic>{
       'type': _$IntakeTypeDBOEnumMap[instance.type]!,
       'meal': instance.meal,
       'dateTime': instance.dateTime.toIso8601String(),
+      'groupId': instance.groupId,
+      'groupName': instance.groupName,
     };
 
 const _$IntakeTypeDBOEnumMap = {

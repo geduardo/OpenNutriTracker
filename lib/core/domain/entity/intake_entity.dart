@@ -12,13 +12,20 @@ class IntakeEntity extends Equatable {
 
   final MealEntity meal;
 
+  final String? groupId;
+  final String? groupName;
+
   const IntakeEntity(
       {required this.id,
       required this.unit,
       required this.amount,
       required this.type,
       required this.meal,
-      required this.dateTime});
+      required this.dateTime,
+      this.groupId,
+      this.groupName});
+
+  bool get isGrouped => groupId != null;
 
   factory IntakeEntity.fromIntakeDBO(IntakeDBO intakeDBO) {
     return IntakeEntity(
@@ -27,7 +34,9 @@ class IntakeEntity extends Equatable {
         amount: intakeDBO.amount,
         type: IntakeTypeEntity.fromIntakeTypeDBO(intakeDBO.type),
         meal: MealEntity.fromMealDBO(intakeDBO.meal),
-        dateTime: intakeDBO.dateTime);
+        dateTime: intakeDBO.dateTime,
+        groupId: intakeDBO.groupId,
+        groupName: intakeDBO.groupName);
   }
 
   double get totalKcal => amount * (meal.nutriments.energyPerUnit ?? 0);

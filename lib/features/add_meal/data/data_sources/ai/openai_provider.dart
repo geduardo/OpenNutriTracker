@@ -9,12 +9,82 @@ import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.
 class OpenAiProvider implements AiProvider {
   static const _baseUrl = 'api.openai.com';
   static const _model = 'gpt-4o-mini';
-  static const _timeout = Duration(seconds: 30);
+  static const _timeout = Duration(seconds: 45);
 
   final _log = Logger('OpenAiProvider');
   final String _apiKey;
 
   OpenAiProvider(this._apiKey);
+
+  /// JSON Schema for OpenAI structured outputs (strict mode).
+  static final _nutritionResponseSchema = {
+    'name': 'nutrition_response',
+    'strict': true,
+    'schema': {
+      'type': 'object',
+      'properties': {
+        'items': {
+          'type': 'array',
+          'items': {
+            'type': 'object',
+            'properties': {
+              'name': {'type': 'string'},
+              'estimated_weight_g': {'type': 'number'},
+              'confidence': {
+                'type': 'string',
+                'enum': ['high', 'medium', 'low']
+              },
+              'per_100g': {
+                'type': 'object',
+                'properties': {
+                  'energy_kcal': {'type': 'number'},
+                  'protein_g': {'type': 'number'},
+                  'carbohydrates_g': {'type': 'number'},
+                  'fat_g': {'type': 'number'},
+                  'saturated_fat_g': {'type': 'number'},
+                  'sugars_g': {'type': 'number'},
+                  'fiber_g': {'type': 'number'},
+                  'sodium_mg': {'type': 'number'},
+                },
+                'required': [
+                  'energy_kcal', 'protein_g', 'carbohydrates_g', 'fat_g',
+                  'saturated_fat_g', 'sugars_g', 'fiber_g', 'sodium_mg'
+                ],
+                'additionalProperties': false,
+              },
+            },
+            'required': [
+              'name', 'estimated_weight_g', 'confidence', 'per_100g'
+            ],
+            'additionalProperties': false,
+          },
+        },
+        'source': {
+          'type': 'string',
+          'enum': ['estimation', 'label_extraction']
+        },
+        'clarification': {
+          'anyOf': [
+            {
+              'type': 'object',
+              'properties': {
+                'question': {'type': 'string'},
+                'suggested_answers': {
+                  'type': 'array',
+                  'items': {'type': 'string'},
+                },
+              },
+              'required': ['question', 'suggested_answers'],
+              'additionalProperties': false,
+            },
+            {'type': 'null'},
+          ],
+        },
+      },
+      'required': ['items', 'source', 'clarification'],
+      'additionalProperties': false,
+    },
+  };
 
   @override
   Future<AiNutritionResponseDTO> estimateFromPhoto(
@@ -22,12 +92,11 @@ class OpenAiProvider implements AiProvider {
     String mimeType, {
     String? clarificationAnswer,
   }) async {
-    // Reuse Gemini's prompt logic — same structured output format
-    final prompt = _buildPrompt(
-      isLabel: false,
-      clarificationAnswer: clarificationAnswer,
+    return _sendRequest(
+      imageBytes,
+      mimeType,
+      _buildPrompt(isLabel: false, clarificationAnswer: clarificationAnswer),
     );
-    return _sendRequest(imageBytes, mimeType, prompt);
   }
 
   @override
@@ -36,11 +105,11 @@ class OpenAiProvider implements AiProvider {
     String mimeType, {
     String? clarificationAnswer,
   }) async {
-    final prompt = _buildPrompt(
-      isLabel: true,
-      clarificationAnswer: clarificationAnswer,
+    return _sendRequest(
+      imageBytes,
+      mimeType,
+      _buildPrompt(isLabel: true, clarificationAnswer: clarificationAnswer),
     );
-    return _sendRequest(imageBytes, mimeType, prompt);
   }
 
   Future<AiNutritionResponseDTO> _sendRequest(
@@ -49,40 +118,47 @@ class OpenAiProvider implements AiProvider {
     String prompt,
   ) async {
     final uri = Uri.https(_baseUrl, '/v1/chat/completions');
-    final base64Image = base64Encode(imageBytes);
+
+    // Build message content — text always, image optional
+    final contentParts = <Map<String, dynamic>>[
+      {'type': 'text', 'text': prompt},
+    ];
+
+    if (imageBytes.isNotEmpty) {
+      final base64Image = base64Encode(imageBytes);
+      contentParts.add({
+        'type': 'image_url',
+        'image_url': {
+          'url': 'data:$mimeType;base64,$base64Image',
+        }
+      });
+    }
 
     final body = jsonEncode({
       'model': _model,
       'messages': [
         {
           'role': 'user',
-          'content': [
-            {'type': 'text', 'text': prompt},
-            {
-              'type': 'image_url',
-              'image_url': {
-                'url': 'data:$mimeType;base64,$base64Image',
-              }
-            },
-          ]
+          'content': contentParts,
         }
       ],
-      'response_format': {'type': 'json_object'},
+      'response_format': {
+        'type': 'json_schema',
+        'json_schema': _nutritionResponseSchema,
+      },
       'max_tokens': 2000,
     });
 
     _log.fine('Sending request to OpenAI API');
 
-    final response = await http
-        .post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_apiKey',
-          },
-          body: body,
-        )
-        .timeout(_timeout);
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $_apiKey',
+      },
+      body: body,
+    ).timeout(_timeout);
 
     if (response.statusCode != 200) {
       _log.severe('OpenAI API error: ${response.statusCode} ${response.body}');
@@ -98,64 +174,31 @@ class OpenAiProvider implements AiProvider {
     return AiNutritionResponseDTO.fromJson(nutritionJson);
   }
 
-  // Uses the same prompt structure as Gemini for consistent output format.
-  // Both providers return the same AiNutritionResponseDTO.
   String _buildPrompt({
     required bool isLabel,
     String? clarificationAnswer,
   }) {
-    final clarificationContext = clarificationAnswer != null
-        ? '\n\nThe user previously answered a clarification question with: "$clarificationAnswer". Use this to refine your estimate.'
+    final context = clarificationAnswer != null
+        ? '\n\nAdditional context from user: "$clarificationAnswer"'
         : '';
 
-    final source = isLabel ? 'label_extraction' : 'estimation';
     final task = isLabel
-        ? 'Extract the nutritional information from this nutrition label photo.'
-        : 'Analyze this food photo and estimate the nutritional content of each food item visible.';
+        ? 'Extract the nutritional information from this nutrition label.'
+        : 'Analyze this food and estimate the nutritional content of each food item.';
+
     final rules = isLabel
         ? '''- All values must be normalized to per 100g
 - If the label shows values per serving, use the serving size to convert
 - estimated_weight_g should be the serving size from the label
-- Extract all available nutrients'''
+- If you cannot read the label, set clarification with your question'''
         : '''- All nutrition values must be per 100g
-- estimated_weight_g is your best estimate of the portion size in the photo
+- estimated_weight_g is your best estimate of the portion size
 - confidence is "high", "medium", or "low"
-- Include all items visible in the photo as separate entries
-- Be accurate with portions — use visual cues like plate size, utensils, etc.''';
+- If multiple items, return each separately
+- If you cannot identify the food, set clarification with your question''';
 
     return '''$task
-$clarificationContext
-Return a JSON object with this exact structure:
-{
-  "items": [
-    {
-      "name": "Food item name",
-      "estimated_weight_g": 150,
-      "confidence": "high",
-      "per_100g": {
-        "energy_kcal": 165,
-        "protein_g": 31,
-        "carbohydrates_g": 0,
-        "fat_g": 3.6,
-        "saturated_fat_g": 1.0,
-        "sugars_g": 0,
-        "fiber_g": 0,
-        "sodium_mg": 74
-      }
-    }
-  ],
-  "source": "$source"
-}
-
-If you cannot clearly identify a food item or need more information, instead return:
-{
-  "items": [],
-  "source": "$source",
-  "clarification": {
-    "question": "Your question here",
-    "suggested_answers": ["Option A", "Option B"]
-  }
-}
+$context
 
 Rules:
 $rules''';

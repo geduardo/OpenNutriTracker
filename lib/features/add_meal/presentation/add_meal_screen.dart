@@ -60,6 +60,9 @@ class _AddMealScreenState extends State<AddMealScreen>
         ModalRoute.of(context)?.settings.arguments as AddMealScreenArguments;
     _mealType = args.mealType;
     _day = args.day;
+    if (_tabController.index != args.initialTab) {
+      _tabController.index = args.initialTab;
+    }
     super.didChangeDependencies();
   }
 
@@ -309,5 +312,7 @@ class AddMealScreenArguments {
   final AddMealType mealType;
   final DateTime day;
 
-  AddMealScreenArguments(this.mealType, this.day);
+  final int initialTab;
+
+  AddMealScreenArguments(this.mealType, this.day, {this.initialTab = 0});
 }

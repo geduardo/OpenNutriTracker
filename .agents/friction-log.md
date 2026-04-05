@@ -38,6 +38,13 @@ Collected friction points from real usage. Each one becomes a task.
 **Current behavior:** Only tracks macros + sugar/saturated fat/fiber. No sodium.
 **Desired behavior:** Add sodium (mg) to `MealNutrimentsDBO` and display it. Both OFF and FDC APIs already provide sodium data — it's just not being pulled. The LLM label extraction should also capture it. Full micronutrient support isn't needed, but sodium is essential for health tracking.
 
+## 5b. Drop Products tab (OFF search)
+**Decision:** Remove the Products tab entirely. OFF text search is unreliable (503 errors), results are US-heavy and not relevant. Barcode scanning (OFF) still works and stays. Food tab (FDC via Supabase) is the only text search needed.
+
+## 5c. Rethink custom meal creation
+**Current behavior:** Edit screen with name + kcal prominent, macros row, collapsible details. Works but feels disconnected from the main flow.
+**Desired behavior:** TBD — needs to fit naturally into the new 4-option entry point (Camera, Gallery, Search, Recent). Maybe custom meal becomes a "quick add" option within the search screen, or a simple inline form rather than a full screen.
+
 ## 6. No search debouncing — fires on every keystroke
 **Current behavior:** Typing "banana" fires 6 network requests ("b", "ba", "ban"...). No debounce in `meal_search_bar.dart`.
 **Desired behavior:** 300-400ms debounce. Simple fix.
