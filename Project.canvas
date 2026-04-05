@@ -167,16 +167,6 @@
 			"color": "4"
 		},
 		{
-			"id": "776ffad8",
-			"type": "text",
-			"text": "## CLU-07 Add meal entry point redesign\nReplace current add meal screen with a 4-option entry point: Camera (AI photo), Gallery (AI photo), Search/Barcode (existing flow), Recent/Presets (frequency-sorted one-tap logging). This becomes the first screen when tapping 'Add to Breakfast/Lunch/etc'. Camera and Gallery feed into the AI estimation pipeline (single item vs meal choice). Search keeps the existing search+barcode flow. Recent shows most-logged items for one-tap re-logging.",
-			"x": 4260,
-			"y": 2756,
-			"width": 420,
-			"height": 384,
-			"color": "1"
-		},
-		{
 			"id": "4ac458bf",
 			"type": "text",
 			"text": "## AL-01 Unified AI food input (Magic)\n4-option entry point when adding a meal: Magic, Search, Scan, Recent.\n\n**Magic screen:** Camera button, gallery button, text input field â€” use any combo. Before submitting, choose 'Single item' or 'Meal breakdown'. LLM returns structured JSON.\n\n- Single item â†’ 1 entry with combined macros â†’ review/tweak â†’ save\n- Meal breakdown â†’ ingredient list grouped under a meal name (groupId/groupName on IntakeDBO) â†’ review/tweak each â†’ save all. Diary shows meal name collapsed, tap to expand ingredients.\n\nReplaces old custom meal creation. Added groupId (HiveField 6) and groupName (HiveField 7) to IntakeDBO for meal grouping.",
@@ -187,44 +177,54 @@
 			"color": "4"
 		},
 		{
-			"id": "63b2f1b3",
-			"type": "text",
-			"text": "## CLU-06 Meal presets UI\nUI to create, edit, and quick-log meal presets. One tap to log a full preset (e.g. 'My usual breakfast'). Allow quantity adjustments before confirming.",
-			"x": 4260,
-			"y": 2120,
-			"width": 420,
-			"height": 180,
-			"color": "0"
-		},
-		{
-			"id": "d20d9853",
-			"type": "text",
-			"text": "## CLU-04 Quick-log from search results\nSkip the full MealDetailScreen for known items. Tap item in search results â†’ inline quantity picker â†’ confirm. Detail screen accessible via long-press or info icon. Reduces logging from 6-7 taps to 3-4.",
-			"x": 4260,
-			"y": 1320,
-			"width": 420,
-			"height": 228,
-			"color": "1"
-		},
-		{
 			"id": "186ef498",
 			"type": "text",
 			"text": "## AL-03 LLM clarification dialog\nReusable chat-like widget for LLM follow-up questions. When the LLM response includes a clarification request, show it to the user, collect answer, re-submit. Keeps the flow conversational without breaking the logging UX. Used by both photo estimation and label extraction.\n\n### Changes\nBuilt as part of AL-01 Magic screen. Clarification dialog shows LLM question + suggested answer chips + free text input. Recursive re-submit on answer.",
 			"x": 3680,
-			"y": 1148,
+			"y": 1202,
 			"width": 420,
-			"height": 228,
-			"color": "5"
+			"height": 400,
+			"color": "4"
 		},
 		{
 			"id": "5d86317e",
 			"type": "text",
 			"text": "## AL-02 Label photo extraction flow\nTriggered from: (1) unknown barcode scan, or (2) 'correct this item' action on a fetched product. Take photo of nutrition label â†’ send to AiProvider.extractFromLabel â†’ LLM extracts exact values â†’ save to local overrides DB â†’ proceed with logging. LLM may ask follow-up if label is unclear.\n\n### Changes\n- Scanner screen: barcode not found â†’ shows 'Photograph the label' (camera/gallery) instead of generic error\n- Extracts nutrition via AiProvider.extractFromLabel â†’ saves to LocalFoodDataSource keyed by barcode\n- MealDetailScreen: 'Correct with label photo' button for OFF/FDC items\n- Corrected items saved locally and meal updated in-place\n- Both flows reuse the same AI label extraction pipeline",
-			"x": 3620,
-			"y": 1656,
+			"x": 3680,
+			"y": 1740,
 			"width": 420,
-			"height": 244,
+			"height": 632,
+			"color": "4"
+		},
+		{
+			"id": "d20d9853",
+			"type": "text",
+			"text": "## CLU-04 Quick-log from search results\nSkip the full MealDetailScreen for known items. Tap item in search results â†’ inline quantity picker â†’ confirm. Detail screen accessible via long-press or info icon. Reduces logging from 6-7 taps to 3-4.\n\n### Changes\n- Tap search result â†’ inline quantity bottom sheet with pre-filled last-used amount and live kcal calc\n- Long-press or info icon â†’ full MealDetailScreen (unchanged)\n- Quick add saves intake, updates tracked day, refreshes home, pops back\n- Bottom sheet shows food name, brands, editable quantity field, total kcal, Add button",
+			"x": 4260,
+			"y": 1202,
+			"width": 420,
+			"height": 228,
 			"color": "5"
+		},
+		{
+			"id": "776ffad8",
+			"type": "text",
+			"text": "## CLU-07 Add meal entry point redesign\nReplace current add meal screen with a 4-option entry point: Camera (AI photo), Gallery (AI photo), Search/Barcode (existing flow), Recent/Presets (frequency-sorted one-tap logging). This becomes the first screen when tapping 'Add to Breakfast/Lunch/etc'. Camera and Gallery feed into the AI estimation pipeline (single item vs meal choice). Search keeps the existing search+barcode flow. Recent shows most-logged items for one-tap re-logging.\n\n### Changes\nBuilt as part of AL-01. MealEntryScreen with 4 options: Magic (AI photo/text), Search (FDC), Scan (barcode), Recent (frequency-sorted). Navigation wired from home screen and bottom sheet.",
+			"x": 4260,
+			"y": 2200,
+			"width": 420,
+			"height": 532,
+			"color": "4"
+		},
+		{
+			"id": "63b2f1b3",
+			"type": "text",
+			"text": "## CLU-06 Meal presets UI\nUI to create, edit, and quick-log meal presets. One tap to log a full preset (e.g. 'My usual breakfast'). Allow quantity adjustments before confirming.",
+			"x": 4260,
+			"y": 1650,
+			"width": 420,
+			"height": 180,
+			"color": "0"
 		}
 	],
 	"edges": [
