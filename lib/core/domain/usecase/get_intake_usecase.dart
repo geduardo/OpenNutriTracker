@@ -43,4 +43,9 @@ class GetIntakeUsecase {
   Future<IntakeEntity?> getIntakeById(String intakeId) async {
     return _intakeRepository.getIntakeById(intakeId);
   }
+
+  Future<IntakeEntity?> getLastIntakeForMeal(
+      String? code, String? name) async {
+    return _intakeRepository.getLastIntakeForMeal(code, name);
+  }
 }

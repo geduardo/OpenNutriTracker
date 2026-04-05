@@ -98,4 +98,11 @@ class ConfigDataSource {
     final config = _configBox.get(_configKey);
     return config?.hasAcceptedSendAnonymousData ?? false;
   }
+
+  Future<void> setSchemaVersion(int version) async {
+    _log.fine('Updating schema version to $version');
+    final config = _configBox.get(_configKey);
+    config?.schemaVersion = version;
+    config?.save();
+  }
 }

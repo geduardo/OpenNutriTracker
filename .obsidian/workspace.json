@@ -1,0 +1,206 @@
+{
+  "main": {
+    "id": "e54618bc76af4266",
+    "type": "split",
+    "children": [
+      {
+        "id": "35f65875461aaee7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "94cf316fbe2d7bf0",
+            "type": "leaf",
+            "state": {
+              "type": "canvas",
+              "state": {
+                "file": "Project.canvas",
+                "viewState": {
+                  "x": 1588.5783724186654,
+                  "y": 1732.2974275111992,
+                  "zoom": -1.3333333042689732
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "Project"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "bb22b41b2867912b",
+    "type": "split",
+    "children": [
+      {
+        "id": "3941a3b4704463ae",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "085df2a5358eaf07",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "0be9b7d8eae9007a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "96c58334dd4e8e63",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "22c32565f8a9ea4b",
+    "type": "split",
+    "children": [
+      {
+        "id": "ac6cf00d9fba06e5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "98a1524cd4287afc",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Project.canvas",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Project"
+            }
+          },
+          {
+            "id": "98e2ee808a5a94f7",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Project.canvas",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Project"
+            }
+          },
+          {
+            "id": "8e42bb7eaa6287e9",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "f4cffad5ce1666bd",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "09927ca6d28c7b2c",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Project.canvas",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Project"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "canvas-watcher:Run Canvas Watcher": false
+    }
+  },
+  "active": "94cf316fbe2d7bf0",
+  "lastOpenFiles": [
+    "lib/core/utils/locator.dart.tmp.44396.1775385765998",
+    "lib/features/add_meal/data/repository/products_repository.dart.tmp.44396.1775385759896",
+    "lib/features/add_meal/data/repository/products_repository.dart.tmp.44396.1775385752816",
+    "lib/features/add_meal/data/repository/products_repository.dart.tmp.44396.1775385744356",
+    "lib/features/add_meal/data/repository/products_repository.dart.tmp.44396.1775385736089",
+    "lib/core/utils/locator.dart.tmp.44396.1775385722336",
+    "lib/core/utils/locator.dart.tmp.44396.1775385716741",
+    "lib/core/utils/hive_db_provider.dart.tmp.44396.1775385710551",
+    "lib/core/utils/hive_db_provider.dart.tmp.44396.1775385703600",
+    "lib/core/utils/hive_db_provider.dart.tmp.44396.1775385697401",
+    "lib/core/data/data_source/local_food_data_source.dart",
+    "GettingStarted.md",
+    "Project.canvas"
+  ]
+}

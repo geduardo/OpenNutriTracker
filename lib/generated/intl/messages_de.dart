@@ -39,6 +39,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "addLabel": MessageLookupByLibrary.simpleMessage("Hinzufügen"),
         "additionalInfoLabelCompendium2011": MessageLookupByLibrary.simpleMessage(
             "Informationen bereitgestellt von\n\'2011 Compendium\n of Physical Activities\'"),
+        "additionalInfoLabelAI": MessageLookupByLibrary.simpleMessage(
+            "KI-geschätzte Mahlzeit"),
         "additionalInfoLabelCustom":
             MessageLookupByLibrary.simpleMessage("Benutzerdefinierte Mahlzeit"),
         "additionalInfoLabelFDC": MessageLookupByLibrary.simpleMessage(
@@ -127,6 +129,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "energyLabel": MessageLookupByLibrary.simpleMessage("Energie"),
         "errorFetchingProductData": MessageLookupByLibrary.simpleMessage(
             "Fehler beim Abrufen von Produktinformationen"),
+        "additionalInfoLabel":
+            MessageLookupByLibrary.simpleMessage("Weitere Details"),
         "errorLoadingActivities": MessageLookupByLibrary.simpleMessage(
             "Fehler beim Laden von Aktivitäten"),
         "errorMealSave": MessageLookupByLibrary.simpleMessage(

@@ -1,3 +1,5 @@
+import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/fdc_data_source.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/off_data_source.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/sp_fdc_data_source.dart';
@@ -7,9 +9,10 @@ class ProductsRepository {
   final OFFDataSource _offDataSource;
   final FDCDataSource _fdcDataSource;
   final SpFdcDataSource _spBackendDataSource;
+  final LocalFoodDataSource _localFoodDataSource;
 
-  ProductsRepository(
-      this._offDataSource, this._fdcDataSource, this._spBackendDataSource);
+  ProductsRepository(this._offDataSource, this._fdcDataSource,
+      this._spBackendDataSource, this._localFoodDataSource);
 
   Future<List<MealEntity>> getOFFProductsByString(String searchString) async {
     final offWordResponse =
@@ -42,8 +45,17 @@ class ProductsRepository {
   }
 
   Future<MealEntity> getOFFProductByBarcode(String barcode) async {
-    final productResponse = await _offDataSource.fetchBarcodeResults(barcode);
+    // Check local overrides first
+    final localOverride = await _localFoodDataSource.getFoodByKey(barcode);
+    if (localOverride != null) {
+      return MealEntity.fromMealDBO(localOverride);
+    }
 
+    final productResponse = await _offDataSource.fetchBarcodeResults(barcode);
     return MealEntity.fromOFFProduct(productResponse.product);
+  }
+
+  Future<void> saveLocalFoodOverride(String key, MealEntity meal) async {
+    await _localFoodDataSource.saveFood(key, MealDBO.fromMealEntity(meal));
   }
 }

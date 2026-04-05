@@ -1331,6 +1331,16 @@ class S {
     );
   }
 
+  /// `AI Estimated Meal Item`
+  String get additionalInfoLabelAI {
+    return Intl.message(
+      'AI Estimated Meal Item',
+      name: 'additionalInfoLabelAI',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Information provided\n by the \n'2011 Compendium\n of Physical Activities'`
   String get additionalInfoLabelCompendium2011 {
     return Intl.message(
@@ -1606,6 +1616,16 @@ class S {
     return Intl.message(
       'protein per 100 g/ml',
       name: 'mealProteinLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `More details`
+  String get additionalInfoLabel {
+    return Intl.message(
+      'More details',
+      name: 'additionalInfoLabel',
       desc: '',
       args: [],
     );

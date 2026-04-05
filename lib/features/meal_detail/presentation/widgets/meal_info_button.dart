@@ -41,6 +41,9 @@ class MealInfoButton extends StatelessWidget {
       case MealSourceEntity.fdc:
         siteUrl = url ?? FDCConst.fdcWebsiteUrl;
         break;
+      case MealSourceEntity.ai:
+        siteUrl = "";
+        break;
     }
     return siteUrl;
   }
@@ -59,6 +62,9 @@ class MealInfoButton extends StatelessWidget {
         break;
       case MealSourceEntity.fdc:
         infoLabel = S.of(context).additionalInfoLabelFDC;
+        break;
+      case MealSourceEntity.ai:
+        infoLabel = S.of(context).additionalInfoLabelAI;
     }
     return infoLabel;
   }

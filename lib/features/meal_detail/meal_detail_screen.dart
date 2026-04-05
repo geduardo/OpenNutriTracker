@@ -84,20 +84,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           .add(UpdateKcalEvent(meal: meal, selectedUnit: _initialUnit));
     }
 
-    // Set initial quantity
+    // Set initial quantity (check for last-used amount first)
     if (_initialQuantity == "") {
-      if (meal.hasServingValues) {
-        _initialQuantity = "1";
-        quantityTextController.text = "1";
-      } else if (_usesImperialUnits) {
-        _initialQuantity = _initialQuantityImperial;
-        quantityTextController.text = _initialQuantityImperial;
-      } else {
-        _initialQuantity = _initialQuantityMetric;
-        quantityTextController.text = _initialQuantityMetric;
-      }
-      _mealDetailBloc.add(UpdateKcalEvent(
-          meal: meal, totalQuantity: quantityTextController.text));
+      _setInitialQuantity();
     }
 
     super.didChangeDependencies();
@@ -276,6 +265,32 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         ]))
       ],
     );
+  }
+
+  Future<void> _setInitialQuantity() async {
+    // Try to use the last-used quantity for this food item
+    final lastAmount =
+        await _mealDetailBloc.getLastUsedAmount(meal.code, meal.name);
+
+    if (lastAmount != null) {
+      final quantityStr = lastAmount == lastAmount.roundToDouble()
+          ? lastAmount.toInt().toString()
+          : lastAmount.toString();
+      _initialQuantity = quantityStr;
+      quantityTextController.text = quantityStr;
+    } else if (meal.hasServingValues) {
+      _initialQuantity = "1";
+      quantityTextController.text = "1";
+    } else if (_usesImperialUnits) {
+      _initialQuantity = _initialQuantityImperial;
+      quantityTextController.text = _initialQuantityImperial;
+    } else {
+      _initialQuantity = _initialQuantityMetric;
+      quantityTextController.text = _initialQuantityMetric;
+    }
+
+    _mealDetailBloc.add(UpdateKcalEvent(
+        meal: meal, totalQuantity: quantityTextController.text));
   }
 
   void onQuantityOrUnitChanged(String? quantityString, String? unit) {

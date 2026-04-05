@@ -24,13 +24,14 @@ class MealNutrimentsDBOAdapter extends TypeAdapter<MealNutrimentsDBO> {
       sugars100: fields[4] as double?,
       saturatedFat100: fields[5] as double?,
       fiber100: fields[6] as double?,
+      sodiumMg100: fields[7] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealNutrimentsDBO obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.energyKcal100)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class MealNutrimentsDBOAdapter extends TypeAdapter<MealNutrimentsDBO> {
       ..writeByte(5)
       ..write(obj.saturatedFat100)
       ..writeByte(6)
-      ..write(obj.fiber100);
+      ..write(obj.fiber100)
+      ..writeByte(7)
+      ..write(obj.sodiumMg100);
   }
 
   @override
@@ -71,6 +74,7 @@ MealNutrimentsDBO _$MealNutrimentsDBOFromJson(Map<String, dynamic> json) =>
       sugars100: (json['sugars100'] as num?)?.toDouble(),
       saturatedFat100: (json['saturatedFat100'] as num?)?.toDouble(),
       fiber100: (json['fiber100'] as num?)?.toDouble(),
+      sodiumMg100: (json['sodiumMg100'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$MealNutrimentsDBOToJson(MealNutrimentsDBO instance) =>
@@ -82,4 +86,5 @@ Map<String, dynamic> _$MealNutrimentsDBOToJson(MealNutrimentsDBO instance) =>
       'sugars100': instance.sugars100,
       'saturatedFat100': instance.saturatedFat100,
       'fiber100': instance.fiber100,
+      'sodiumMg100': instance.sodiumMg100,
     };

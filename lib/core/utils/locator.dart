@@ -1,6 +1,8 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/physical_activity_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
@@ -29,7 +31,11 @@ import 'package:opennutritracker/core/domain/usecase/get_user_activity_usecase.d
 import 'package:opennutritracker/core/domain/usecase/get_user_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/utils/env.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/gemini_provider.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/openai_provider.dart';
 import 'package:opennutritracker/core/utils/hive_db_provider.dart';
+import 'package:opennutritracker/core/utils/migration_runner.dart';
 import 'package:opennutritracker/core/utils/ont_image_cache_manager.dart';
 import 'package:opennutritracker/core/utils/secure_app_storage_provider.dart';
 import 'package:opennutritracker/features/activity_detail/presentation/bloc/activity_detail_bloc.dart';
@@ -106,7 +112,7 @@ Future<void> initLocator() async {
   locator.registerFactory<ActivityDetailBloc>(() => ActivityDetailBloc(
       locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory<MealDetailBloc>(
-      () => MealDetailBloc(locator(), locator(), locator(), locator()));
+      () => MealDetailBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory<ScannerBloc>(() => ScannerBloc(locator(), locator()));
   locator.registerFactory<EditMealBloc>(() => EditMealBloc(locator()));
   locator.registerFactory<AddMealBloc>(() => AddMealBloc(locator()));
@@ -163,7 +169,7 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<IntakeRepository>(
       () => IntakeRepository(locator()));
   locator.registerLazySingleton<ProductsRepository>(
-      () => ProductsRepository(locator(), locator(), locator()));
+      () => ProductsRepository(locator(), locator(), locator(), locator()));
   locator.registerLazySingleton<UserActivityRepository>(
       () => UserActivityRepository(locator()));
   locator.registerLazySingleton<PhysicalActivityRepository>(
@@ -182,13 +188,26 @@ Future<void> initLocator() async {
       () => UserActivityDataSource(hiveDBProvider.userActivityBox));
   locator.registerLazySingleton<PhysicalActivityDataSource>(
       () => PhysicalActivityDataSource());
+  // AI Provider — uses Gemini by default, falls back to OpenAI if no Gemini key
+  locator.registerLazySingleton<AiProvider>(() {
+    if (Env.geminiApiKey.isNotEmpty) {
+      return GeminiProvider(Env.geminiApiKey);
+    } else {
+      return OpenAiProvider(Env.openaiApiKey);
+    }
+  });
   locator.registerLazySingleton<OFFDataSource>(() => OFFDataSource());
   locator.registerLazySingleton<FDCDataSource>(() => FDCDataSource());
   locator.registerLazySingleton<SpFdcDataSource>(() => SpFdcDataSource());
   locator.registerLazySingleton(
       () => TrackedDayDataSource(hiveDBProvider.trackedDayBox));
+  locator.registerLazySingleton(
+      () => MealPresetDataSource(hiveDBProvider.mealPresetBox));
+  locator.registerLazySingleton(
+      () => LocalFoodDataSource(hiveDBProvider.localFoodBox));
 
   await _initializeConfig(locator());
+  await MigrationRunner(locator()).runMigrations();
 }
 
 Future<void> _initializeConfig(ConfigDataSource configDataSource) async {

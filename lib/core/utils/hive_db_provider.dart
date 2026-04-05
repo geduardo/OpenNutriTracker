@@ -7,6 +7,7 @@ import 'package:opennutritracker/core/data/dbo/app_theme_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/config_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/intake_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/physical_activity_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
@@ -22,12 +23,16 @@ class HiveDBProvider extends ChangeNotifier {
   static const userActivityBoxName = 'UserActivityBox';
   static const userBoxName = 'UserBox';
   static const trackedDayBoxName = 'TrackedDayBox';
+  static const mealPresetBoxName = 'MealPresetBox';
+  static const localFoodBoxName = 'LocalFoodBox';
 
   late Box<ConfigDBO> configBox;
   late Box<IntakeDBO> intakeBox;
   late Box<UserActivityDBO> userActivityBox;
   late Box<UserDBO> userBox;
   late Box<TrackedDayDBO> trackedDayBox;
+  late Box<MealPresetDBO> mealPresetBox;
+  late Box<MealDBO> localFoodBox;
 
   Future<void> initHiveDB(Uint8List encryptionKey) async {
     final encryptionCypher = HiveAesCipher(encryptionKey);
@@ -47,6 +52,8 @@ class HiveDBProvider extends ChangeNotifier {
     Hive.registerAdapter(PhysicalActivityDBOAdapter());
     Hive.registerAdapter(PhysicalActivityTypeDBOAdapter());
     Hive.registerAdapter(AppThemeDBOAdapter());
+    Hive.registerAdapter(MealPresetDBOAdapter());
+    Hive.registerAdapter(MealPresetItemDBOAdapter());
 
     configBox =
         await Hive.openBox(configBoxName, encryptionCipher: encryptionCypher);
@@ -57,6 +64,10 @@ class HiveDBProvider extends ChangeNotifier {
     userBox =
         await Hive.openBox(userBoxName, encryptionCipher: encryptionCypher);
     trackedDayBox = await Hive.openBox(trackedDayBoxName,
+        encryptionCipher: encryptionCypher);
+    mealPresetBox = await Hive.openBox(mealPresetBoxName,
+        encryptionCipher: encryptionCypher);
+    localFoodBox = await Hive.openBox(localFoodBoxName,
         encryptionCipher: encryptionCypher);
   }
 

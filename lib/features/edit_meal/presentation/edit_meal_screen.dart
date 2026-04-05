@@ -51,6 +51,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
   // TODO: Add base quantity and unit
   String baseQuantity = "100";
   String baseQuantityUnit = " g/ml";
+  bool _showMoreDetails = false;
 
   @override
   void initState() {
@@ -170,6 +171,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
           ),
         )),
         const SizedBox(height: 32),
+        // Essential fields: Name + Kcal
         TextFormField(
           controller: _nameTextController,
           decoration: InputDecoration(
@@ -178,54 +180,6 @@ class _EditMealScreenState extends State<EditMealScreen> {
           keyboardType: TextInputType.text,
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _brandsTextController,
-          decoration: InputDecoration(
-              labelText: S.of(context).mealBrandsLabel,
-              border: const OutlineInputBorder()),
-          keyboardType: TextInputType.text,
-        ),
-        const SizedBox(height: 32),
-        TextFormField(
-          controller: _mealQuantityTextController,
-          decoration: InputDecoration(
-              labelText: _usesImperialUnits
-                  ? S.of(context).mealSizeLabelImperial
-                  : S.of(context).mealSizeLabel,
-              border: const OutlineInputBorder()),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _servingQuantityTextController,
-          inputFormatters: CustomTextInputFormatter.doubleOnly(),
-          decoration: InputDecoration(
-              labelText: _usesImperialUnits
-                  ? S.of(context).servingSizeLabelImperial
-                  : S.of(context).servingSizeLabelMetric,
-              border: const OutlineInputBorder()),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
-        const SizedBox(height: 16),
-        SegmentedButton<String>(
-          segments: _mealUnitButtonSegment,
-          selected: {selectedUnit ?? _units[2]},
-          onSelectionChanged: (Set<String> newSelection) {
-            setState(() {
-              selectedUnit = newSelection.first;
-            });
-          },
-        ),
-        const SizedBox(height: 48),
-        TextFormField(
-          controller: _baseQuantityTextController,
-          inputFormatters: CustomTextInputFormatter.doubleOnly(),
-          decoration: InputDecoration(
-              labelText: S.of(context).baseQuantityLabel,
-              border: const OutlineInputBorder()),
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 48),
         TextFormField(
           controller: _kcalTextController,
           inputFormatters: CustomTextInputFormatter.doubleOnly(),
@@ -236,37 +190,116 @@ class _EditMealScreenState extends State<EditMealScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _carbsTextController,
-          inputFormatters: CustomTextInputFormatter.doubleOnly(),
-          decoration: InputDecoration(
-              labelText: S.of(context).mealCarbsLabel +
-                  baseQuantity +
-                  baseQuantityUnit,
-              border: const OutlineInputBorder()),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        // Macros row (optional but visible)
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _carbsTextController,
+                inputFormatters: CustomTextInputFormatter.doubleOnly(),
+                decoration: InputDecoration(
+                    labelText: S.of(context).carbsLabel,
+                    border: const OutlineInputBorder()),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _fatTextController,
+                inputFormatters: CustomTextInputFormatter.doubleOnly(),
+                decoration: InputDecoration(
+                    labelText: S.of(context).fatLabel,
+                    border: const OutlineInputBorder()),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _proteinTextController,
+                inputFormatters: CustomTextInputFormatter.doubleOnly(),
+                decoration: InputDecoration(
+                    labelText: S.of(context).proteinLabel,
+                    border: const OutlineInputBorder()),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _fatTextController,
-          inputFormatters: CustomTextInputFormatter.doubleOnly(),
-          decoration: InputDecoration(
-              labelText:
-                  S.of(context).mealFatLabel + baseQuantity + baseQuantityUnit,
-              border: const OutlineInputBorder()),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        // Collapsible details section
+        InkWell(
+          onTap: () => setState(() => _showMoreDetails = !_showMoreDetails),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(_showMoreDetails
+                    ? Icons.expand_less
+                    : Icons.expand_more),
+                const SizedBox(width: 8),
+                Text(S.of(context).additionalInfoLabel,
+                    style: Theme.of(context).textTheme.titleSmall),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _proteinTextController,
-          inputFormatters: CustomTextInputFormatter.doubleOnly(),
-          decoration: InputDecoration(
-              labelText: S.of(context).mealProteinLabel +
-                  baseQuantity +
-                  baseQuantityUnit,
-              border: const OutlineInputBorder()),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        ),
+        if (_showMoreDetails) ...[
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _brandsTextController,
+            decoration: InputDecoration(
+                labelText: S.of(context).mealBrandsLabel,
+                border: const OutlineInputBorder()),
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _mealQuantityTextController,
+            decoration: InputDecoration(
+                labelText: _usesImperialUnits
+                    ? S.of(context).mealSizeLabelImperial
+                    : S.of(context).mealSizeLabel,
+                border: const OutlineInputBorder()),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _servingQuantityTextController,
+            inputFormatters: CustomTextInputFormatter.doubleOnly(),
+            decoration: InputDecoration(
+                labelText: _usesImperialUnits
+                    ? S.of(context).servingSizeLabelImperial
+                    : S.of(context).servingSizeLabelMetric,
+                border: const OutlineInputBorder()),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+          ),
+          const SizedBox(height: 16),
+          SegmentedButton<String>(
+            segments: _mealUnitButtonSegment,
+            selected: {selectedUnit ?? _units[2]},
+            onSelectionChanged: (Set<String> newSelection) {
+              setState(() {
+                selectedUnit = newSelection.first;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _baseQuantityTextController,
+            inputFormatters: CustomTextInputFormatter.doubleOnly(),
+            decoration: InputDecoration(
+                labelText: S.of(context).baseQuantityLabel,
+                border: const OutlineInputBorder()),
+            keyboardType: TextInputType.number,
+          ),
+        ],
       ],
     );
   }

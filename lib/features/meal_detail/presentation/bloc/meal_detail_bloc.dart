@@ -6,6 +6,7 @@ import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
@@ -23,9 +24,11 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
   final AddTrackedDayUsecase _addTrackedDayUsecase;
   final GetKcalGoalUsecase _getKcalGoalUsecase;
   final GetMacroGoalUsecase _getMacroGoalUsecase;
+  final GetIntakeUsecase _getIntakeUsecase;
 
   MealDetailBloc(this._addIntakeUseCase, this._addTrackedDayUsecase,
-      this._getKcalGoalUsecase, this._getMacroGoalUsecase)
+      this._getKcalGoalUsecase, this._getMacroGoalUsecase,
+      this._getIntakeUsecase)
       : super(MealDetailInitial(
             totalQuantityConverted: '100',
             selectedUnit: UnitDropdownItem.gml.toString())) {
@@ -72,6 +75,13 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
         Sentry.captureException(e);
       }
     });
+  }
+
+  /// Returns the last-used amount for a given food item, or null if never logged.
+  Future<double?> getLastUsedAmount(String? code, String? name) async {
+    final lastIntake =
+        await _getIntakeUsecase.getLastIntakeForMeal(code, name);
+    return lastIntake?.amount;
   }
 
   void addIntake(BuildContext context, String unit, String amountText,

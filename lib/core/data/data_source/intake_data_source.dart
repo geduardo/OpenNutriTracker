@@ -66,16 +66,46 @@ class IntakeDataSource {
   Future<List<IntakeDBO>> getRecentlyAddedIntake({int number = 100}) async {
     final intakeList = _intakeBox.values.toList();
 
-    //  sort list by date (newest first) and filter unique intake
-    intakeList
-        .sort((a, b) =>  (-1) * a.dateTime.compareTo(b.dateTime));
+    // Count frequency per food item and track the most recent intake for each
+    final frequencyMap = <String, int>{};
+    final latestIntakeMap = <String, IntakeDBO>{};
 
-    final filterCodes = <String>{};
-    final uniqueIntake = intakeList
-        .where((intake) =>
-            filterCodes.add(intake.meal.code ?? intake.meal.name ?? ""))
-        .toList();
+    for (final intake in intakeList) {
+      final key = intake.meal.code ?? intake.meal.name ?? "";
+      frequencyMap[key] = (frequencyMap[key] ?? 0) + 1;
+      final existing = latestIntakeMap[key];
+      if (existing == null ||
+          intake.dateTime.isAfter(existing.dateTime)) {
+        latestIntakeMap[key] = intake;
+      }
+    }
 
-    return uniqueIntake.take(number).toList();
+    // Sort by frequency (most-logged first), then by recency as tiebreaker
+    final sortedEntries = latestIntakeMap.entries.toList()
+      ..sort((a, b) {
+        final freqCompare =
+            frequencyMap[b.key]!.compareTo(frequencyMap[a.key]!);
+        if (freqCompare != 0) return freqCompare;
+        return b.value.dateTime.compareTo(a.value.dateTime);
+      });
+
+    return sortedEntries.take(number).map((e) => e.value).toList();
+  }
+
+  /// Returns the most recent intake for a food identified by code or name.
+  Future<IntakeDBO?> getLastIntakeForMeal(String? code, String? name) async {
+    final key = code ?? name;
+    if (key == null || key.isEmpty) return null;
+
+    IntakeDBO? latest;
+    for (final intake in _intakeBox.values) {
+      final intakeKey = intake.meal.code ?? intake.meal.name ?? "";
+      if (intakeKey == key) {
+        if (latest == null || intake.dateTime.isAfter(latest.dateTime)) {
+          latest = intake;
+        }
+      }
+    }
+    return latest;
   }
 }

@@ -38,6 +38,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "addLabel": MessageLookupByLibrary.simpleMessage("Ekle"),
         "additionalInfoLabelCompendium2011": MessageLookupByLibrary.simpleMessage(
             "Bilgi\n\'2011 Compendium\n of Physical Activities\'\nden sağlanmıştır"),
+        "additionalInfoLabelAI": MessageLookupByLibrary.simpleMessage(
+            "Yapay Zeka Tahmini Yemek"),
         "additionalInfoLabelCustom":
             MessageLookupByLibrary.simpleMessage("Özel Yemek Öğesi"),
         "additionalInfoLabelFDC": MessageLookupByLibrary.simpleMessage(
@@ -124,6 +126,8 @@ class MessageLookup extends MessageLookupByLibrary {
         "energyLabel": MessageLookupByLibrary.simpleMessage("enerji"),
         "errorFetchingProductData": MessageLookupByLibrary.simpleMessage(
             "Ürün verileri alınırken hata oluştu"),
+        "additionalInfoLabel":
+            MessageLookupByLibrary.simpleMessage("Daha fazla detay"),
         "errorLoadingActivities": MessageLookupByLibrary.simpleMessage(
             "Aktiviteler yüklenirken hata oluştu"),
         "errorMealSave": MessageLookupByLibrary.simpleMessage(

@@ -60,6 +60,8 @@ class OFFProductNutrimentsDTO {
   // final double? fiber_value;
   // final String? fiber_unit;
 
+  final dynamic sodium_100g; // can be String, int, double or null (in grams)
+
   OFFProductNutrimentsDTO({
     //required this.energy_kcal,
     required this.energy_kcal_100g,
@@ -96,6 +98,7 @@ class OFFProductNutrimentsDTO {
     // required this.fiber_serving,
     // required this.fiber_value,
     // required this.fiber_unit,
+    this.sodium_100g,
   });
 
   factory OFFProductNutrimentsDTO.fromJson(Map<String, dynamic> json) =>

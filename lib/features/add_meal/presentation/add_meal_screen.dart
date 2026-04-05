@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/presentation/widgets/error_dialog.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
@@ -36,6 +38,7 @@ class _AddMealScreenState extends State<AddMealScreen>
   late RecentMealBloc _recentMealBloc;
 
   late TabController _tabController;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -47,6 +50,7 @@ class _AddMealScreenState extends State<AddMealScreen>
       // Update search results when tab changes
       _onSearchSubmit(_searchStringListener.value);
     });
+    _searchStringListener.addListener(_onSearchStringChanged);
     super.initState();
   }
 
@@ -61,8 +65,19 @@ class _AddMealScreenState extends State<AddMealScreen>
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _searchStringListener.removeListener(_onSearchStringChanged);
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onSearchStringChanged() {
+    _debounceTimer?.cancel();
+    final query = _searchStringListener.value;
+    if (query.isEmpty) return;
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      _onSearchSubmit(query);
+    });
   }
 
   @override
@@ -275,25 +290,7 @@ class _AddMealScreenState extends State<AddMealScreen>
   }
 
   void _onCustomAddButtonPressed(bool usesImperialUnits) {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(S.of(context).createCustomDialogTitle),
-            content: Text(S.of(context).createCustomDialogContent),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(), // close dialog
-                  child: Text(S.of(context).dialogCancelLabel)),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
-                    _openEditMealScreen(usesImperialUnits);
-                  },
-                  child: Text(S.of(context).buttonYesLabel)),
-            ],
-          );
-        });
+    _openEditMealScreen(usesImperialUnits);
   }
 
   void _openEditMealScreen(bool usesImperialUnits) {

@@ -1,0 +1,2 @@
+- [User profile](user_profile.md) — Eduardo, building AI calorie tracker from OpenNutriTracker fork
+- [Project goals](project_goals.md) — Low-friction AI calorie tracking, VLLM integration, rapid iteration

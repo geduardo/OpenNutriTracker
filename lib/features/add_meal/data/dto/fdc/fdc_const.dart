@@ -187,6 +187,7 @@ class FDCConst {
   static const fdcTotalSugarId = 1063;
   static const fdcTotalSaturatedFatId = 1258;
   static const fdcTotalDietaryFiberId = 1079;
+  static const fdcTotalSodiumId = 1093;
 
   // Measure unit codes
   static const fdcPortionServingId = 1049;

@@ -15,8 +15,10 @@ class MealNutrimentsEntity extends Equatable {
   final double? sugars100;
   final double? saturatedFat100;
   final double? fiber100;
+  final double? sodiumMg100;
 
   double? get energyPerUnit => _getValuePerUnit(energyKcal100);
+  double? get sodiumMgPerUnit => _getValuePerUnit(sodiumMg100);
 
   double? get carbohydratesPerUnit => _getValuePerUnit(carbohydrates100);
 
@@ -31,7 +33,8 @@ class MealNutrimentsEntity extends Equatable {
       required this.proteins100,
       required this.sugars100,
       required this.saturatedFat100,
-      required this.fiber100});
+      required this.fiber100,
+      this.sodiumMg100});
 
   factory MealNutrimentsEntity.empty() => const MealNutrimentsEntity(
       energyKcal100: null,
@@ -40,7 +43,8 @@ class MealNutrimentsEntity extends Equatable {
       proteins100: null,
       sugars100: null,
       saturatedFat100: null,
-      fiber100: null);
+      fiber100: null,
+      sodiumMg100: null);
 
   factory MealNutrimentsEntity.fromMealNutrimentsDBO(
       MealNutrimentsDBO nutriments) {
@@ -51,7 +55,8 @@ class MealNutrimentsEntity extends Equatable {
         proteins100: nutriments.proteins100,
         sugars100: nutriments.sugars100,
         saturatedFat100: nutriments.saturatedFat100,
-        fiber100: nutriments.fiber100);
+        fiber100: nutriments.fiber100,
+        sodiumMg100: nutriments.sodiumMg100);
   }
 
   factory MealNutrimentsEntity.fromOffNutriments(
@@ -69,7 +74,14 @@ class MealNutrimentsEntity extends Equatable {
         sugars100: (offNutriments.sugars_100g as Object?).asDoubleOrNull(),
         saturatedFat100:
             (offNutriments.saturated_fat_100g as Object?).asDoubleOrNull(),
-        fiber100: (offNutriments.fiber_100g as Object?).asDoubleOrNull());
+        fiber100: (offNutriments.fiber_100g as Object?).asDoubleOrNull(),
+        sodiumMg100: _offSodiumToMg(
+            (offNutriments.sodium_100g as Object?).asDoubleOrNull()));
+  }
+
+  /// OFF stores sodium in grams, convert to mg
+  static double? _offSodiumToMg(double? sodiumGrams) {
+    return sodiumGrams != null ? sodiumGrams * 1000 : null;
   }
 
   factory MealNutrimentsEntity.fromFDCNutriments(
@@ -119,6 +131,11 @@ class MealNutrimentsEntity extends Equatable {
             nutriment.nutrientId == FDCConst.fdcTotalDietaryFiberId)
         ?.amount;
 
+    final sodiumTotal = fdcNutriment
+        .firstWhereOrNull(
+            (nutriment) => nutriment.nutrientId == FDCConst.fdcTotalSodiumId)
+        ?.amount;
+
     return MealNutrimentsEntity(
         energyKcal100: energyTotal,
         carbohydrates100: carbsTotal,
@@ -126,7 +143,8 @@ class MealNutrimentsEntity extends Equatable {
         proteins100: proteinsTotal,
         sugars100: sugarTotal,
         saturatedFat100: saturatedFatTotal,
-        fiber100: fiberTotal);
+        fiber100: fiberTotal,
+        sodiumMg100: sodiumTotal);
   }
 
   static double? _getValuePerUnit(double? valuePer100) {

@@ -55,4 +55,10 @@ class IntakeRepository {
     final result = await _intakeDataSource.getIntakeById(intakeId);
     return result == null ? null : IntakeEntity.fromIntakeDBO(result);
   }
+
+  Future<IntakeEntity?> getLastIntakeForMeal(
+      String? code, String? name) async {
+    final result = await _intakeDataSource.getLastIntakeForMeal(code, name);
+    return result == null ? null : IntakeEntity.fromIntakeDBO(result);
+  }
 }
