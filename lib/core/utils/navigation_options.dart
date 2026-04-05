@@ -6,6 +6,7 @@ class NavigationOptions {
   static const addMealRoute = "addMeal";
   static const magicRoute = "magic";
   static const aiResultRoute = "aiResult";
+  static const presetsRoute = "presets";
   static const scannerRoute = "scanner";
   static const mealDetailRoute = "mealDetail";
   static const editMealRoute = "editMeal";

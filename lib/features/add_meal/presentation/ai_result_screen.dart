@@ -6,6 +6,9 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
+import 'package:opennutritracker/features/add_meal/presentation/presets_screen.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
@@ -104,6 +107,18 @@ class _AiResultScreenState extends State<AiResultScreen> {
               ),
             ),
           ),
+          if (_mode == MagicMode.mealBreakdown && _items.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isSaving ? null : _saveAsPreset,
+                  icon: const Icon(Icons.playlist_add),
+                  label: const Text('Save as preset'),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -193,6 +208,76 @@ class _AiResultScreenState extends State<AiResultScreen> {
       child: Text('$label ${grams.toInt()}g',
           style: Theme.of(context).textTheme.bodySmall),
     );
+  }
+
+  Future<void> _saveAsPreset() async {
+    final nameController = TextEditingController(
+      text: _items.map((i) => i.name).join(' + '),
+    );
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Save as preset'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Preset name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, nameController.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (name == null || name.isEmpty || !mounted) return;
+
+    final presetItems = _items.map((item) {
+      final nutriments = MealNutrimentsEntity(
+        energyKcal100: item.per100g.energyKcal,
+        carbohydrates100: item.per100g.carbohydratesG,
+        fat100: item.per100g.fatG,
+        proteins100: item.per100g.proteinG,
+        sugars100: item.per100g.sugarsG,
+        saturatedFat100: item.per100g.saturatedFatG,
+        fiber100: item.per100g.fiberG,
+        sodiumMg100: item.per100g.sodiumMg,
+      );
+
+      final meal = MealEntity(
+        code: null,
+        name: item.name,
+        brands: null,
+        url: null,
+        thumbnailImageUrl: null,
+        mainImageUrl: null,
+        mealQuantity: null,
+        mealUnit: 'g',
+        servingQuantity: null,
+        servingUnit: null,
+        servingSize: null,
+        nutriments: nutriments,
+        source: MealSourceEntity.ai,
+      );
+
+      return MealPresetItemDBO(
+        meal: MealDBO.fromMealEntity(meal),
+        amount: item.weightG,
+        unit: 'g',
+      );
+    }).toList();
+
+    await saveAsPreset(context, name, presetItems);
   }
 
   Future<void> _saveAll() async {

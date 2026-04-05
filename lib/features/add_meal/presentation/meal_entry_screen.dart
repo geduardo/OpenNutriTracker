@@ -3,6 +3,7 @@ import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_screen.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/add_meal/presentation/magic_screen.dart';
+import 'package:opennutritracker/features/add_meal/presentation/presets_screen.dart';
 import 'package:opennutritracker/features/scanner/scanner_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -69,6 +70,17 @@ class MealEntryScreen extends StatelessWidget {
                 arguments:
                     AddMealScreenArguments(args.mealType, args.day,
                         initialTab: 2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _EntryOption(
+              icon: Icons.playlist_play,
+              label: 'Presets',
+              subtitle: 'Saved meals',
+              color: Theme.of(context).colorScheme.inversePrimary,
+              onTap: () => Navigator.of(context).pushNamed(
+                NavigationOptions.presetsRoute,
+                arguments: PresetsScreenArguments(args.mealType, args.day),
               ),
             ),
           ],

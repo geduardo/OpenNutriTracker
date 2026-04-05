@@ -204,7 +204,7 @@
 			"y": 1202,
 			"width": 420,
 			"height": 228,
-			"color": "5"
+			"color": "4"
 		},
 		{
 			"id": "776ffad8",
@@ -219,12 +219,12 @@
 		{
 			"id": "63b2f1b3",
 			"type": "text",
-			"text": "## CLU-06 Meal presets UI\nUI to create, edit, and quick-log meal presets. One tap to log a full preset (e.g. 'My usual breakfast'). Allow quantity adjustments before confirming.",
+			"text": "## CLU-06 Meal presets UI\nUI to create, edit, and quick-log meal presets. One tap to log a full preset (e.g. 'My usual breakfast'). Allow quantity adjustments before confirming.\n\n### Changes\n- PresetsScreen: view saved presets, one-tap to log all items, delete presets\n- 5th entry option 'Presets' added to MealEntryScreen\n- AI result screen: 'Save as preset' button for meal breakdowns (names dialog)\n- Logging a preset creates grouped intakes with groupId/groupName\n- saveAsPreset() helper for creating presets from anywhere",
 			"x": 4260,
-			"y": 1650,
+			"y": 1656,
 			"width": 420,
 			"height": 180,
-			"color": "0"
+			"color": "5"
 		}
 	],
 	"edges": [
