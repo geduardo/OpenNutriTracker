@@ -3,11 +3,13 @@ class AiNutritionResponseDTO {
   final List<AiNutritionItemDTO> items;
   final AiNutritionSource source;
   final AiClarificationRequest? clarification;
+  final String? mealName;
 
   const AiNutritionResponseDTO({
     required this.items,
     required this.source,
     this.clarification,
+    this.mealName,
   });
 
   bool get needsClarification => clarification != null;
@@ -27,6 +29,7 @@ class AiNutritionResponseDTO {
           ? AiClarificationRequest.fromJson(
               json['clarification'] as Map<String, dynamic>)
           : null,
+      mealName: json['meal_name'] as String?,
     );
   }
 }

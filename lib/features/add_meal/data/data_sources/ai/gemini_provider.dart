@@ -58,6 +58,10 @@ class GeminiProvider implements AiProvider {
         'type': 'STRING',
         'enum': ['estimation', 'label_extraction']
       },
+      'meal_name': {
+        'type': 'STRING',
+        'nullable': true,
+      },
       'clarification': {
         'type': 'OBJECT',
         'nullable': true,
@@ -174,7 +178,8 @@ Rules:
 - confidence is "high", "medium", or "low"
 - If multiple items, return each separately
 - Be accurate with portions — use visual cues like plate size, utensils, etc.
-- If you cannot identify the food or need more info, return empty items with a clarification object''';
+- If you cannot identify the food or need more info, return empty items with a clarification object
+- If there are multiple items, set meal_name to a concise name for the overall meal (e.g. "Spaghetti Bolognese", "Chicken Caesar Salad")''';
   }
 
   String _buildLabelExtractionPrompt({String? clarificationAnswer}) {

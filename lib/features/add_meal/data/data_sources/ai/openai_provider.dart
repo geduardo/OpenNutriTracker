@@ -63,6 +63,12 @@ class OpenAiProvider implements AiProvider {
           'type': 'string',
           'enum': ['estimation', 'label_extraction']
         },
+        'meal_name': {
+          'anyOf': [
+            {'type': 'string'},
+            {'type': 'null'},
+          ],
+        },
         'clarification': {
           'anyOf': [
             {
@@ -81,7 +87,7 @@ class OpenAiProvider implements AiProvider {
           ],
         },
       },
-      'required': ['items', 'source', 'clarification'],
+      'required': ['items', 'source', 'meal_name', 'clarification'],
       'additionalProperties': false,
     },
   };

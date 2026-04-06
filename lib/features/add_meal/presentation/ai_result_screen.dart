@@ -6,6 +6,7 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/features/add_meal/presentation/presets_screen.dart';
@@ -211,14 +212,29 @@ class _AiResultScreenState extends State<AiResultScreen> {
   }
 
   Future<void> _saveAsPreset() async {
-    final nameController = TextEditingController(
-      text: _items.map((i) => i.name).join(' + '),
-    );
+    // Use LLM-generated name, or fall back to joining item names
+    final suggestedName = _response.mealName ??
+        _items.map((i) => i.name).join(' + ');
+
+    // Check for duplicate names and append number if needed
+    final dataSource = locator<MealPresetDataSource>();
+    final existingPresets = await dataSource.getAllPresets();
+    final existingNames = existingPresets.map((p) => p.name).toSet();
+    var uniqueName = suggestedName;
+    var counter = 2;
+    while (existingNames.contains(uniqueName)) {
+      uniqueName = '$suggestedName $counter';
+      counter++;
+    }
+
+    if (!mounted) return;
+
+    final nameController = TextEditingController(text: uniqueName);
 
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Save as preset'),
+        title: const Text('Save & add as preset'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -234,7 +250,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, nameController.text.trim()),
-            child: const Text('Save'),
+            child: const Text('Save & add'),
           ),
         ],
       ),
@@ -242,6 +258,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
     if (name == null || name.isEmpty || !mounted) return;
 
+    // Build preset items
     final presetItems = _items.map((item) {
       final nutriments = MealNutrimentsEntity(
         energyKcal100: item.per100g.energyKcal,
@@ -277,10 +294,18 @@ class _AiResultScreenState extends State<AiResultScreen> {
       );
     }).toList();
 
+    // Save preset
     await saveAsPreset(context, name, presetItems);
+
+    // Also log it now (same as _saveAll but with preset name as groupName)
+    await _saveAllWithGroupName(name);
   }
 
-  Future<void> _saveAll() async {
+  Future<void> _saveAllWithGroupName(String groupName) async {
+    return _saveAll(overrideGroupName: groupName);
+  }
+
+  Future<void> _saveAll({String? overrideGroupName}) async {
     setState(() => _isSaving = true);
 
     try {
@@ -293,9 +318,10 @@ class _AiResultScreenState extends State<AiResultScreen> {
       final groupId = _mode == MagicMode.mealBreakdown
           ? IdGenerator.getUniqueID()
           : null;
-      final groupName = _mode == MagicMode.mealBreakdown && _items.length > 1
-          ? _items.map((i) => i.name).join(' + ')
-          : null;
+      final groupName = overrideGroupName ??
+          (_mode == MagicMode.mealBreakdown && _items.length > 1
+              ? _response.mealName ?? _items.map((i) => i.name).join(' + ')
+              : null);
 
       // Ensure tracked day exists
       final hasTrackedDay = await addTrackedDayUsecase.hasTrackedDay(_day);

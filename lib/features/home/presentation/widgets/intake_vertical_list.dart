@@ -68,6 +68,28 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
         .fold(0, (previousValue, element) => previousValue + element.totalKcal);
   }
 
+  /// Groups intakes by groupId. Ungrouped items become single-item lists.
+  List<_IntakeGroup> get _groupedIntakes {
+    final groups = <String, List<IntakeEntity>>{};
+    final ungrouped = <IntakeEntity>[];
+
+    for (final intake in widget.intakeList) {
+      if (intake.groupId != null) {
+        groups.putIfAbsent(intake.groupId!, () => []).add(intake);
+      } else {
+        ungrouped.add(intake);
+      }
+    }
+
+    return [
+      ...groups.entries.map((e) => _IntakeGroup(
+            name: e.value.first.groupName ?? e.value.map((i) => i.meal.name ?? '?').join(' + '),
+            intakes: e.value,
+          )),
+      ...ungrouped.map((i) => _IntakeGroup(name: null, intakes: [i])),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -146,74 +168,159 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
             _onItemDropped(intake.data);
           },
           builder: (context, candidateData, rejectedData) {
+            final groups = _groupedIntakes;
             return SizedBox(
               height: 120,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: widget.intakeList.length + 1,
-                // List length + placeholder card
+                itemCount: groups.length + 1,
                 itemBuilder: (BuildContext context, int index) {
-                  final firstListElement = index == 0 ? true : false;
-                  if (index == widget.intakeList.length) {
+                  final firstListElement = index == 0;
+                  if (index == groups.length) {
                     return PlaceholderCard(
                         day: widget.day,
                         onTap: () => _onPlaceholderCardTapped(context),
                         firstListElement: firstListElement);
-                  } else {
-                    final intakeEntity = widget.intakeList[index];
-                    return LongPressDraggable<IntakeEntity>(
-                      onDragStarted: () {
-                        widget.onItemDragCallback?.call(true);
-                      },
-                      onDragEnd: (details) {
-                        widget.onItemDragCallback?.call(false);
-                      },
-                      data: intakeEntity,
-                      feedback: Material(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Opacity(
-                          opacity: 0.7,
-                          child: IntakeCard(
-                            key: ValueKey(intakeEntity.meal.code),
-                            intake: intakeEntity,
-                            firstListElement: false,
-                            usesImperialUnits: widget.usesImperialUnits,
-                          ),
-                        ),
-                      ),
-                      childWhenDragging: Row(
-                        children: [
-                          SizedBox(width: firstListElement ? 16 : 0),
-                          SizedBox(
-                            width: 120,
-                            height: 120,
-                            child: Card(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.0),
-                              ),
-                              color: Theme.of(context).cardColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      child: IntakeCard(
-                        key: ValueKey(intakeEntity.meal.code),
-                        intake: intakeEntity,
-                        onItemLongPressed: widget.onItemLongPressedCallback,
-                        onItemTapped: widget.onItemTappedCallback,
-                        firstListElement: firstListElement,
-                        usesImperialUnits: widget.usesImperialUnits,
-                      ),
-                    );
                   }
+
+                  final group = groups[index];
+
+                  if (group.isGrouped) {
+                    // Grouped meal — show as single card with group name
+                    return _buildGroupedCard(
+                        group, firstListElement);
+                  }
+
+                  // Single item
+                  final intakeEntity = group.primary;
+                  return LongPressDraggable<IntakeEntity>(
+                    onDragStarted: () {
+                      widget.onItemDragCallback?.call(true);
+                    },
+                    onDragEnd: (details) {
+                      widget.onItemDragCallback?.call(false);
+                    },
+                    data: intakeEntity,
+                    feedback: Material(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: Opacity(
+                        opacity: 0.7,
+                        child: IntakeCard(
+                          key: ValueKey(intakeEntity.meal.code),
+                          intake: intakeEntity,
+                          firstListElement: false,
+                          usesImperialUnits: widget.usesImperialUnits,
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: Row(
+                      children: [
+                        SizedBox(width: firstListElement ? 16 : 0),
+                        SizedBox(
+                          width: 120,
+                          height: 120,
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                            ),
+                            color: Theme.of(context).cardColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    child: IntakeCard(
+                      key: ValueKey(intakeEntity.meal.code),
+                      intake: intakeEntity,
+                      onItemLongPressed: widget.onItemLongPressedCallback,
+                      onItemTapped: widget.onItemTappedCallback,
+                      firstListElement: firstListElement,
+                      usesImperialUnits: widget.usesImperialUnits,
+                    ),
+                  );
                 },
               ),
             );
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildGroupedCard(_IntakeGroup group, bool firstListElement) {
+    return GestureDetector(
+      onTap: () => _showGroupDetail(group),
+      child: Row(
+        children: [
+          SizedBox(width: firstListElement ? 16 : 0),
+          SizedBox(
+            width: 120,
+            height: 120,
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.restaurant_menu,
+                        size: 24,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer),
+                    const SizedBox(height: 4),
+                    Text(
+                      group.name ?? '?',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${group.totalKcal.toInt()} ${S.of(context).kcalLabel}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimaryContainer),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGroupDetail(_IntakeGroup group) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(group.name ?? 'Meal',
+                  style: Theme.of(ctx).textTheme.titleLarge),
+              Text('${group.totalKcal.toInt()} ${S.of(ctx).kcalLabel}',
+                  style: Theme.of(ctx).textTheme.bodyMedium),
+              const Divider(),
+              ...group.intakes.map((intake) => ListTile(
+                    dense: true,
+                    title: Text(intake.meal.name ?? '?'),
+                    trailing: Text(
+                        '${intake.amount.toInt()}g · ${intake.totalKcal.toInt()} kcal'),
+                  )),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -234,4 +341,19 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
     locator<DiaryBloc>().add(const LoadDiaryYearEvent());
     locator<CalendarDayBloc>().add(RefreshCalendarDayEvent());
   }
+}
+
+class _IntakeGroup {
+  final String? name;
+  final List<IntakeEntity> intakes;
+
+  _IntakeGroup({required this.name, required this.intakes});
+
+  bool get isGrouped => intakes.length > 1 && name != null;
+
+  double get totalKcal =>
+      intakes.fold(0, (sum, i) => sum + i.totalKcal);
+
+  /// Returns the first intake (used for display when collapsed)
+  IntakeEntity get primary => intakes.first;
 }
