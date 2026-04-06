@@ -40,7 +40,8 @@ class ExpenditureEstimatorService {
     required double seedTdee,
   }) {
     final today = DateUtils.dateOnly(DateTime.now());
-    final windowStart = today.subtract(Duration(days: windowDays));
+    final windowStart = DateUtils.dateOnly(
+        DateTime(today.year, today.month, today.day - windowDays));
 
     // 1. Count valid intake days in the window
     final validDays = trackedDays.where((d) {
@@ -89,6 +90,13 @@ class ExpenditureEstimatorService {
         endDate: today);
     final trendToday = trendSeries[today];
     final trendWindowStart = trendSeries[windowStart];
+
+    debugPrint('ExpEstimator: trendSeries=${trendSeries.length} entries, trendToday=$trendToday, trendWindowStart=$trendWindowStart');
+    if (trendSeries.isNotEmpty) {
+      final keys = trendSeries.keys.toList()..sort();
+      debugPrint('ExpEstimator: range ${keys.first} to ${keys.last}');
+      debugPrint('ExpEstimator: looking for today=$today windowStart=$windowStart');
+    }
 
     if (trendToday == null || trendWindowStart == null) {
       // Can't compute delta — hold

@@ -5,9 +5,12 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/strategy/data/data_source/expenditure_state_data_source.dart';
 import 'package:opennutritracker/features/strategy/data/repository/weight_entry_repository.dart';
 import 'package:opennutritracker/features/strategy/domain/entity/expenditure_state_entity.dart';
+import 'package:opennutritracker/features/strategy/domain/entity/weight_entry_entity.dart';
 import 'package:opennutritracker/features/strategy/domain/service/expenditure_estimator_service.dart';
 import 'package:opennutritracker/features/strategy/domain/service/trend_weight_service.dart';
+import 'package:opennutritracker/features/strategy/presentation/widgets/weight_trend_chart.dart';
 import 'package:opennutritracker/core/utils/debug_data_generator.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
 import 'package:opennutritracker/features/strategy/presentation/pages/weight_entry_page.dart';
 
 class StrategyPage extends StatefulWidget {
@@ -22,6 +25,7 @@ class _StrategyPageState extends State<StrategyPage> {
   double? _trendWeight;
   double? _staticTdee;
   int _totalWeighIns = 0;
+  List<WeightEntryEntity> _weightEntries = [];
   bool _isLoading = true;
 
   @override
@@ -45,12 +49,18 @@ class _StrategyPageState extends State<StrategyPage> {
         ? ExpenditureStateEntity.fromDBO(previousState)
         : null;
 
+    // Debug logging
+    debugPrint('Strategy: ${trackedDays.length} tracked days, ${weightEntries.length} weight entries');
+    final completeDays = trackedDays.where((d) => d.logQuality == DayLogQualityDBO.complete).length;
+    debugPrint('Strategy: $completeDays complete days, staticTDEE=$staticTdee');
+
     final state = ExpenditureEstimatorService.estimate(
       trackedDays: trackedDays,
       weightEntries: weightEntries,
       previousEstimate: previous,
       seedTdee: staticTdee,
     );
+    debugPrint('Strategy: status=${state.status}, validDays=${state.validNutritionDays}, weighIns=${state.recentWeighInCount}, exp=${state.estimatedExpenditureKcal.toInt()}');
 
     // Persist the new state
     await expDataSource.saveState(state.toDBO());
@@ -63,6 +73,7 @@ class _StrategyPageState extends State<StrategyPage> {
         _trendWeight = trendWeight;
         _staticTdee = staticTdee;
         _totalWeighIns = weightEntries.length;
+        _weightEntries = weightEntries;
         _isLoading = false;
       });
     }
@@ -81,6 +92,16 @@ class _StrategyPageState extends State<StrategyPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Weight trend chart
+          if (_weightEntries.isNotEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: WeightTrendChart(entries: _weightEntries),
+              ),
+            ),
+          const SizedBox(height: 12),
+
           // Estimator status card
           _buildStatusCard(context, state),
           const SizedBox(height: 12),

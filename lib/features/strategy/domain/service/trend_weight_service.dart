@@ -43,14 +43,14 @@ class TrendWeightService {
       final scale = scaleSeries[day];
       if (scale != null) {
         if (prevTrend == null) {
-          // Initialize: trend[firstDay] = scale[firstDay]
           prevTrend = scale;
         } else {
           prevTrend = alpha * scale + (1 - alpha) * prevTrend;
         }
         trendSeries[day] = prevTrend;
       }
-      day = day.add(const Duration(days: 1));
+      // DST-safe day increment
+      day = DateUtils.dateOnly(DateTime(day.year, day.month, day.day + 1));
     }
 
     return trendSeries;
@@ -84,8 +84,9 @@ class TrendWeightService {
   /// Counts weigh-ins in the last [days] days.
   static int recentWeighInCount(List<WeightEntryEntity> entries,
       {int days = 7}) {
+    final now = DateTime.now();
     final cutoff =
-        DateUtils.dateOnly(DateTime.now().subtract(Duration(days: days)));
+        DateUtils.dateOnly(DateTime(now.year, now.month, now.day - days));
     return entries
         .where((e) => !DateUtils.dateOnly(e.day).isBefore(cutoff))
         .length;
@@ -141,7 +142,8 @@ class TrendWeightService {
         }
         // Before first weigh-in: no entry
       }
-      day = day.add(const Duration(days: 1));
+      // DST-safe day increment
+      day = DateUtils.dateOnly(DateTime(day.year, day.month, day.day + 1));
     }
 
     return series;
