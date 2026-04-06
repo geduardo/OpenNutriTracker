@@ -17,6 +17,8 @@ TrackedDayDBO _$TrackedDayDBOFromJson(Map<String, dynamic> json) =>
       fatTracked: (json['fatTracked'] as num?)?.toDouble(),
       proteinGoal: (json['proteinGoal'] as num?)?.toDouble(),
       proteinTracked: (json['proteinTracked'] as num?)?.toDouble(),
+      sodiumGoal: (json['sodiumGoal'] as num?)?.toDouble(),
+      sodiumTracked: (json['sodiumTracked'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$TrackedDayDBOToJson(TrackedDayDBO instance) =>
@@ -30,4 +32,6 @@ Map<String, dynamic> _$TrackedDayDBOToJson(TrackedDayDBO instance) =>
       'fatTracked': instance.fatTracked,
       'proteinGoal': instance.proteinGoal,
       'proteinTracked': instance.proteinTracked,
+      'sodiumGoal': instance.sodiumGoal,
+      'sodiumTracked': instance.sodiumTracked,
     };

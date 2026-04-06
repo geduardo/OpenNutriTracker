@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
@@ -8,6 +9,7 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
@@ -101,6 +103,21 @@ class _PresetsScreenState extends State<PresetsScreen> {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FoodImage(
+                  imageUrl: preset.imagePath,
+                  width: 56,
+                  height: 56,
+                  placeholder: Container(
+                    width: 56,
+                    height: 56,
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    child: const Icon(Icons.playlist_add),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +133,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
                     Text(
                       preset.items
                           .map((i) =>
-                              '${MealEntity.fromMealDBO(i.meal).name ?? "?"} ${i.amount.toInt()}g')
+                              '${MealEntity.fromMealDBO(i.meal).name ?? "?"} ${MealPortionHelper.formatStoredAmount(MealEntity.fromMealDBO(i.meal), i.amount, i.unit)}')
                           .join(', '),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.outline),
@@ -163,11 +180,13 @@ class _PresetsScreenState extends State<PresetsScreen> {
             meal: updatedItems[index].meal,
             amount: newAmount,
             unit: updatedItems[index].unit,
+            foodId: updatedItems[index].foodId,
           );
           final updated = MealPresetDBO(
             id: preset.id,
             name: preset.name,
             items: updatedItems,
+            imagePath: preset.imagePath,
           );
           await dataSource.updatePreset(updated);
           _loadPresets();
@@ -224,6 +243,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
         id: preset.id,
         name: newName,
         items: preset.items,
+        imagePath: preset.imagePath,
       );
       await dataSource.updatePreset(updated);
       _loadPresets();
@@ -245,8 +265,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
       final totalKcalGoal = await getKcalGoalUsecase.getKcalGoal();
       final totalCarbsGoal =
           await getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
-      final totalFatGoal =
-          await getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
+      final totalFatGoal = await getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
       final totalProteinGoal =
           await getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
       await addTrackedDayUsecase.addNewTrackedDay(
@@ -271,7 +290,8 @@ class _PresetsScreenState extends State<PresetsScreen> {
       addTrackedDayUsecase.addDayMacrosTracked(_day,
           carbsTracked: intake.totalCarbsGram,
           fatTracked: intake.totalFatsGram,
-          proteinTracked: intake.totalProteinsGram);
+          proteinTracked: intake.totalProteinsGram,
+          sodiumTracked: intake.totalSodiumMg);
     }
 
     locator<HomeBloc>().add(const LoadItemsEvent());
@@ -311,12 +331,14 @@ class _PresetsScreenState extends State<PresetsScreen> {
 
 /// Static helper to save a preset from anywhere (e.g. after Magic meal breakdown)
 Future<void> saveAsPreset(
-    BuildContext context, String name, List<MealPresetItemDBO> items) async {
+    BuildContext context, String name, List<MealPresetItemDBO> items,
+    {String? imagePath}) async {
   final dataSource = locator<MealPresetDataSource>();
   final preset = MealPresetDBO(
     id: IdGenerator.getUniqueID(),
     name: name,
     items: items,
+    imagePath: imagePath,
   );
   await dataSource.addPreset(preset);
 
@@ -370,6 +392,20 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image
+            if (widget.preset.imagePath != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: FoodImage(
+                    imageUrl: widget.preset.imagePath,
+                    width: double.infinity,
+                    height: 160,
+                  ),
+                ),
+              ),
+
             // Header
             Row(
               children: [
@@ -404,14 +440,15 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
               final index = entry.key;
               final item = entry.value;
               final meal = MealEntity.fromMealDBO(item.meal);
-              final itemKcal = item.amount * (meal.nutriments.energyPerUnit ?? 0);
+              final itemKcal =
+                  item.amount * (meal.nutriments.energyPerUnit ?? 0);
 
               return ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 title: Text(meal.name ?? '?'),
-                subtitle: Text(
-                    '${item.amount.toInt()}g · ${itemKcal.toInt()} kcal'),
+                subtitle:
+                    Text('${MealPortionHelper.formatStoredAmount(meal, item.amount, item.unit)} · ${itemKcal.toInt()} kcal'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -449,19 +486,23 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
   }
 
   void _editItemAmount(int index, MealPresetItemDBO item) {
-    final controller =
-        TextEditingController(text: item.amount.toInt().toString());
+    final meal = MealEntity.fromMealDBO(item.meal);
+    final controller = TextEditingController(
+      text: MealPortionHelper.formatValue(
+        MealPortionHelper.fromBaseAmount(meal, item.amount, item.unit),
+      ),
+    );
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(MealEntity.fromMealDBO(item.meal).name ?? '?'),
+        title: Text(meal.name ?? '?'),
         content: TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
-          decoration: const InputDecoration(
-            suffixText: 'g',
+          decoration: InputDecoration(
+            suffixText: MealPortionHelper.unitLabel(meal, item.unit),
             border: OutlineInputBorder(),
           ),
         ),
@@ -474,7 +515,10 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
             onPressed: () {
               final newAmount = double.tryParse(controller.text);
               if (newAmount != null && newAmount > 0) {
-                widget.onUpdateItem(index, newAmount);
+                widget.onUpdateItem(
+                  index,
+                  MealPortionHelper.toBaseAmount(meal, newAmount, item.unit),
+                );
                 Navigator.pop(ctx);
                 Navigator.pop(context); // close bottom sheet too
               }

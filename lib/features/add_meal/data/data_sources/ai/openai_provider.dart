@@ -8,13 +8,21 @@ import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.
 
 class OpenAiProvider implements AiProvider {
   static const _baseUrl = 'api.openai.com';
-  static const _model = 'gpt-4o-mini';
+  static const defaultModel = 'gpt-5.4-mini';
+  static const availableModels = [
+    'gpt-5.4-nano',
+    'gpt-5.4-mini',
+    'gpt-5.4',
+    'o4-mini',
+    'o3',
+  ];
   static const _timeout = Duration(seconds: 45);
 
   final _log = Logger('OpenAiProvider');
   final String _apiKey;
+  final String _model;
 
-  OpenAiProvider(this._apiKey);
+  OpenAiProvider(this._apiKey, {String model = defaultModel}) : _model = model;
 
   /// JSON Schema for OpenAI structured outputs (strict mode).
   static final _nutritionResponseSchema = {

@@ -34,6 +34,11 @@ class TrackedDayDBO extends HiveObject {
   @HiveField(10)
   bool? manuallyMarked;
 
+  @HiveField(11)
+  double? sodiumGoal;
+  @HiveField(12)
+  double? sodiumTracked;
+
   TrackedDayDBO(
       {required this.day,
       required this.calorieGoal,
@@ -45,7 +50,9 @@ class TrackedDayDBO extends HiveObject {
       this.proteinGoal,
       this.proteinTracked,
       this.logQuality,
-      this.manuallyMarked});
+      this.manuallyMarked,
+      this.sodiumGoal,
+      this.sodiumTracked});
 
   factory TrackedDayDBO.fromTrackedDayEntity(TrackedDayEntity entity) {
     return TrackedDayDBO(
@@ -57,11 +64,50 @@ class TrackedDayDBO extends HiveObject {
         fatGoal: entity.fatGoal,
         fatTracked: entity.fatTracked,
         proteinGoal: entity.proteinGoal,
-        proteinTracked: entity.proteinTracked);
+        proteinTracked: entity.proteinTracked,
+        sodiumGoal: entity.sodiumGoal,
+        sodiumTracked: entity.sodiumTracked);
   }
 
-  factory TrackedDayDBO.fromJson(Map<String, dynamic> json) =>
-      _$TrackedDayDBOFromJson(json);
+  factory TrackedDayDBO.fromJson(Map<String, dynamic> json) => TrackedDayDBO(
+        day: DateTime.parse(json['day'] as String),
+        calorieGoal: (json['calorieGoal'] as num).toDouble(),
+        caloriesTracked: (json['caloriesTracked'] as num).toDouble(),
+        carbsGoal: (json['carbsGoal'] as num?)?.toDouble(),
+        carbsTracked: (json['carbsTracked'] as num?)?.toDouble(),
+        fatGoal: (json['fatGoal'] as num?)?.toDouble(),
+        fatTracked: (json['fatTracked'] as num?)?.toDouble(),
+        proteinGoal: (json['proteinGoal'] as num?)?.toDouble(),
+        proteinTracked: (json['proteinTracked'] as num?)?.toDouble(),
+        logQuality: _logQualityFromJson(json['logQuality'] as String?),
+        manuallyMarked: json['manuallyMarked'] as bool?,
+        sodiumGoal: (json['sodiumGoal'] as num?)?.toDouble(),
+        sodiumTracked: (json['sodiumTracked'] as num?)?.toDouble(),
+      );
 
-  Map<String, dynamic> toJson() => _$TrackedDayDBOToJson(this);
+  Map<String, dynamic> toJson() => {
+        'day': day.toIso8601String(),
+        'calorieGoal': calorieGoal,
+        'caloriesTracked': caloriesTracked,
+        'carbsGoal': carbsGoal,
+        'carbsTracked': carbsTracked,
+        'fatGoal': fatGoal,
+        'fatTracked': fatTracked,
+        'proteinGoal': proteinGoal,
+        'proteinTracked': proteinTracked,
+        'logQuality': logQuality?.name,
+        'manuallyMarked': manuallyMarked,
+        'sodiumGoal': sodiumGoal,
+        'sodiumTracked': sodiumTracked,
+      };
+
+  static DayLogQualityDBO? _logQualityFromJson(String? value) {
+    return switch (value) {
+      'complete' => DayLogQualityDBO.complete,
+      'partial' => DayLogQualityDBO.partial,
+      'unlogged' => DayLogQualityDBO.unlogged,
+      'fasted' => DayLogQualityDBO.fasted,
+      _ => null,
+    };
+  }
 }

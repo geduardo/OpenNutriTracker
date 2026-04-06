@@ -29,112 +29,79 @@ class _MacroNutrientsViewState extends State<MacroNutrientsView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        Row(
-          children: [
-            CircularPercentIndicator(
-              radius: 15.0,
-              lineWidth: 6.0,
-              animation: true,
-              percent: getGoalPercentage(
-                  widget.totalCarbsGoal, widget.totalCarbsIntake),
-              progressColor: Theme.of(context).colorScheme.primary,
-              backgroundColor:
-                  Theme.of(context).colorScheme.primary.withAlpha(50),
-              circularStrokeCap: CircularStrokeCap.round,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Column(
-                children: [
-                  Text(
-                    '${widget.totalCarbsIntake.toInt()}/${widget.totalCarbsGoal.toInt()} g',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurface),
-                  ),
-                  Text(
-                    S.of(context).carbsLabel,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurface),
-                  )
-                ],
-              ),
-            )
-          ],
+        _macroIndicator(
+          context,
+          intake: widget.totalCarbsIntake,
+          goal: widget.totalCarbsGoal,
+          label: S.of(context).carbsLabel,
         ),
-        Row(
-          children: [
-            CircularPercentIndicator(
-              radius: 15.0,
-              lineWidth: 6.0,
-              animation: true,
-              percent: getGoalPercentage(
-                  widget.totalFatsGoal, widget.totalFatsIntake),
-              progressColor: Theme.of(context).colorScheme.primary,
-              backgroundColor:
-                  Theme.of(context).colorScheme.primary.withAlpha(50),
-              circularStrokeCap: CircularStrokeCap.round,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Column(
-                children: [
-                  Text(
-                    "${widget.totalFatsIntake.toInt()}/${widget.totalFatsGoal.toInt()} g",
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurface),
-                  ),
-                  Text(S.of(context).fatLabel,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface)),
-                ],
-              ),
-            )
-          ],
+        _macroIndicator(
+          context,
+          intake: widget.totalFatsIntake,
+          goal: widget.totalFatsGoal,
+          label: S.of(context).fatLabel,
         ),
-        Row(
-          children: [
-            CircularPercentIndicator(
-              radius: 15.0,
-              lineWidth: 6.0,
-              animation: true,
-              percent: getGoalPercentage(
-                  widget.totalProteinsGoal, widget.totalProteinsIntake),
-              progressColor: Theme.of(context).colorScheme.primary,
-              backgroundColor:
-                  Theme.of(context).colorScheme.primary.withAlpha(50),
-              circularStrokeCap: CircularStrokeCap.round,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Column(
-                children: [
-                  Text(
-                    "${widget.totalProteinsIntake.toInt()}/${widget.totalProteinsGoal.toInt()} g",
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurface),
-                  ),
-                  Text(
-                    S.of(context).proteinLabel,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurface),
-                  )
-                ],
-              ),
-            )
-          ],
-        )
+        _macroIndicator(
+          context,
+          intake: widget.totalProteinsIntake,
+          goal: widget.totalProteinsGoal,
+          label: S.of(context).proteinLabel,
+        ),
       ],
     );
   }
 
-  double getGoalPercentage(double goal, double supplied) {
+  Widget _macroIndicator(
+    BuildContext context, {
+    required double intake,
+    required double goal,
+    required String label,
+  }) {
+    final isOver = goal > 0 && intake > goal;
+    final color = isOver
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.primary;
+
+    final diff = goal - intake;
+    final diffText = isOver
+        ? '+${(-diff).toInt()}'
+        : '${intake.toInt()}/${goal.toInt()}';
+
+    return Row(
+      children: [
+        CircularPercentIndicator(
+          radius: 15.0,
+          lineWidth: 6.0,
+          animation: true,
+          percent: _goalPercentage(goal, intake),
+          progressColor: color,
+          backgroundColor: color.withAlpha(50),
+          circularStrokeCap: CircularStrokeCap.round,
+        ),
+        Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Column(
+            children: [
+              Text(
+                '$diffText g',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: isOver
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.onSurface),
+              ),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _goalPercentage(double goal, double supplied) {
     if (supplied <= 0 || goal <= 0) {
       return 0;
     } else if (supplied > goal) {

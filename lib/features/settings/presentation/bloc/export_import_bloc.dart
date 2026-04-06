@@ -11,6 +11,11 @@ class ExportImportBloc extends Bloc<ExportImportEvent, ExportImportState> {
   static const exportZipFileName = 'opennutritracker-export.zip';
   static const userIntakeJsonFileName = 'user_intake.json';
   static const trackedDayJsonFileName = 'user_tracked_day.json';
+  static const weightEntryJsonFileName = 'weight_entries.json';
+  static const expenditureStateJsonFileName =
+      'adaptive_expenditure_states.json';
+  static const goalStrategyJsonFileName = 'adaptive_goal_strategy.json';
+  static const checkInRecordJsonFileName = 'adaptive_check_in_records.json';
 
   final ExportDataUsecase _exportDataUsecase;
   final ImportDataUsecase _importDataUsecase;
@@ -25,6 +30,10 @@ class ExportImportBloc extends Bloc<ExportImportEvent, ExportImportState> {
           exportZipFileName,
           userIntakeJsonFileName,
           trackedDayJsonFileName,
+          weightEntryJsonFileName,
+          expenditureStateJsonFileName,
+          goalStrategyJsonFileName,
+          checkInRecordJsonFileName,
         );
 
         if (result) {
@@ -42,8 +51,13 @@ class ExportImportBloc extends Bloc<ExportImportEvent, ExportImportState> {
         emit(ExportImportLoadingState());
 
         final result = await _importDataUsecase.importData(
-            userIntakeJsonFileName,
-            trackedDayJsonFileName);
+          userIntakeJsonFileName,
+          trackedDayJsonFileName,
+          weightEntryJsonFileName,
+          expenditureStateJsonFileName,
+          goalStrategyJsonFileName,
+          checkInRecordJsonFileName,
+        );
         if (result) {
           emit(ExportImportSuccess());
         } else {

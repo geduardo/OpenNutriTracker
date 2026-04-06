@@ -14,10 +14,14 @@ class MealPresetDBO extends HiveObject {
   @HiveField(2)
   final List<MealPresetItemDBO> items;
 
+  @HiveField(3)
+  final String? imagePath;
+
   MealPresetDBO({
     required this.id,
     required this.name,
     required this.items,
+    this.imagePath,
   });
 }
 
@@ -32,9 +36,13 @@ class MealPresetItemDBO extends HiveObject {
   @HiveField(2)
   final String unit;
 
+  @HiveField(3)
+  final String? foodId;
+
   MealPresetItemDBO({
     required this.meal,
     required this.amount,
     required this.unit,
+    this.foodId,
   });
 }

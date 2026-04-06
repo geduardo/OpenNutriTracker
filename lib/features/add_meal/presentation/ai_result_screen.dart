@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
@@ -8,9 +10,11 @@ import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/local_food_record_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/features/add_meal/presentation/presets_screen.dart';
+import 'package:opennutritracker/core/utils/food_image_storage.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
@@ -31,7 +35,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
   late AddMealType _mealType;
   late DateTime _day;
   late MagicMode _mode;
+  late bool _selectionMode;
   late List<_EditableItem> _items;
+  Uint8List? _imageBytes;
+  String? _imageFilePath;
+  String? _savedImagePath; // cached after first save to avoid double-saving
   bool _isSaving = false;
 
   @override
@@ -42,6 +50,9 @@ class _AiResultScreenState extends State<AiResultScreen> {
     _mealType = args.mealType;
     _day = args.day;
     _mode = args.mode;
+    _selectionMode = args.selectionMode;
+    _imageBytes = args.imageBytes;
+    _imageFilePath = args.imageFilePath;
 
     _items = _response.items
         .map((item) => _EditableItem(
@@ -62,21 +73,47 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_mode == MagicMode.singleItem ? 'Review item' : 'Review meal'),
+        title:
+            Text(_mode == MagicMode.singleItem ? 'Review item' : 'Review meal'),
       ),
       body: Column(
         children: [
-          // Total summary bar
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Theme.of(context).colorScheme.primaryContainer,
-            child: Text(
-              '${totalKcal.toInt()} ${S.of(context).kcalLabel} total',
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
+          // Photo + total summary
+          if (_imageBytes != null && _imageBytes!.isNotEmpty)
+            SizedBox(
+              height: 140,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.memory(_imageBytes!, fit: BoxFit.cover),
+                  Container(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withValues(alpha: 0.7),
+                  ),
+                  Center(
+                    child: Text(
+                      '${totalKcal.toInt()} ${S.of(context).kcalLabel} total',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Text(
+                '${totalKcal.toInt()} ${S.of(context).kcalLabel} total',
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
 
           // Items list
           Expanded(
@@ -103,13 +140,19 @@ class _AiResultScreenState extends State<AiResultScreen> {
                     : const Icon(Icons.check),
                 label: Text(_isSaving
                     ? 'Saving...'
-                    : _mode == MagicMode.singleItem
+                    : _selectionMode
+                        ? _mode == MagicMode.singleItem
+                            ? 'Use item'
+                            : 'Use items (${_items.length})'
+                        : _mode == MagicMode.singleItem
                         ? 'Add item'
                         : 'Add all (${_items.length} items)'),
               ),
             ),
           ),
-          if (_mode == MagicMode.mealBreakdown && _items.length > 1)
+          if (!_selectionMode &&
+              _mode == MagicMode.mealBreakdown &&
+              _items.length > 1)
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: SizedBox(
@@ -177,7 +220,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
                 const Spacer(),
                 // Macros summary
                 _macroChip('P', item.per100g.proteinG * item.weightG / 100),
-                _macroChip('C', item.per100g.carbohydratesG * item.weightG / 100),
+                _macroChip(
+                    'C', item.per100g.carbohydratesG * item.weightG / 100),
                 _macroChip('F', item.per100g.fatG * item.weightG / 100),
               ],
             ),
@@ -200,7 +244,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(confidence,
-          style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
+          style: TextStyle(
+              fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
   }
 
@@ -214,8 +259,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
   Future<void> _saveAsPreset() async {
     // Use LLM-generated name, or fall back to joining item names
-    final suggestedName = _response.mealName ??
-        _items.map((i) => i.name).join(' + ');
+    final suggestedName =
+        _response.mealName ?? _items.map((i) => i.name).join(' + ');
 
     // Check for duplicate names and append number if needed
     final dataSource = locator<MealPresetDataSource>();
@@ -259,57 +304,57 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
     if (name == null || name.isEmpty || !mounted) return;
 
-    // Build preset items
-    final presetItems = _items.map((item) {
-      final nutriments = MealNutrimentsEntity(
-        energyKcal100: item.per100g.energyKcal,
-        carbohydrates100: item.per100g.carbohydratesG,
-        fat100: item.per100g.fatG,
-        proteins100: item.per100g.proteinG,
-        sugars100: item.per100g.sugarsG,
-        saturatedFat100: item.per100g.saturatedFatG,
-        fiber100: item.per100g.fiberG,
-        sodiumMg100: item.per100g.sodiumMg,
-      );
+    // Save photo to local storage if available
+    final imagePath = await _savePhoto();
 
-      final meal = MealEntity(
-        code: null,
-        name: item.name,
-        brands: null,
-        url: null,
-        thumbnailImageUrl: null,
-        mainImageUrl: null,
-        mealQuantity: null,
-        mealUnit: 'g',
-        servingQuantity: null,
-        servingUnit: null,
-        servingSize: null,
-        nutriments: nutriments,
-        source: MealSourceEntity.ai,
+    // Build preset items from canonical food records.
+    final presetItems = <MealPresetItemDBO>[];
+    for (final item in _items) {
+      final foodRecord = await _upsertLocalFood(_buildAiMeal(item));
+      presetItems.add(
+        MealPresetItemDBO(
+          meal: foodRecord.meal,
+          amount: item.weightG,
+          unit: 'g',
+          foodId: foodRecord.id,
+        ),
       );
+    }
 
-      return MealPresetItemDBO(
-        meal: MealDBO.fromMealEntity(meal),
-        amount: item.weightG,
-        unit: 'g',
-      );
-    }).toList();
+    if (!mounted) return;
 
     // Save preset
-    await saveAsPreset(context, name, presetItems);
-
-    // Save each item to local food DB so they appear in My Foods
-    final localFoodDataSource = locator<LocalFoodDataSource>();
-    for (final presetItem in presetItems) {
-      final meal = MealEntity.fromMealDBO(presetItem.meal);
-      final key = meal.name ?? '';
-      if (key.isNotEmpty) {
-        await localFoodDataSource.saveFood(key, presetItem.meal);
-      }
-    }
+    await saveAsPreset(context, name, presetItems, imagePath: imagePath);
 
     // Also log it now (same as _saveAll but with preset name as groupName)
     await _saveAllWithGroupName(name);
+  }
+
+  /// Save the photo to local storage. Returns the saved path, or reuses the
+  /// cached path if already saved (avoids double-save when preset flow calls
+  /// _saveAll internally).
+  Future<String?> _savePhoto() async {
+    if (_savedImagePath != null) return _savedImagePath;
+
+    try {
+      // Prefer bytes — we know they're valid because the preview renders them.
+      if (_imageBytes != null && _imageBytes!.isNotEmpty) {
+        _savedImagePath = await FoodImageStorage.saveImageBytes(_imageBytes!);
+        debugPrint(
+            'FoodImage: saved ${_imageBytes!.length} bytes → $_savedImagePath');
+        return _savedImagePath;
+      }
+      // Fallback: copy from picker file path.
+      if (_imageFilePath != null && _imageFilePath!.isNotEmpty) {
+        _savedImagePath =
+            await FoodImageStorage.saveImageFromPath(_imageFilePath!);
+        debugPrint('FoodImage: copied $_imageFilePath → $_savedImagePath');
+        return _savedImagePath;
+      }
+    } catch (e) {
+      debugPrint('FoodImage: save failed: $e');
+    }
+    return null;
   }
 
   Future<void> _saveAllWithGroupName(String groupName) async {
@@ -317,6 +362,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
   }
 
   Future<void> _saveAll({String? overrideGroupName}) async {
+    if (_selectionMode) {
+      await _returnItemsForBuilder();
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
@@ -325,10 +375,12 @@ class _AiResultScreenState extends State<AiResultScreen> {
       final getKcalGoalUsecase = locator<GetKcalGoalUsecase>();
       final getMacroGoalUsecase = locator<GetMacroGoalUsecase>();
 
+      // Save photo to local storage if available
+      final imagePath = await _savePhoto();
+
       final intakeType = _mealType.getIntakeType();
-      final groupId = _mode == MagicMode.mealBreakdown
-          ? IdGenerator.getUniqueID()
-          : null;
+      final groupId =
+          _mode == MagicMode.mealBreakdown ? IdGenerator.getUniqueID() : null;
       final groupName = overrideGroupName ??
           (_mode == MagicMode.mealBreakdown && _items.length > 1
               ? _response.mealName ?? _items.map((i) => i.name).join(' + ')
@@ -344,36 +396,18 @@ class _AiResultScreenState extends State<AiResultScreen> {
             await getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
         final totalProteinGoal =
             await getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
-        await addTrackedDayUsecase.addNewTrackedDay(
-            _day, totalKcalGoal, totalCarbsGoal, totalFatGoal, totalProteinGoal);
+        await addTrackedDayUsecase.addNewTrackedDay(_day, totalKcalGoal,
+            totalCarbsGoal, totalFatGoal, totalProteinGoal);
       }
 
       for (final item in _items) {
-        final nutriments = MealNutrimentsEntity(
-          energyKcal100: item.per100g.energyKcal,
-          carbohydrates100: item.per100g.carbohydratesG,
-          fat100: item.per100g.fatG,
-          proteins100: item.per100g.proteinG,
-          sugars100: item.per100g.sugarsG,
-          saturatedFat100: item.per100g.saturatedFatG,
-          fiber100: item.per100g.fiberG,
-          sodiumMg100: item.per100g.sodiumMg,
-        );
-
-        final meal = MealEntity(
-          code: null,
-          name: item.name,
-          brands: null,
-          url: null,
-          thumbnailImageUrl: null,
-          mainImageUrl: null,
-          mealQuantity: null,
-          mealUnit: 'g',
-          servingQuantity: null,
-          servingUnit: null,
-          servingSize: null,
-          nutriments: nutriments,
-          source: MealSourceEntity.ai,
+        // Only single-item saves get the photo on the item itself.
+        // For breakdowns the photo belongs to the preset/group, not ingredients.
+        final isSingleItem = _items.length == 1;
+        final meal = _buildAiMeal(
+          item,
+          thumbnailImageUrl: isSingleItem ? imagePath : null,
+          mainImageUrl: isSingleItem ? imagePath : null,
         );
 
         final intake = IntakeEntity(
@@ -392,7 +426,19 @@ class _AiResultScreenState extends State<AiResultScreen> {
         addTrackedDayUsecase.addDayMacrosTracked(_day,
             carbsTracked: intake.totalCarbsGram,
             fatTracked: intake.totalFatsGram,
-            proteinTracked: intake.totalProteinsGram);
+            proteinTracked: intake.totalProteinsGram,
+            sodiumTracked: intake.totalSodiumMg);
+
+        // Save to local food DB so it appears in My Foods.
+        // Strip the plate photo from individual ingredients — the photo
+        // is of the whole meal, not this specific food.
+        final mealForDb = _items.length > 1
+            ? meal.copyWith(
+                thumbnailImageUrl: null,
+                mainImageUrl: null,
+              )
+            : meal;
+        await _upsertLocalFood(mealForDb);
       }
 
       if (mounted) {
@@ -407,6 +453,72 @@ class _AiResultScreenState extends State<AiResultScreen> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  MealEntity _buildAiMeal(
+    _EditableItem item, {
+    String? thumbnailImageUrl,
+    String? mainImageUrl,
+  }) {
+    final nutriments = MealNutrimentsEntity(
+      energyKcal100: item.per100g.energyKcal,
+      carbohydrates100: item.per100g.carbohydratesG,
+      fat100: item.per100g.fatG,
+      proteins100: item.per100g.proteinG,
+      sugars100: item.per100g.sugarsG,
+      saturatedFat100: item.per100g.saturatedFatG,
+      fiber100: item.per100g.fiberG,
+      sodiumMg100: item.per100g.sodiumMg,
+    );
+
+    return MealEntity(
+      code: null,
+      name: item.name,
+      brands: null,
+      url: null,
+      thumbnailImageUrl: thumbnailImageUrl,
+      mainImageUrl: mainImageUrl,
+      mealQuantity: null,
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: null,
+      servingSize: null,
+      nutriments: nutriments,
+      source: MealSourceEntity.ai,
+    );
+  }
+
+  Future<LocalFoodRecordDBO> _upsertLocalFood(MealEntity meal) {
+    return locator<LocalFoodDataSource>().saveFood(
+      MealDBO.fromMealEntity(meal),
+      existingFoodId: meal.localFoodId,
+    );
+  }
+
+  Future<void> _returnItemsForBuilder() async {
+    setState(() => _isSaving = true);
+    try {
+      final items = <MealPresetItemDBO>[];
+      for (final item in _items) {
+        final foodRecord = await _upsertLocalFood(_buildAiMeal(item));
+        items.add(
+          MealPresetItemDBO(
+            meal: foodRecord.meal,
+            amount: item.weightG,
+            unit: 'g',
+            foodId: foodRecord.id,
+          ),
+        );
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop(items);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 }
@@ -430,11 +542,17 @@ class AiResultScreenArguments {
   final AddMealType mealType;
   final DateTime day;
   final MagicMode mode;
+  final Uint8List? imageBytes;
+  final String? imageFilePath;
+  final bool selectionMode;
 
   AiResultScreenArguments({
     required this.response,
     required this.mealType,
     required this.day,
     required this.mode,
+    this.imageBytes,
+    this.imageFilePath,
+    this.selectionMode = false,
   });
 }

@@ -160,26 +160,7 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
                 ),
               ),
               borderData: FlBorderData(show: false),
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (spots) => spots.map((spot) {
-                    final date = DateUtils.dateOnly(DateTime(
-                        rangeStart.year,
-                        rangeStart.month,
-                        rangeStart.day + spot.x.toInt()));
-                    final label = spot.barIndex == 0 ? 'Scale' : 'Trend';
-                    return LineTooltipItem(
-                      '$label: ${spot.y.toStringAsFixed(1)} kg\n${date.day}/${date.month}',
-                      TextStyle(
-                        color: spot.barIndex == 0
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.error,
-                        fontSize: 12,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+              lineTouchData: const LineTouchData(enabled: false),
               lineBarsData: [
                 // Scale weight dots
                 LineChartBarData(
@@ -189,7 +170,7 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
                       .colorScheme
                       .primary
                       .withValues(alpha: 0.5),
-                  barWidth: 0,
+                  barWidth: 1.0,
                   dotData: FlDotData(
                     show: true,
                     getDotPainter: (spot, percent, bar, index) =>
@@ -211,13 +192,6 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
                   color: Theme.of(context).colorScheme.error,
                   barWidth: 2.5,
                   dotData: const FlDotData(show: false),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .error
-                        .withValues(alpha: 0.08),
-                  ),
                 ),
               ],
             ),

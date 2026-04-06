@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
 
 class TrackedDayDataSource {
   final log = Logger('TrackedDayDataSource');
@@ -11,11 +12,19 @@ class TrackedDayDataSource {
 
   Future<void> saveTrackedDay(TrackedDayDBO trackedDayDBO) async {
     log.fine('Updating tracked day in db');
+    trackedDayDBO.logQuality ??= DayLogQualityDBO.complete;
+    trackedDayDBO.manuallyMarked ??= false;
     _trackedDayBox.put(trackedDayDBO.day.toParsedDay(), trackedDayDBO);
   }
 
   Future<void> saveAllTrackedDays(List<TrackedDayDBO> trackedDayDBOList) async {
     log.fine('Updating tracked days in db');
+    for (final trackedDayDBO in trackedDayDBOList) {
+      trackedDayDBO.logQuality ??= trackedDayDBO.caloriesTracked > 0
+          ? DayLogQualityDBO.complete
+          : DayLogQualityDBO.unlogged;
+      trackedDayDBO.manuallyMarked ??= false;
+    }
     _trackedDayBox.putAll({
       for (var trackedDayDBO in trackedDayDBOList)
         trackedDayDBO.day.toParsedDay(): trackedDayDBO
@@ -78,6 +87,7 @@ class TrackedDayDataSource {
 
     if (updateDay != null) {
       updateDay.caloriesTracked += addCalories;
+      _applyAutomaticLogQuality(updateDay);
       updateDay.save();
     }
   }
@@ -89,12 +99,13 @@ class TrackedDayDataSource {
 
     if (updateDay != null) {
       updateDay.caloriesTracked -= addCalories;
+      _applyAutomaticLogQuality(updateDay);
       updateDay.save();
     }
   }
 
   Future<void> updateDayMacroGoals(DateTime day,
-      {double? carbsGoal, double? fatGoal, double? proteinGoal}) async {
+      {double? carbsGoal, double? fatGoal, double? proteinGoal, double? sodiumGoal}) async {
     log.fine('Updating tracked day macro goals');
 
     final updateDay = await getTrackedDay(day);
@@ -109,12 +120,15 @@ class TrackedDayDataSource {
       if (proteinGoal != null) {
         updateDay.proteinGoal = proteinGoal;
       }
+      if (sodiumGoal != null) {
+        updateDay.sodiumGoal = sodiumGoal;
+      }
       updateDay.save();
     }
   }
 
   Future<void> increaseDayMacroGoal(DateTime day,
-      {double? carbsAmount, double? fatAmount, double? proteinAmount}) async {
+      {double? carbsAmount, double? fatAmount, double? proteinAmount, double? sodiumAmount}) async {
     log.fine('Increasing tracked day macro goals');
     final updateDay = await getTrackedDay(day);
 
@@ -128,12 +142,15 @@ class TrackedDayDataSource {
       if (proteinAmount != null) {
         updateDay.proteinGoal = (updateDay.proteinGoal ?? 0) + proteinAmount;
       }
+      if (sodiumAmount != null) {
+        updateDay.sodiumGoal = (updateDay.sodiumGoal ?? 0) + sodiumAmount;
+      }
       updateDay.save();
     }
   }
 
   Future<void> reduceDayMacroGoal(DateTime day,
-      {double? carbsAmount, double? fatAmount, double? proteinAmount}) async {
+      {double? carbsAmount, double? fatAmount, double? proteinAmount, double? sodiumAmount}) async {
     log.fine('Reducing tracked day macro goals');
     final updateDay = await getTrackedDay(day);
 
@@ -147,12 +164,15 @@ class TrackedDayDataSource {
       if (proteinAmount != null) {
         updateDay.proteinGoal = (updateDay.proteinGoal ?? 0) - proteinAmount;
       }
+      if (sodiumAmount != null) {
+        updateDay.sodiumGoal = (updateDay.sodiumGoal ?? 0) - sodiumAmount;
+      }
       updateDay.save();
     }
   }
 
   Future<void> addDayMacroTracked(DateTime day,
-      {double? carbsAmount, double? fatAmount, double? proteinAmount}) async {
+      {double? carbsAmount, double? fatAmount, double? proteinAmount, double? sodiumAmount}) async {
     log.fine('Adding new tracked day macro');
     final updateDay = await getTrackedDay(day);
 
@@ -167,12 +187,17 @@ class TrackedDayDataSource {
         updateDay.proteinTracked =
             (updateDay.proteinTracked ?? 0) + proteinAmount;
       }
+      if (sodiumAmount != null) {
+        updateDay.sodiumTracked =
+            (updateDay.sodiumTracked ?? 0) + sodiumAmount;
+      }
+      _applyAutomaticLogQuality(updateDay);
       updateDay.save();
     }
   }
 
   Future<void> removeDayMacroTracked(DateTime day,
-      {double? carbsAmount, double? fatAmount, double? proteinAmount}) async {
+      {double? carbsAmount, double? fatAmount, double? proteinAmount, double? sodiumAmount}) async {
     log.fine('Removing tracked day macro');
     final updateDay = await getTrackedDay(day);
 
@@ -187,7 +212,21 @@ class TrackedDayDataSource {
         updateDay.proteinTracked =
             (updateDay.proteinTracked ?? 0) - proteinAmount;
       }
+      if (sodiumAmount != null) {
+        updateDay.sodiumTracked =
+            (updateDay.sodiumTracked ?? 0) - sodiumAmount;
+      }
+      _applyAutomaticLogQuality(updateDay);
       updateDay.save();
     }
+  }
+
+  void _applyAutomaticLogQuality(TrackedDayDBO trackedDay) {
+    if (trackedDay.manuallyMarked == true) {
+      return;
+    }
+
+    trackedDay.logQuality ??= DayLogQualityDBO.complete;
+    trackedDay.manuallyMarked ??= false;
   }
 }

@@ -1,12 +1,15 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/local_food_record_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
@@ -53,6 +56,20 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Preset image
+          if (_preset.imagePath != null && _preset.imagePath!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FoodImage(
+                  imageUrl: _preset.imagePath,
+                  width: double.infinity,
+                  height: 180,
+                ),
+              ),
+            ),
+
           // Name field
           TextField(
             controller: _nameController,
@@ -63,7 +80,8 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
             onSubmitted: (_) => _saveName(),
           ),
           const SizedBox(height: 8),
-          Text('${_preset.items.length} items · ${_totalKcal.toInt()} ${S.of(context).kcalLabel}',
+          Text(
+              '${_preset.items.length} items · ${_totalKcal.toInt()} ${S.of(context).kcalLabel}',
               style: Theme.of(context).textTheme.bodyMedium),
           const Divider(height: 24),
 
@@ -78,7 +96,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               child: ListTile(
                 title: Text(meal.name ?? '?'),
                 subtitle: Text(
-                    '${item.amount.toInt()}g · ${itemKcal.toInt()} kcal · P:${(item.amount * (meal.nutriments.proteinsPerUnit ?? 0)).toInt()}g C:${(item.amount * (meal.nutriments.carbohydratesPerUnit ?? 0)).toInt()}g F:${(item.amount * (meal.nutriments.fatPerUnit ?? 0)).toInt()}g'),
+                    '${MealPortionHelper.formatStoredAmount(meal, item.amount, item.unit)} · ${itemKcal.toInt()} kcal · P:${(item.amount * (meal.nutriments.proteinsPerUnit ?? 0)).toInt()}g C:${(item.amount * (meal.nutriments.carbohydratesPerUnit ?? 0)).toInt()}g F:${(item.amount * (meal.nutriments.fatPerUnit ?? 0)).toInt()}g'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -93,10 +111,12 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                       icon: const Icon(Icons.open_in_new, size: 20),
                       tooltip: 'View food',
                       onPressed: () {
+                        final mealWithLink =
+                            meal.copyWith(localFoodId: item.foodId);
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => FoodDetailPage(food: meal),
+                            builder: (_) => FoodDetailPage(food: mealWithLink),
                           ),
                         );
                       },
@@ -143,25 +163,30 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       id: _preset.id,
       name: newName,
       items: _preset.items,
+      imagePath: _preset.imagePath,
     );
     await locator<MealPresetDataSource>().updatePreset(updated);
     setState(() => _preset = updated);
   }
 
   Future<void> _editItemQuantity(int index, MealPresetItemDBO item) async {
-    final controller =
-        TextEditingController(text: item.amount.toInt().toString());
+    final meal = MealEntity.fromMealDBO(item.meal);
+    final controller = TextEditingController(
+      text: MealPortionHelper.formatValue(
+        MealPortionHelper.fromBaseAmount(meal, item.amount, item.unit),
+      ),
+    );
 
     final newAmount = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(MealEntity.fromMealDBO(item.meal).name ?? '?'),
+        title: Text(meal.name ?? '?'),
         content: TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
-          decoration: const InputDecoration(
-            suffixText: 'g',
+          decoration: InputDecoration(
+            suffixText: MealPortionHelper.unitLabel(meal, item.unit),
             border: OutlineInputBorder(),
           ),
         ),
@@ -173,7 +198,14 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           TextButton(
             onPressed: () {
               final v = double.tryParse(controller.text);
-              Navigator.pop(ctx, v);
+              if (v == null) {
+                Navigator.pop(ctx);
+                return;
+              }
+              Navigator.pop(
+                ctx,
+                MealPortionHelper.toBaseAmount(meal, v, item.unit),
+              );
             },
             child: const Text('Update'),
           ),
@@ -187,11 +219,13 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
         meal: item.meal,
         amount: newAmount,
         unit: item.unit,
+        foodId: item.foodId,
       );
       final updated = MealPresetDBO(
         id: _preset.id,
         name: _preset.name,
         items: updatedItems,
+        imagePath: _preset.imagePath,
       );
       await locator<MealPresetDataSource>().updatePreset(updated);
       setState(() => _preset = updated);
@@ -211,6 +245,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       id: _preset.id,
       name: _preset.name,
       items: updatedItems,
+      imagePath: _preset.imagePath,
     );
     await locator<MealPresetDataSource>().updatePreset(updated);
     setState(() => _preset = updated);
@@ -275,19 +310,20 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final intakeDataSource = locator<IntakeDataSource>();
     final localFoodDataSource = locator<LocalFoodDataSource>();
 
-    final recentIntakes = await intakeDataSource.getRecentlyAddedIntake(number: 200);
-    final localFoods = await localFoodDataSource.getAllLocalFoods();
+    final recentIntakes =
+        await intakeDataSource.getRecentlyAddedIntake(number: 200);
+    final localFoods = await localFoodDataSource.getAllFoodRecords();
 
     final seen = <String>{};
     final allFoods = <MealEntity>[];
-    for (final dbo in localFoods) {
-      final meal = MealEntity.fromMealDBO(dbo);
-      final key = meal.code ?? meal.name ?? '';
+    for (final record in localFoods) {
+      final meal = MealEntity.fromLocalFoodRecord(record);
+      final key = _foodPickerKey(meal);
       if (key.isNotEmpty && seen.add(key)) allFoods.add(meal);
     }
     for (final dbo in recentIntakes) {
       final meal = MealEntity.fromMealDBO(dbo.meal);
-      final key = meal.code ?? meal.name ?? '';
+      final key = _foodPickerKey(meal);
       if (key.isNotEmpty && seen.add(key)) allFoods.add(meal);
     }
 
@@ -301,17 +337,20 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
     if (result == null || !mounted) return;
 
+    final foodRecord = await _upsertLocalFood(result.food);
     final updatedItems = List<MealPresetItemDBO>.from(_preset.items)
       ..add(MealPresetItemDBO(
-        meal: MealDBO.fromMealEntity(result.food),
+        meal: foodRecord.meal,
         amount: result.amount,
         unit: 'g',
+        foodId: foodRecord.id,
       ));
 
     final updated = MealPresetDBO(
       id: _preset.id,
       name: _preset.name,
       items: updatedItems,
+      imagePath: _preset.imagePath,
     );
     await locator<MealPresetDataSource>().updatePreset(updated);
     setState(() => _preset = updated);
@@ -347,34 +386,58 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               ),
               const SizedBox(height: 8),
               Row(children: [
-                Expanded(child: TextField(
-                  controller: kcalController, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'kcal/100g', border: OutlineInputBorder(), isDense: true),
+                Expanded(
+                    child: TextField(
+                  controller: kcalController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                      labelText: 'kcal/100g',
+                      border: OutlineInputBorder(),
+                      isDense: true),
                 )),
                 const SizedBox(width: 8),
-                Expanded(child: TextField(
-                  controller: proteinController, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'P g/100g', border: OutlineInputBorder(), isDense: true),
+                Expanded(
+                    child: TextField(
+                  controller: proteinController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                      labelText: 'P g/100g',
+                      border: OutlineInputBorder(),
+                      isDense: true),
                 )),
               ]),
               const SizedBox(height: 8),
               Row(children: [
-                Expanded(child: TextField(
-                  controller: carbsController, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'C g/100g', border: OutlineInputBorder(), isDense: true),
+                Expanded(
+                    child: TextField(
+                  controller: carbsController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                      labelText: 'C g/100g',
+                      border: OutlineInputBorder(),
+                      isDense: true),
                 )),
                 const SizedBox(width: 8),
-                Expanded(child: TextField(
-                  controller: fatController, keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'F g/100g', border: OutlineInputBorder(), isDense: true),
+                Expanded(
+                    child: TextField(
+                  controller: fatController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                      labelText: 'F g/100g',
+                      border: OutlineInputBorder(),
+                      isDense: true),
                 )),
               ]),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.of(ctx).dialogCancelLabel)),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(S.of(ctx).addLabel)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(S.of(ctx).dialogCancelLabel)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(S.of(ctx).addLabel)),
         ],
       ),
     );
@@ -388,25 +451,41 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       proteins100: double.tryParse(proteinController.text),
       carbohydrates100: double.tryParse(carbsController.text),
       fat100: double.tryParse(fatController.text),
-      sugars100: null, saturatedFat100: null, fiber100: null,
+      sugars100: null,
+      saturatedFat100: null,
+      fiber100: null,
     );
 
     final meal = MealEntity(
-      code: null, name: name, brands: null, url: null,
-      thumbnailImageUrl: null, mainImageUrl: null,
-      mealQuantity: null, mealUnit: 'g',
-      servingQuantity: null, servingUnit: null, servingSize: null,
-      nutriments: nutriments, source: MealSourceEntity.custom,
+      code: null,
+      name: name,
+      brands: null,
+      url: null,
+      thumbnailImageUrl: null,
+      mainImageUrl: null,
+      mealQuantity: null,
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: null,
+      servingSize: null,
+      nutriments: nutriments,
+      source: MealSourceEntity.custom,
     );
 
+    final foodRecord = await _upsertLocalFood(meal);
     final updatedItems = List<MealPresetItemDBO>.from(_preset.items)
       ..add(MealPresetItemDBO(
-        meal: MealDBO.fromMealEntity(meal),
+        meal: foodRecord.meal,
         amount: double.tryParse(amountController.text) ?? 100,
         unit: 'g',
+        foodId: foodRecord.id,
       ));
 
-    final updated = MealPresetDBO(id: _preset.id, name: _preset.name, items: updatedItems);
+    final updated = MealPresetDBO(
+        id: _preset.id,
+        name: _preset.name,
+        items: updatedItems,
+        imagePath: _preset.imagePath);
     await locator<MealPresetDataSource>().updatePreset(updated);
     setState(() => _preset = updated);
   }
@@ -429,7 +508,8 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               maxLines: 3,
               autofocus: true,
               decoration: const InputDecoration(
-                hintText: 'e.g. "double the rice", "remove butter", "add 50g cheese"',
+                hintText:
+                    'e.g. "double the rice", "remove butter", "add 50g cheese"',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -471,7 +551,8 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       final response = await aiProvider.estimateFromPhoto(
         Uint8List(0),
         'text/plain',
-        clarificationAnswer: 'Return the COMPLETE updated ingredient list after applying changes. $prompt',
+        clarificationAnswer:
+            'Return the COMPLETE updated ingredient list after applying changes. $prompt',
       );
 
       if (!mounted) return;
@@ -484,18 +565,8 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       }
 
       // Rebuild preset from AI response
-      final newItems = response.items.map((item) {
-        final nutriments = MealNutrimentsEntity(
-          energyKcal100: item.per100g.energyKcal,
-          proteins100: item.per100g.proteinG,
-          carbohydrates100: item.per100g.carbohydratesG,
-          fat100: item.per100g.fatG,
-          sugars100: item.per100g.sugarsG,
-          saturatedFat100: item.per100g.saturatedFatG,
-          fiber100: item.per100g.fiberG,
-          sodiumMg100: item.per100g.sodiumMg,
-        );
-
+      final newItems = <MealPresetItemDBO>[];
+      for (final item in response.items) {
         final meal = MealEntity(
           code: null,
           name: item.name,
@@ -508,33 +579,37 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           servingQuantity: null,
           servingUnit: null,
           servingSize: null,
-          nutriments: nutriments,
+          nutriments: MealNutrimentsEntity(
+            energyKcal100: item.per100g.energyKcal,
+            proteins100: item.per100g.proteinG,
+            carbohydrates100: item.per100g.carbohydratesG,
+            fat100: item.per100g.fatG,
+            sugars100: item.per100g.sugarsG,
+            saturatedFat100: item.per100g.saturatedFatG,
+            fiber100: item.per100g.fiberG,
+            sodiumMg100: item.per100g.sodiumMg,
+          ),
           source: MealSourceEntity.ai,
         );
-
-        return MealPresetItemDBO(
-          meal: MealDBO.fromMealEntity(meal),
-          amount: item.estimatedWeightG,
-          unit: 'g',
+        final foodRecord = await _upsertLocalFood(meal);
+        newItems.add(
+          MealPresetItemDBO(
+            meal: foodRecord.meal,
+            amount: item.estimatedWeightG,
+            unit: 'g',
+            foodId: foodRecord.id,
+          ),
         );
-      }).toList();
+      }
 
       final newName = response.mealName ?? _preset.name;
       final updated = MealPresetDBO(
         id: _preset.id,
         name: newName,
         items: newItems,
+        imagePath: _preset.imagePath,
       );
       await locator<MealPresetDataSource>().updatePreset(updated);
-      // Save each AI item to local food DB so it appears in My Foods
-      final localFoodDataSource = locator<LocalFoodDataSource>();
-      for (final item in newItems) {
-        final meal = MealEntity.fromMealDBO(item.meal);
-        final key = meal.name ?? '';
-        if (key.isNotEmpty) {
-          await localFoodDataSource.saveFood(key, item.meal);
-        }
-      }
 
       _nameController.text = newName;
       setState(() => _preset = updated);
@@ -551,6 +626,26 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
         );
       }
     }
+  }
+
+  Future<LocalFoodRecordDBO> _upsertLocalFood(MealEntity meal) {
+    return locator<LocalFoodDataSource>().saveFood(
+      MealDBO.fromMealEntity(meal),
+      existingFoodId: meal.localFoodId,
+      lookupKeys: [
+        if (meal.code != null && meal.code!.isNotEmpty) meal.code!,
+      ],
+    );
+  }
+
+  String _foodPickerKey(MealEntity meal) {
+    if (meal.code != null && meal.code!.trim().isNotEmpty) {
+      return 'code:${meal.code!.trim().toLowerCase()}';
+    }
+    if (meal.name != null && meal.name!.trim().isNotEmpty) {
+      return 'name:${meal.name!.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ')}';
+    }
+    return '';
   }
 }
 
@@ -599,8 +694,8 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
               decoration: InputDecoration(
                 hintText: 'Search foods...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 isDense: true,
               ),
             ),

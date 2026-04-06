@@ -56,6 +56,10 @@ class ProductsRepository {
   }
 
   Future<void> saveLocalFoodOverride(String key, MealEntity meal) async {
-    await _localFoodDataSource.saveFood(key, MealDBO.fromMealEntity(meal));
+    await _localFoodDataSource.saveFood(
+      MealDBO.fromMealEntity(meal),
+      existingFoodId: meal.localFoodId,
+      lookupKeys: [key],
+    );
   }
 }

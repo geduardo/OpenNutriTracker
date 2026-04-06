@@ -8,7 +8,7 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
-import 'package:opennutritracker/features/diary/presentation/widgets/diary_table_calendar.dart';
+import 'package:opennutritracker/features/diary/presentation/widgets/diary_histogram_chart.dart';
 import 'package:opennutritracker/features/diary/presentation/widgets/day_info_widget.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
@@ -27,10 +27,7 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
   late CalendarDayBloc _calendarDayBloc;
   late MealDetailBloc _mealDetailBloc;
 
-  static const _calendarDurationDays = Duration(days: 356);
-  final _currentDate = DateTime.now();
   var _selectedDate = DateTime.now();
-  var _focusedDate = DateTime.now();
 
   @override
   void initState() {
@@ -81,13 +78,13 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
       Map<String, TrackedDayEntity> trackedDaysMap, bool usesImperialUnits) {
     return ListView(
       children: [
-        DiaryTableCalendar(
-          trackedDaysMap: trackedDaysMap,
-          onDateSelected: _onDateSelected,
-          calendarDurationDays: _calendarDurationDays,
-          currentDate: _currentDate,
-          selectedDate: _selectedDate,
-          focusedDate: _focusedDate,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: DiaryHistogramChart(
+            trackedDaysMap: trackedDaysMap,
+            selectedDate: _selectedDate,
+            onDateSelected: (date) => _onDateSelected(date, trackedDaysMap),
+          ),
         ),
         const SizedBox(height: 16.0),
         BlocBuilder<CalendarDayBloc, CalendarDayState>(
@@ -152,7 +149,6 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
       DateTime newDate, Map<String, TrackedDayEntity> trackedDaysMap) {
     setState(() {
       _selectedDate = newDate;
-      _focusedDate = newDate;
       _calendarDayBloc.add(LoadCalendarDayEvent(newDate));
     });
   }

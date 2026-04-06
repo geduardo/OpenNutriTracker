@@ -25,10 +25,24 @@ class ExpenditureStateDataSource {
     return entries.first;
   }
 
+  Future<ExpenditureStateDBO?> getLatestStateBefore(DateTime day) async {
+    final cutoff = DateTime(day.year, day.month, day.day);
+    final entries = _box.values
+        .where((entry) => DateTime(entry.day.year, entry.day.month, entry.day.day)
+            .isBefore(cutoff))
+        .toList()
+      ..sort((a, b) => b.day.compareTo(a.day));
+    return entries.isEmpty ? null : entries.first;
+  }
+
   Future<List<ExpenditureStateDBO>> getAllStates() async {
     final entries = _box.values.toList()
       ..sort((a, b) => a.day.compareTo(b.day));
     return entries;
+  }
+
+  Future<void> clear() async {
+    await _box.clear();
   }
 
   String _dayKey(DateTime day) =>

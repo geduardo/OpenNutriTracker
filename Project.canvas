@@ -4,9 +4,9 @@
 			"id": "group-adapti",
 			"type": "group",
 			"x": 20,
-			"y": 124,
+			"y": 76,
 			"width": 1030,
-			"height": 3076,
+			"height": 2981,
 			"label": "Adaptive Strategy"
 		},
 		{
@@ -22,28 +22,28 @@
 			"id": "group-aillmi",
 			"type": "group",
 			"x": 4200,
-			"y": 797,
+			"y": 124,
 			"width": 1030,
-			"height": 945,
+			"height": 2014,
 			"label": "AI / LLM Integration"
-		},
-		{
-			"id": "group-datamo",
-			"type": "group",
-			"x": 1130,
-			"y": 713,
-			"width": 2010,
-			"height": 428,
-			"label": "Data Model"
 		},
 		{
 			"id": "group-corelo",
 			"type": "group",
 			"x": 5310,
-			"y": 761,
+			"y": 911,
 			"width": 540,
-			"height": 1486,
+			"height": 2062,
 			"label": "Core Logging UX"
+		},
+		{
+			"id": "group-datamo",
+			"type": "group",
+			"x": 1130,
+			"y": 863,
+			"width": 2010,
+			"height": 428,
+			"label": "Data Model"
 		},
 		{
 			"id": "canvas-errors",
@@ -80,9 +80,9 @@
 			"type": "text",
 			"text": "## AS-01 Weight history and trend estimator\nAdd dated weigh-ins, interpolate missing weigh-in days, and compute a smoothed trend-weight series for calorie logic. Keep profile weight backward-compatible during migration.\n\n### Changes\n- WeightEntryDBO (typeId 19) + WeightEntrySourceDBO (typeId 20) with adapters\n- WeightEntryDataSource: CRUD keyed by date, range queries, latest entry\n- WeightEntryRepository: entity/DBO mapping layer\n- TrendWeightService: EMA smoothing (half-life 7d), linear interpolation between weigh-ins, carry-forward up to 7 days\n- Registered in HiveDBProvider + locator",
 			"x": 80,
-			"y": 164,
+			"y": 116,
 			"width": 420,
-			"height": 589,
+			"height": 276,
 			"color": "4"
 		},
 		{
@@ -90,9 +90,9 @@
 			"type": "text",
 			"text": "## AS-02 Logging quality states\nAdd complete, partial, unlogged, and fasted day states so the calorie estimator can ignore misleading days instead of treating partial logs as true intake.\n\n### Changes\n- DayLogQualityDBO enum (typeId 21): complete, partial, unlogged, fasted with adapter\n- Added logQuality (HiveField 9) and manuallyMarked (HiveField 10) to TrackedDayDBO\n- Updated TrackedDayDBO adapter for new fields\n- Migration v1â†’v2: existing tracked days with calories default to complete, others to unlogged\n- Migration also seeds weight history from UserEntity.weightKG",
 			"x": 570,
-			"y": 164,
+			"y": 116,
 			"width": 420,
-			"height": 516,
+			"height": 276,
 			"color": "4"
 		},
 		{
@@ -100,19 +100,29 @@
 			"type": "text",
 			"text": "## AS-04 Weekly calorie controller\nGenerate next-week calorie targets from estimated expenditure plus desired rate of weight change, with smoothing, maintenance-band nudges, and no catch-up logic for prior weeks.\n\n### Changes\n- WeeklyCalorieController: computes proposed calorie target from expenditure\n  - Goal modes: lose/maintain/gain with configurable rate (% BW/week)\n  - Maintenance band (+/- 0.68kg) with auto-nudge at 0.15%/week\n  - Smoothing: weekly step capped 75-150 kcal based on confidence\n  - No catch-up logic â€” each week is independent\n  - Absolute minimum floor at 1200 kcal\n- MacroProgramService: derives macros from calorie target + body weight\n  - Protein floor: 1.6g/kg (clamped 110-220g)\n  - Fat floor: max(0.6g/kg, 20% calories)\n  - Styles: balanced, highCarbLowFat, lowCarbHighFat, manual\n- CheckInRecordDBO (typeId 27): persists weekly recommendations (previous/proposed/applied target, dismissed flag, expenditure/weight/confidence at check-in)\n- CheckInProposal data class for controller output\n- All registered in Hive",
 			"x": 80,
-			"y": 1474,
+			"y": 1726,
 			"width": 420,
-			"height": 586,
+			"height": 468,
 			"color": "4"
 		},
 		{
-			"id": "17ed4e1d",
+			"id": "ec8aa5fb",
 			"type": "text",
-			"text": "## CLU-02 Frequency-based recents\nReplace recent-only sorting in getRecentlyAddedIntake with frequency-based sorting (most-logged first). Most-eaten foods should always be at the top of the list.\n\n### Changes\n- Replaced recency-only sorting in `getRecentlyAddedIntake()` with frequency-based sorting\n- Counts how many times each food item was logged, sorts most-frequent first\n- Recency used as tiebreaker for items with equal frequency\n- Keeps the latest intake DBO for each food (preserving most recent serving info)",
-			"x": 1680,
-			"y": 128,
+			"text": "## AS-03 Adaptive expenditure estimator\nEstimate expenditure from logged intake plus change in trend weight over a rolling window, with seeded startup behavior and holding/updating status when data quality is insufficient.\n\n### Changes\n- ExpenditureStateDBO (typeId 22) + ExpenditureStatusDBO (typeId 23) with adapters\n- GoalStrategyDBO (typeId 24) + StrategyGoalModeDBO (25) + MacroProgramStyleDBO (26)\n- ExpenditureStateDataSource: persist daily expenditure estimates\n- ExpenditureEstimatorService: 21-day energy balance, EMA smoothing (14-day half-life), confidence scoring, seeded/holding/updating state machine\n- ExpenditureStateEntity with DBO mapping\n- All registered in Hive + locator",
+			"x": 80,
+			"y": 927,
 			"width": 420,
-			"height": 252,
+			"height": 300,
+			"color": "4"
+		},
+		{
+			"id": "649512b0",
+			"type": "text",
+			"text": "## AS-05 Strategy integration and check-in flow\nReplace static TDEE-plus-offset targets with strategy-driven targets in use cases and add a minimal Strategy surface for expenditure, trend weight, and weekly check-ins.\n\n### Changes\n- Refactored GetKcalGoalUsecase: branches between adaptive (from expenditure estimator) and static TDEE\n- Added getStaticTdee() for seeding the estimator\n- Strategy tab in bottom navigation (between My Foods and Diary)\n- StrategyPage dashboard: estimator status, estimated TDEE, trend weight, confidence, data quality indicators\n- Runs expenditure estimator on page load and persists state\n- WeightEntryPage: log weight, view history with trend values, delete entries\n- Weight history accessible from strategy dashboard\n- Pull-to-refresh on strategy page",
+			"x": 80,
+			"y": 2669,
+			"width": 420,
+			"height": 348,
 			"color": "4"
 		},
 		{
@@ -146,33 +156,13 @@
 			"color": "4"
 		},
 		{
-			"id": "caca0315",
+			"id": "17ed4e1d",
 			"type": "text",
-			"text": "## DM-01 Add sodium to nutriments\nAdd nullable sodium_mg field to MealNutrimentsDBO (append-only, won't break existing data). Map it from OFF (sodium_100g) and FDC (nutrient ID 1093). Display in meal detail UI.\n\n### Changes\n- Added `sodiumMg100` (nullable double, HiveField 7) to MealNutrimentsDBO\n- Added `sodiumMg100` to MealNutrimentsEntity with `sodiumMgPerUnit` getter\n- Updated OFF DTO: added `sodium_100g` field, converts gâ†’mg in entity factory\n- Updated FDC: added `fdcTotalSodiumId = 1093` constant, mapped in entity factory\n- Updated all .g.dart files (Hive adapter + JSON serialization)\n- Updated EditMealBloc to preserve sodium on edit",
-			"x": 1190,
-			"y": 777,
-			"width": 420,
-			"height": 300,
-			"color": "4"
-		},
-		{
-			"id": "4c0eb41c",
-			"type": "text",
-			"text": "## DM-02 Add MealSource.ai enum value\nAdd 'ai' to MealSourceDBO enum so LLM-estimated meals are tagged with their source. Append-only to avoid breaking Hive.\n\n### Changes\n- Added `ai` value to `MealSourceDBO` enum (HiveField 4) and `MealSourceEntity` enum\n- Updated both switch-based factory methods for DBOâ†”Entity conversion\n- Updated `MealSourceDBOAdapter` (read/write) in .g.dart\n- Updated JSON enum map in .g.dart\n- Added `MealSourceEntity.ai` handling to `MealInfoButton` (URL + label)\n- Added `additionalInfoLabelAI` localization in EN/DE/TR",
+			"text": "## CLU-02 Frequency-based recents\nReplace recent-only sorting in getRecentlyAddedIntake with frequency-based sorting (most-logged first). Most-eaten foods should always be at the top of the list.\n\n### Changes\n- Replaced recency-only sorting in `getRecentlyAddedIntake()` with frequency-based sorting\n- Counts how many times each food item was logged, sorts most-frequent first\n- Recency used as tiebreaker for items with equal frequency\n- Keeps the latest intake DBO for each food (preserving most recent serving info)",
 			"x": 1680,
-			"y": 777,
+			"y": 128,
 			"width": 420,
-			"height": 300,
-			"color": "4"
-		},
-		{
-			"id": "c9b074ee",
-			"type": "text",
-			"text": "## DM-03 Meal presets model\nNew MealPresetDBO: name + list of (MealDBO reference, default amount, unit). Hive TypeAdapter with new type ID. Repository + data source for CRUD. Allows saving and recalling groups of food items as a single meal.\n\n### Changes\n- Created `MealPresetDBO` (Hive Type ID: 15) with id, name, and items list\n- Created `MealPresetItemDBO` (Hive Type ID: 16) with MealDBO reference, amount, unit\n- Created `MealPresetDataSource` with CRUD operations (add, delete, update, getAll, getById)\n- Registered adapters in HiveDBProvider + opened MealPresetBox\n- Registered MealPresetDataSource in locator\n- Hand-written .g.dart adapter file",
-			"x": 2170,
-			"y": 777,
-			"width": 420,
-			"height": 300,
+			"height": 252,
 			"color": "4"
 		},
 		{
@@ -196,43 +186,43 @@
 			"color": "4"
 		},
 		{
+			"id": "caca0315",
+			"type": "text",
+			"text": "## DM-01 Add sodium to nutriments\nAdd nullable sodium_mg field to MealNutrimentsDBO (append-only, won't break existing data). Map it from OFF (sodium_100g) and FDC (nutrient ID 1093). Display in meal detail UI.\n\n### Changes\n- Added `sodiumMg100` (nullable double, HiveField 7) to MealNutrimentsDBO\n- Added `sodiumMg100` to MealNutrimentsEntity with `sodiumMgPerUnit` getter\n- Updated OFF DTO: added `sodium_100g` field, converts gâ†’mg in entity factory\n- Updated FDC: added `fdcTotalSodiumId = 1093` constant, mapped in entity factory\n- Updated all .g.dart files (Hive adapter + JSON serialization)\n- Updated EditMealBloc to preserve sodium on edit",
+			"x": 1190,
+			"y": 927,
+			"width": 420,
+			"height": 300,
+			"color": "4"
+		},
+		{
+			"id": "4c0eb41c",
+			"type": "text",
+			"text": "## DM-02 Add MealSource.ai enum value\nAdd 'ai' to MealSourceDBO enum so LLM-estimated meals are tagged with their source. Append-only to avoid breaking Hive.\n\n### Changes\n- Added `ai` value to `MealSourceDBO` enum (HiveField 4) and `MealSourceEntity` enum\n- Updated both switch-based factory methods for DBOâ†”Entity conversion\n- Updated `MealSourceDBOAdapter` (read/write) in .g.dart\n- Updated JSON enum map in .g.dart\n- Added `MealSourceEntity.ai` handling to `MealInfoButton` (URL + label)\n- Added `additionalInfoLabelAI` localization in EN/DE/TR",
+			"x": 1680,
+			"y": 927,
+			"width": 420,
+			"height": 300,
+			"color": "4"
+		},
+		{
+			"id": "c9b074ee",
+			"type": "text",
+			"text": "## DM-03 Meal presets model\nNew MealPresetDBO: name + list of (MealDBO reference, default amount, unit). Hive TypeAdapter with new type ID. Repository + data source for CRUD. Allows saving and recalling groups of food items as a single meal.\n\n### Changes\n- Created `MealPresetDBO` (Hive Type ID: 15) with id, name, and items list\n- Created `MealPresetItemDBO` (Hive Type ID: 16) with MealDBO reference, amount, unit\n- Created `MealPresetDataSource` with CRUD operations (add, delete, update, getAll, getById)\n- Registered adapters in HiveDBProvider + opened MealPresetBox\n- Registered MealPresetDataSource in locator\n- Hand-written .g.dart adapter file",
+			"x": 2170,
+			"y": 927,
+			"width": 420,
+			"height": 300,
+			"color": "4"
+		},
+		{
 			"id": "6b3d8c01",
 			"type": "text",
 			"text": "## DM-04 Local food overrides database\nNew Hive box for locally saved/corrected food items, keyed by barcode or user-generated ID. When a barcode is scanned, check local overrides first before hitting OFF/FDC. Used by both label extraction and manual correction flows.\n\n### Changes\n- Created `LocalFoodDataSource` at `lib/core/data/data_source/local_food_data_source.dart`\n  - Uses a separate Hive Box<MealDBO> keyed by barcode/custom ID\n  - Methods: saveFood, deleteFood, getFoodByKey, searchByName, getAllLocalFoods\n- Registered LocalFoodBox in HiveDBProvider (encrypted)\n- Registered LocalFoodDataSource in locator\n- Injected into ProductsRepository as 4th parameter\n- `getOFFProductByBarcode()` now checks local overrides FIRST before hitting OFF API\n- Added `saveLocalFoodOverride()` to ProductsRepository for saving corrected items",
 			"x": 2660,
-			"y": 753,
+			"y": 903,
 			"width": 420,
 			"height": 348,
-			"color": "4"
-		},
-		{
-			"id": "4ac458bf",
-			"type": "text",
-			"text": "## AL-01 Unified AI food input (Magic)\n4-option entry point when adding a meal: Magic, Search, Scan, Recent.\n\n**Magic screen:** Camera button, gallery button, text input field â€” use any combo. Before submitting, choose 'Single item' or 'Meal breakdown'. LLM returns structured JSON.\n\n- Single item â†’ 1 entry with combined macros â†’ review/tweak â†’ save\n- Meal breakdown â†’ ingredient list grouped under a meal name (groupId/groupName on IntakeDBO) â†’ review/tweak each â†’ save all. Diary shows meal name collapsed, tap to expand ingredients.\n\nReplaces old custom meal creation. Added groupId (HiveField 6) and groupName (HiveField 7) to IntakeDBO for meal grouping.",
-			"x": 4260,
-			"y": 1426,
-			"width": 420,
-			"height": 276,
-			"color": "4"
-		},
-		{
-			"id": "186ef498",
-			"type": "text",
-			"text": "## AL-03 LLM clarification dialog\nReusable chat-like widget for LLM follow-up questions. When the LLM response includes a clarification request, show it to the user, collect answer, re-submit. Keeps the flow conversational without breaking the logging UX. Used by both photo estimation and label extraction.\n\n### Changes\nBuilt as part of AL-01 Magic screen. Clarification dialog shows LLM question + suggested answer chips + free text input. Recursive re-submit on answer.",
-			"x": 4260,
-			"y": 837,
-			"width": 420,
-			"height": 180,
-			"color": "4"
-		},
-		{
-			"id": "5d86317e",
-			"type": "text",
-			"text": "## AL-02 Label photo extraction flow\nTriggered from: (1) unknown barcode scan, or (2) 'correct this item' action on a fetched product. Take photo of nutrition label â†’ send to AiProvider.extractFromLabel â†’ LLM extracts exact values â†’ save to local overrides DB â†’ proceed with logging. LLM may ask follow-up if label is unclear.\n\n### Changes\n- Scanner screen: barcode not found â†’ shows 'Photograph the label' (camera/gallery) instead of generic error\n- Extracts nutrition via AiProvider.extractFromLabel â†’ saves to LocalFoodDataSource keyed by barcode\n- MealDetailScreen: 'Correct with label photo' button for OFF/FDC items\n- Corrected items saved locally and meal updated in-place\n- Both flows reuse the same AI label extraction pipeline",
-			"x": 4750,
-			"y": 1426,
-			"width": 420,
-			"height": 276,
 			"color": "4"
 		},
 		{
@@ -240,19 +230,9 @@
 			"type": "text",
 			"text": "## CLU-04 Quick-log from search results\nSkip the full MealDetailScreen for known items. Tap item in search results â†’ inline quantity picker â†’ confirm. Detail screen accessible via long-press or info icon. Reduces logging from 6-7 taps to 3-4.\n\n### Changes\n- Tap search result â†’ inline quantity bottom sheet with pre-filled last-used amount and live kcal calc\n- Long-press or info icon â†’ full MealDetailScreen (unchanged)\n- Quick add saves intake, updates tracked day, refreshes home, pops back\n- Bottom sheet shows food name, brands, editable quantity field, total kcal, Add button",
 			"x": 5370,
-			"y": 801,
+			"y": 951,
 			"width": 420,
 			"height": 252,
-			"color": "4"
-		},
-		{
-			"id": "776ffad8",
-			"type": "text",
-			"text": "## CLU-07 Add meal entry point redesign\nReplace current add meal screen with a 4-option entry point: Camera (AI photo), Gallery (AI photo), Search/Barcode (existing flow), Recent/Presets (frequency-sorted one-tap logging). This becomes the first screen when tapping 'Add to Breakfast/Lunch/etc'. Camera and Gallery feed into the AI estimation pipeline (single item vs meal choice). Search keeps the existing search+barcode flow. Recent shows most-logged items for one-tap re-logging.\n\n### Changes\nBuilt as part of AL-01. MealEntryScreen with 4 options: Magic (AI photo/text), Search (FDC), Scan (barcode), Recent (frequency-sorted). Navigation wired from home screen and bottom sheet.",
-			"x": 5370,
-			"y": 2027,
-			"width": 420,
-			"height": 180,
 			"color": "4"
 		},
 		{
@@ -260,30 +240,50 @@
 			"type": "text",
 			"text": "## CLU-06 Meal presets UI\nUI to create, edit, and quick-log meal presets. One tap to log a full preset (e.g. 'My usual breakfast'). Allow quantity adjustments before confirming.\n\n### Changes\n- PresetsScreen: view saved presets, one-tap to log all items, delete presets\n- 5th entry option 'Presets' added to MealEntryScreen\n- AI result screen: 'Save as preset' button for meal breakdowns (names dialog)\n- Logging a preset creates grouped intakes with groupId/groupName\n- saveAsPreset() helper for creating presets from anywhere",
 			"x": 5370,
-			"y": 1426,
+			"y": 1822,
 			"width": 420,
 			"height": 276,
-			"color": "5"
-		},
-		{
-			"id": "ec8aa5fb",
-			"type": "text",
-			"text": "## AS-03 Adaptive expenditure estimator\nEstimate expenditure from logged intake plus change in trend weight over a rolling window, with seeded startup behavior and holding/updating status when data quality is insufficient.\n\n### Changes\n- ExpenditureStateDBO (typeId 22) + ExpenditureStatusDBO (typeId 23) with adapters\n- GoalStrategyDBO (typeId 24) + StrategyGoalModeDBO (25) + MacroProgramStyleDBO (26)\n- ExpenditureStateDataSource: persist daily expenditure estimates\n- ExpenditureEstimatorService: 21-day energy balance, EMA smoothing (14-day half-life), confidence scoring, seeded/holding/updating state machine\n- ExpenditureStateEntity with DBO mapping\n- All registered in Hive + locator",
-			"x": 80,
-			"y": 807,
-			"width": 420,
-			"height": 613,
 			"color": "4"
 		},
 		{
-			"id": "649512b0",
+			"id": "4ac458bf",
 			"type": "text",
-			"text": "## AS-05 Strategy integration and check-in flow\nReplace static TDEE-plus-offset targets with strategy-driven targets in use cases and add a minimal Strategy surface for expenditure, trend weight, and weekly check-ins.\n\n### Changes\n- Refactored GetKcalGoalUsecase: branches between adaptive (from expenditure estimator) and static TDEE\n- Added getStaticTdee() for seeding the estimator\n- Strategy tab in bottom navigation (between My Foods and Diary)\n- StrategyPage dashboard: estimator status, estimated TDEE, trend weight, confidence, data quality indicators\n- Runs expenditure estimator on page load and persists state\n- WeightEntryPage: log weight, view history with trend values, delete entries\n- Weight history accessible from strategy dashboard\n- Pull-to-refresh on strategy page",
-			"x": 80,
-			"y": 2120,
+			"text": "## AL-01 Unified AI food input (Magic)\n4-option entry point when adding a meal: Magic, Search, Scan, Recent.\n\n**Magic screen:** Camera button, gallery button, text input field â€” use any combo. Before submitting, choose 'Single item' or 'Meal breakdown'. LLM returns structured JSON.\n\n- Single item â†’ 1 entry with combined macros â†’ review/tweak â†’ save\n- Meal breakdown â†’ ingredient list grouped under a meal name (groupId/groupName on IntakeDBO) â†’ review/tweak each â†’ save all. Diary shows meal name collapsed, tap to expand ingredients.\n\nReplaces old custom meal creation. Added groupId (HiveField 6) and groupName (HiveField 7) to IntakeDBO for meal grouping.",
+			"x": 4260,
+			"y": 1822,
 			"width": 420,
-			"height": 640,
-			"color": "5"
+			"height": 276,
+			"color": "4"
+		},
+		{
+			"id": "5d86317e",
+			"type": "text",
+			"text": "## AL-02 Label photo extraction flow\nTriggered from: (1) unknown barcode scan, or (2) 'correct this item' action on a fetched product. Take photo of nutrition label â†’ send to AiProvider.extractFromLabel â†’ LLM extracts exact values â†’ save to local overrides DB â†’ proceed with logging. LLM may ask follow-up if label is unclear.\n\n### Changes\n- Scanner screen: barcode not found â†’ shows 'Photograph the label' (camera/gallery) instead of generic error\n- Extracts nutrition via AiProvider.extractFromLabel â†’ saves to LocalFoodDataSource keyed by barcode\n- MealDetailScreen: 'Correct with label photo' button for OFF/FDC items\n- Corrected items saved locally and meal updated in-place\n- Both flows reuse the same AI label extraction pipeline",
+			"x": 4750,
+			"y": 1822,
+			"width": 420,
+			"height": 276,
+			"color": "4"
+		},
+		{
+			"id": "776ffad8",
+			"type": "text",
+			"text": "## CLU-07 Add meal entry point redesign\nReplace current add meal screen with a 4-option entry point: Camera (AI photo), Gallery (AI photo), Search/Barcode (existing flow), Recent/Presets (frequency-sorted one-tap logging). This becomes the first screen when tapping 'Add to Breakfast/Lunch/etc'. Camera and Gallery feed into the AI estimation pipeline (single item vs meal choice). Search keeps the existing search+barcode flow. Recent shows most-logged items for one-tap re-logging.\n\n### Changes\nBuilt as part of AL-01. MealEntryScreen with 4 options: Magic (AI photo/text), Search (FDC), Scan (barcode), Recent (frequency-sorted). Navigation wired from home screen and bottom sheet.",
+			"x": 5370,
+			"y": 2753,
+			"width": 420,
+			"height": 180,
+			"color": "4"
+		},
+		{
+			"id": "186ef498",
+			"type": "text",
+			"text": "## AL-03 LLM clarification dialog\nReusable chat-like widget for LLM followup questions. When the LLM response includes a clarification request, show it to the user, collect answer, re-submit. Keeps the flow conversational without breaking the logging UX. Used by both photo estimation and label extraction.\n\n### Changes\nBuilt as part of AL-01 Magic screen. Clarification dialog shows LLM question + suggested answer chips + free text input. Recursive re-submit on answer.",
+			"x": 4260,
+			"y": 164,
+			"width": 420,
+			"height": 180,
+			"color": "4"
 		}
 	],
 	"edges": [
@@ -369,13 +369,6 @@
 			"fromNode": "4c0eb41c",
 			"fromSide": "bottom",
 			"toNode": "5d86317e",
-			"toSide": "top"
-		},
-		{
-			"id": "edge-013",
-			"fromNode": "7f0c4295",
-			"fromSide": "bottom",
-			"toNode": "186ef498",
 			"toSide": "top"
 		},
 		{

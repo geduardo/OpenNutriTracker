@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/local_food_record_dbo.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/supported_language.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
@@ -22,6 +23,7 @@ class MealEntity extends Equatable {
 
   final String? code;
   final String? name;
+  final String? localFoodId;
 
   final String? brands;
 
@@ -36,7 +38,11 @@ class MealEntity extends Equatable {
   final String? servingUnit;
   final String? servingSize;
 
-  get hasServingValues => servingQuantity != null && servingUnit != null;
+  get hasServingValues =>
+      servingQuantity != null &&
+      servingQuantity! > 0 &&
+      servingUnit != null &&
+      servingUnit!.isNotEmpty;
 
   final MealSourceEntity source;
 
@@ -49,6 +55,7 @@ class MealEntity extends Equatable {
   const MealEntity(
       {required this.code,
       required this.name,
+      this.localFoodId,
       this.brands,
       this.thumbnailImageUrl,
       this.mainImageUrl,
@@ -64,6 +71,7 @@ class MealEntity extends Equatable {
   factory MealEntity.empty() => MealEntity(
       code: IdGenerator.getUniqueID(),
       name: null,
+      localFoodId: null,
       url: null,
       mealQuantity: null,
       mealUnit: 'gml',
@@ -76,6 +84,7 @@ class MealEntity extends Equatable {
   factory MealEntity.fromMealDBO(MealDBO mealDBO) => MealEntity(
       code: mealDBO.code,
       name: mealDBO.name,
+      localFoodId: null,
       brands: mealDBO.brands,
       thumbnailImageUrl: mealDBO.thumbnailImageUrl,
       mainImageUrl: mealDBO.mainImageUrl,
@@ -89,11 +98,16 @@ class MealEntity extends Equatable {
           MealNutrimentsEntity.fromMealNutrimentsDBO(mealDBO.nutriments),
       source: MealSourceEntity.fromMealSourceDBO(mealDBO.source));
 
+  factory MealEntity.fromLocalFoodRecord(LocalFoodRecordDBO record) {
+    return MealEntity.fromMealDBO(record.meal).copyWith(localFoodId: record.id);
+  }
+
   factory MealEntity.fromOFFProduct(OFFProductDTO offProduct) {
     return MealEntity(
         code: offProduct.code,
         name: offProduct
             .getLocaleName(SupportedLanguage.fromCode(Platform.localeName)),
+        localFoodId: null,
         brands: offProduct.brands,
         thumbnailImageUrl: offProduct.image_front_thumb_url,
         mainImageUrl: offProduct.image_front_url,
@@ -114,6 +128,7 @@ class MealEntity extends Equatable {
     return MealEntity(
         code: fdcId,
         name: fdcFood.description,
+        localFoodId: null,
         brands: fdcFood.brandName,
         url: FDCConst.getFoodDetailUrlString(fdcId),
         mealQuantity: fdcFood.packageWeight,
@@ -133,6 +148,7 @@ class MealEntity extends Equatable {
         code: fdcId,
         name: foodItem.getLocaleDescription(
             SupportedLanguage.fromCode(Platform.localeName)),
+        localFoodId: null,
         brands: null,
         url: FDCConst.getFoodDetailUrlString(fdcId),
         mealQuantity: null,
@@ -179,8 +195,55 @@ class MealEntity extends Equatable {
     }
   }
 
+  MealEntity copyWith({
+    String? code,
+    String? name,
+    String? localFoodId,
+    String? brands,
+    String? thumbnailImageUrl,
+    String? mainImageUrl,
+    String? url,
+    String? mealQuantity,
+    String? mealUnit,
+    double? servingQuantity,
+    String? servingUnit,
+    String? servingSize,
+    MealSourceEntity? source,
+    MealNutrimentsEntity? nutriments,
+  }) {
+    return MealEntity(
+      code: code ?? this.code,
+      name: name ?? this.name,
+      localFoodId: localFoodId ?? this.localFoodId,
+      brands: brands ?? this.brands,
+      thumbnailImageUrl: thumbnailImageUrl ?? this.thumbnailImageUrl,
+      mainImageUrl: mainImageUrl ?? this.mainImageUrl,
+      url: url ?? this.url,
+      mealQuantity: mealQuantity ?? this.mealQuantity,
+      mealUnit: mealUnit ?? this.mealUnit,
+      servingQuantity: servingQuantity ?? this.servingQuantity,
+      servingUnit: servingUnit ?? this.servingUnit,
+      servingSize: servingSize ?? this.servingSize,
+      nutriments: nutriments ?? this.nutriments,
+      source: source ?? this.source,
+    );
+  }
+
+  String? get identityKey {
+    if (localFoodId != null && localFoodId!.isNotEmpty) {
+      return 'local:$localFoodId';
+    }
+    if (code != null && code!.trim().isNotEmpty) {
+      return 'code:${code!.trim().toLowerCase()}';
+    }
+    if (name != null && name!.trim().isNotEmpty) {
+      return 'name:${name!.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ')}';
+    }
+    return null;
+  }
+
   @override
-  List<Object?> get props => [code, name];
+  List<Object?> get props => [localFoodId, code, name];
 }
 
 enum MealSourceEntity {

@@ -8,13 +8,20 @@ import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.
 
 class GeminiProvider implements AiProvider {
   static const _baseUrl = 'generativelanguage.googleapis.com';
-  static const _model = 'gemini-3.1-pro-preview';
+  static const defaultModel = 'gemini-3-flash-preview';
+  static const availableModels = [
+    'gemini-3-flash-preview',
+    'gemini-3.1-pro-preview',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+  ];
   static const _timeout = Duration(seconds: 45);
 
   final _log = Logger('GeminiProvider');
   final String _apiKey;
+  final String _model;
 
-  GeminiProvider(this._apiKey);
+  GeminiProvider(this._apiKey, {String model = defaultModel}) : _model = model;
 
   /// JSON Schema enforced on the Gemini response.
   static final _nutritionResponseSchema = {

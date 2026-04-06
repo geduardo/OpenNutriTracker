@@ -1,12 +1,12 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/custom_text_input_formatter.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
@@ -35,6 +35,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
   final _nameTextController = TextEditingController();
   final _brandsTextController = TextEditingController();
   final _mealQuantityTextController = TextEditingController();
+  final _servingLabelTextController = TextEditingController();
   final _servingQuantityTextController = TextEditingController();
   final _baseQuantityTextController = TextEditingController();
   final _kcalTextController = TextEditingController();
@@ -77,6 +78,8 @@ class _EditMealScreenState extends State<EditMealScreen> {
     _nameTextController.text = _mealEntity.name ?? "";
     _brandsTextController.text = _mealEntity.brands ?? "";
     _mealQuantityTextController.text = _mealEntity.mealQuantity ?? "";
+    _servingLabelTextController.text =
+        MealPortionHelper.servingName(_mealEntity) ?? "";
     _servingQuantityTextController.text =
         _mealEntity.servingQuantity.toStringOrEmpty();
     _kcalTextController.text =
@@ -159,15 +162,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
       children: [
         Center(
             child: ClipOval(
-          child: CachedNetworkImage(
-            cacheManager: locator<CacheManager>(),
+          child: FoodImage(
+            imageUrl: _mealEntity.mainImageUrl,
             width: 120,
             height: 120,
-            placeholder: (context, string) => const DefaultMealImage(),
-            errorWidget: (context, exception, stacktrace) =>
-                const DefaultMealImage(),
-            fit: BoxFit.cover,
-            imageUrl: _mealEntity.mainImageUrl ?? "",
+            placeholder: const DefaultMealImage(),
+            errorWidget: const DefaultMealImage(),
           ),
         )),
         const SizedBox(height: 32),
@@ -270,12 +270,21 @@ class _EditMealScreenState extends State<EditMealScreen> {
           ),
           const SizedBox(height: 16),
           TextFormField(
+            controller: _servingLabelTextController,
+            decoration: const InputDecoration(
+                labelText: 'Quantity label',
+                hintText: 'cookie, slice, egg, piece...',
+                border: OutlineInputBorder()),
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
             controller: _servingQuantityTextController,
             inputFormatters: CustomTextInputFormatter.doubleOnly(),
             decoration: InputDecoration(
                 labelText: _usesImperialUnits
-                    ? S.of(context).servingSizeLabelImperial
-                    : S.of(context).servingSizeLabelMetric,
+                    ? 'One quantity equals (${S.of(context).ozUnit}/${S.of(context).flOzUnit})'
+                    : 'One quantity equals (${selectedUnit ?? _units[2]})',
                 border: const OutlineInputBorder()),
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),
@@ -309,15 +318,20 @@ class _EditMealScreenState extends State<EditMealScreen> {
       // Convert meal size back to metric units if necessary
       final mealQuantity = usesImperialUnits
           ? _convertToMetric(
-              _mealQuantityTextController.text, _mealEntity.mealUnit ?? "0")
+              _mealQuantityTextController.text, selectedUnit ?? "0")
           : _mealQuantityTextController.text;
+      final servingQuantity = usesImperialUnits
+          ? _convertToMetric(
+              _servingQuantityTextController.text, selectedUnit ?? "0")
+          : _servingQuantityTextController.text;
 
       final newMealEntity = _editMealBloc.createNewMealEntity(
           _mealEntity,
           _nameTextController.text,
           _brandsTextController.text,
           mealQuantity,
-          _servingQuantityTextController.text,
+          _servingLabelTextController.text,
+          servingQuantity,
           _baseQuantityTextController.text,
           selectedUnit,
           _kcalTextController.text,

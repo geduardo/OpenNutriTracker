@@ -69,7 +69,8 @@ class CalendarDayBloc extends Bloc<CalendarDayEvent, CalendarDayState> {
     await _addTrackedDayUsecase.removeDayMacrosTracked(day,
         carbsTracked: intakeEntity.totalCarbsGram,
         fatTracked: intakeEntity.totalFatsGram,
-        proteinTracked: intakeEntity.totalProteinsGram);
+        proteinTracked: intakeEntity.totalProteinsGram,
+        sodiumTracked: intakeEntity.totalSodiumMg);
   }
 
   Future<void> _updateDiaryPage(DateTime day) async {

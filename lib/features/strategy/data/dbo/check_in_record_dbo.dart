@@ -38,4 +38,33 @@ class CheckInRecordDBO extends HiveObject {
     required this.trendWeightAtCheckIn,
     required this.confidenceAtCheckIn,
   });
+
+  factory CheckInRecordDBO.fromJson(Map<String, dynamic> json) =>
+      CheckInRecordDBO(
+        weekStart: DateTime.parse(json['weekStart'] as String),
+        previousCalorieTarget:
+            (json['previousCalorieTarget'] as num).toDouble(),
+        proposedCalorieTarget:
+            (json['proposedCalorieTarget'] as num).toDouble(),
+        appliedCalorieTarget:
+            (json['appliedCalorieTarget'] as num).toDouble(),
+        dismissed: json['dismissed'] as bool,
+        expenditureAtCheckIn:
+            (json['expenditureAtCheckIn'] as num).toDouble(),
+        trendWeightAtCheckIn:
+            (json['trendWeightAtCheckIn'] as num).toDouble(),
+        confidenceAtCheckIn:
+            (json['confidenceAtCheckIn'] as num).toDouble(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'weekStart': weekStart.toIso8601String(),
+        'previousCalorieTarget': previousCalorieTarget,
+        'proposedCalorieTarget': proposedCalorieTarget,
+        'appliedCalorieTarget': appliedCalorieTarget,
+        'dismissed': dismissed,
+        'expenditureAtCheckIn': expenditureAtCheckIn,
+        'trendWeightAtCheckIn': trendWeightAtCheckIn,
+        'confidenceAtCheckIn': confidenceAtCheckIn,
+      };
 }

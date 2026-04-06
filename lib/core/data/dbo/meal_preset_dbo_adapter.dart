@@ -14,19 +14,22 @@ class MealPresetDBOAdapter extends TypeAdapter<MealPresetDBO> {
       id: fields[0] as String,
       name: fields[1] as String,
       items: (fields[2] as List).cast<MealPresetItemDBO>(),
+      imagePath: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealPresetDBO obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.items);
+      ..write(obj.items)
+      ..writeByte(3)
+      ..write(obj.imagePath);
   }
 
   @override
@@ -54,19 +57,22 @@ class MealPresetItemDBOAdapter extends TypeAdapter<MealPresetItemDBO> {
       meal: fields[0] as MealDBO,
       amount: fields[1] as double,
       unit: fields[2] as String,
+      foodId: fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealPresetItemDBO obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.meal)
       ..writeByte(1)
       ..write(obj.amount)
       ..writeByte(2)
-      ..write(obj.unit);
+      ..write(obj.unit)
+      ..writeByte(3)
+      ..write(obj.foodId);
   }
 
   @override

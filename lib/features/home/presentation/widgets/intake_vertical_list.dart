@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_dialog.dart';
@@ -55,12 +57,26 @@ class IntakeVerticalList extends StatefulWidget {
 class _IntakeVerticalListState extends State<IntakeVerticalList> {
   late MealDetailBloc _mealDetailBloc;
   late HomeBloc _homeBloc;
+  Map<String, String?> _presetImages = {};
 
   @override
   void initState() {
     _mealDetailBloc = locator<MealDetailBloc>();
     _homeBloc = locator<HomeBloc>();
+    _loadPresetImages();
     super.initState();
+  }
+
+  Future<void> _loadPresetImages() async {
+    final presets = await locator<MealPresetDataSource>().getAllPresets();
+    if (mounted) {
+      setState(() {
+        _presetImages = {
+          for (final p in presets)
+            if (p.imagePath != null) p.name: p.imagePath,
+        };
+      });
+    }
   }
 
   double get totalKcal {
@@ -82,10 +98,14 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
     }
 
     return [
-      ...groups.entries.map((e) => _IntakeGroup(
-            name: e.value.first.groupName ?? e.value.map((i) => i.meal.name ?? '?').join(' + '),
-            intakes: e.value,
-          )),
+      ...groups.entries.map((e) {
+        final name = e.value.first.groupName ?? e.value.map((i) => i.meal.name ?? '?').join(' + ');
+        return _IntakeGroup(
+          name: name,
+          intakes: e.value,
+          imageUrl: _presetImages[name],
+        );
+      }),
       ...ungrouped.map((i) => _IntakeGroup(name: null, intakes: [i])),
     ];
   }
@@ -249,6 +269,8 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
   }
 
   Widget _buildGroupedCard(_IntakeGroup group, bool firstListElement) {
+    final imageUrl = group.imageUrl;
+
     return GestureDetector(
       onTap: () => _showGroupDetail(group),
       child: Row(
@@ -258,36 +280,66 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
             width: 120,
             height: 120,
             child: Card(
+              semanticContainer: true,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16.0),
               ),
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.restaurant_menu,
-                        size: 24,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer),
-                    const SizedBox(height: 4),
-                    Text(
-                      group.name ?? '?',
+              elevation: 1,
+              child: Stack(
+                children: [
+                  FoodImage(
+                    imageUrl: imageUrl,
+                    width: double.infinity,
+                    height: double.infinity,
+                    placeholder: Container(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      child: Center(
+                        child: Icon(Icons.restaurant_menu,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondaryContainer
+                          .withValues(alpha: 0.5),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 4.0),
+                    decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .tertiaryContainer
+                            .withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Text(
+                      '${group.totalKcal.toInt()} ${S.of(context).kcalLabel}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onTertiaryContainer),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8.0),
+                    alignment: Alignment.bottomLeft,
+                    child: Text(
+                      group.name ?? '?',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${group.totalKcal.toInt()} ${S.of(context).kcalLabel}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -297,8 +349,11 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
   }
 
   void _showGroupDetail(_IntakeGroup group) {
+    final imageUrl = group.imageUrl;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -306,6 +361,18 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (imageUrl != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: FoodImage(
+                      imageUrl: imageUrl,
+                      width: double.infinity,
+                      height: 160,
+                    ),
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(
@@ -375,8 +442,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 class _IntakeGroup {
   final String? name;
   final List<IntakeEntity> intakes;
+  final String? imageUrl;
 
-  _IntakeGroup({required this.name, required this.intakes});
+  _IntakeGroup({required this.name, required this.intakes, this.imageUrl});
 
   bool get isGrouped => intakes.length > 1 && name != null;
 

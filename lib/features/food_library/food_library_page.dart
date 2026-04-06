@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
@@ -11,8 +12,10 @@ import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
+import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/food_library/food_detail_page.dart';
+import 'package:opennutritracker/features/food_library/meal_builder_page.dart';
 import 'package:opennutritracker/features/food_library/preset_detail_page.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
@@ -50,21 +53,23 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
 
     // Load all unique foods from intake history
     final intakeDataSource = locator<IntakeDataSource>();
-    final recentIntakes = await intakeDataSource.getRecentlyAddedIntake(number: 500);
-    final foods = recentIntakes
-        .map((dbo) => MealEntity.fromMealDBO(dbo.meal))
-        .toList();
+    final recentIntakes =
+        await intakeDataSource.getRecentlyAddedIntake(number: 500);
+    final foods =
+        recentIntakes.map((dbo) => MealEntity.fromMealDBO(dbo.meal)).toList();
 
     // Load local food overrides
     final localFoodDataSource = locator<LocalFoodDataSource>();
-    final localFoods = await localFoodDataSource.getAllLocalFoods();
-    final localMeals = localFoods.map((dbo) => MealEntity.fromMealDBO(dbo)).toList();
+    final localFoods = await localFoodDataSource.getAllFoodRecords();
+    final localMeals = localFoods
+        .map((record) => MealEntity.fromLocalFoodRecord(record))
+        .toList();
 
     // Merge, deduplicate by code/name
     final seen = <String>{};
     final allFoods = <MealEntity>[];
     for (final meal in [...localMeals, ...foods]) {
-      final key = meal.code ?? meal.name ?? '';
+      final key = _libraryKey(meal);
       if (key.isNotEmpty && seen.add(key)) {
         allFoods.add(meal);
       }
@@ -119,6 +124,28 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
             ),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _createFood,
+                  icon: const Icon(Icons.restaurant),
+                  label: const Text('New food'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _createMeal,
+                  icon: const Icon(Icons.playlist_add),
+                  label: const Text('New meal'),
+                ),
+              ),
+            ],
+          ),
+        ),
         TabBar(
           controller: _tabController,
           tabs: [
@@ -145,8 +172,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     final foods = _filteredFoods;
     if (foods.isEmpty) {
       return Center(
-        child: Text('No foods yet',
-            style: Theme.of(context).textTheme.bodyLarge),
+        child:
+            Text('No foods yet', style: Theme.of(context).textTheme.bodyLarge),
       );
     }
     return ListView.builder(
@@ -155,13 +182,27 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
         final food = foods[index];
         final kcal = food.nutriments.energyKcal100;
         return ListTile(
-          leading: Icon(
-            food.source == MealSourceEntity.ai
-                ? Icons.auto_awesome
-                : food.source == MealSourceEntity.off
-                    ? Icons.qr_code
-                    : Icons.restaurant,
-            color: Theme.of(context).colorScheme.primary,
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: FoodImage(
+              imageUrl: food.thumbnailImageUrl,
+              width: 48,
+              height: 48,
+              placeholder: Container(
+                width: 48,
+                height: 48,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Icon(
+                  food.source == MealSourceEntity.ai
+                      ? Icons.auto_awesome
+                      : food.source == MealSourceEntity.off
+                          ? Icons.qr_code
+                          : Icons.restaurant,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+            ),
           ),
           title: Text(food.name ?? '?'),
           subtitle: Text(
@@ -208,8 +249,21 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
           return sum + (item.amount * (meal.nutriments.energyPerUnit ?? 0));
         });
         return ListTile(
-          leading: Icon(Icons.playlist_play,
-              color: Theme.of(context).colorScheme.primary),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: FoodImage(
+              imageUrl: preset.imagePath,
+              width: 48,
+              height: 48,
+              placeholder: Container(
+                width: 48,
+                height: 48,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Icon(Icons.playlist_play,
+                    color: Theme.of(context).colorScheme.primary, size: 24),
+              ),
+            ),
+          ),
           title: Text(preset.name),
           subtitle: Text(
               '${preset.items.length} items · ${totalKcal.toInt()} ${S.of(context).kcalLabel}'),
@@ -278,9 +332,11 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
       final getKcalGoalUsecase = locator<GetKcalGoalUsecase>();
       final getMacroGoalUsecase = locator<GetMacroGoalUsecase>();
       final totalKcalGoal = await getKcalGoalUsecase.getKcalGoal();
-      final totalCarbsGoal = await getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
+      final totalCarbsGoal =
+          await getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
       final totalFatGoal = await getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
-      final totalProteinGoal = await getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
+      final totalProteinGoal =
+          await getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
       await addTrackedDayUsecase.addNewTrackedDay(
           day, totalKcalGoal, totalCarbsGoal, totalFatGoal, totalProteinGoal);
     }
@@ -310,13 +366,16 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     addTrackedDayUsecase.addDayMacrosTracked(day,
         carbsTracked: intake.totalCarbsGram,
         fatTracked: intake.totalFatsGram,
-        proteinTracked: intake.totalProteinsGram);
+        proteinTracked: intake.totalProteinsGram,
+        sodiumTracked: intake.totalSodiumMg);
 
     locator<HomeBloc>().add(const LoadItemsEvent());
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${food.name} added to ${mealType.getTypeName(context)}')),
+        SnackBar(
+            content:
+                Text('${food.name} added to ${mealType.getTypeName(context)}')),
       );
     }
   }
@@ -350,15 +409,74 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
       addTrackedDayUsecase.addDayMacrosTracked(day,
           carbsTracked: intake.totalCarbsGram,
           fatTracked: intake.totalFatsGram,
-          proteinTracked: intake.totalProteinsGram);
+          proteinTracked: intake.totalProteinsGram,
+          sodiumTracked: intake.totalSodiumMg);
     }
 
     locator<HomeBloc>().add(const LoadItemsEvent());
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${preset.name} added to ${mealType.getTypeName(context)}')),
+        SnackBar(
+            content: Text(
+                '${preset.name} added to ${mealType.getTypeName(context)}')),
       );
     }
+  }
+
+  String _libraryKey(MealEntity meal) {
+    if (meal.code != null && meal.code!.trim().isNotEmpty) {
+      return 'code:${meal.code!.trim().toLowerCase()}';
+    }
+    if (meal.name != null && meal.name!.trim().isNotEmpty) {
+      return 'name:${meal.name!.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ')}';
+    }
+    return '';
+  }
+
+  Future<void> _createFood() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FoodDetailPage(
+          food: const MealEntity(
+            code: null,
+            name: null,
+            localFoodId: null,
+            brands: null,
+            thumbnailImageUrl: null,
+            mainImageUrl: null,
+            url: null,
+            mealQuantity: null,
+            mealUnit: 'g',
+            servingQuantity: null,
+            servingUnit: null,
+            servingSize: null,
+            nutriments: MealNutrimentsEntity(
+              energyKcal100: null,
+              carbohydrates100: null,
+              fat100: null,
+              proteins100: null,
+              sugars100: null,
+              saturatedFat100: null,
+              fiber100: null,
+              sodiumMg100: null,
+            ),
+            source: MealSourceEntity.custom,
+          ),
+          title: 'Create food',
+          popOnSave: true,
+        ),
+      ),
+    );
+    _loadData();
+  }
+
+  Future<void> _createMeal() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MealBuilderPage()),
+    );
+    _loadData();
   }
 }

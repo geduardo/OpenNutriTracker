@@ -1,7 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
@@ -10,8 +8,10 @@ import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provi
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/presentation/widgets/image_full_screen.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/edit_meal/presentation/edit_meal_screen.dart';
@@ -80,7 +80,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       } else if (meal.isSolid) {
         _initialUnit = _usesImperialUnits
             ? UnitDropdownItem.oz.toString()
-
             : UnitDropdownItem.g.toString();
       } else {
         _initialUnit = UnitDropdownItem.gml.toString();
@@ -192,22 +191,21 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               child: GestureDetector(
                   child: Hero(
                     tag: ImageFullScreen.fullScreenHeroTag,
-                    child: CachedNetworkImage(
+                    child: FoodImage(
+                      imageUrl: meal.mainImageUrl,
                       width: 250,
                       height: 250,
-                      cacheManager: locator<CacheManager>(),
-                      imageUrl: meal.mainImageUrl ?? "",
-                      fit: BoxFit.cover,
-                      placeholder: (context, string) => const MealPlaceholder(),
-                      errorWidget: (context, url, error) =>
-                          const MealPlaceholder(),
+                      placeholder: const MealPlaceholder(),
+                      errorWidget: const MealPlaceholder(),
                     ),
                   ),
                   onTap: () {
-                    Navigator.of(context).pushNamed(
-                        NavigationOptions.imageFullScreenRoute,
-                        arguments:
-                            ImageFullScreenArguments(meal.mainImageUrl ?? ""));
+                    if (meal.mainImageUrl != null) {
+                      Navigator.of(context).pushNamed(
+                          NavigationOptions.imageFullScreenRoute,
+                          arguments:
+                              ImageFullScreenArguments(meal.mainImageUrl!));
+                    }
                   }),
             ),
           ),
@@ -219,17 +217,24 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   children: [
                     Text('${totalKcal.toInt()} ${S.of(context).kcalLabel}',
                         style: Theme.of(context).textTheme.headlineSmall),
-                    MealValueUnitText(
-                      value: double.parse(totalQuantity),
-                      meal: meal,
-                      displayUnit:
-                          selectedUnit == UnitDropdownItem.serving.toString()
-                              ? meal.servingUnit
-                              : selectedUnit,
-                      usesImperialUnits: _usesImperialUnits,
-                      textStyle: Theme.of(context).textTheme.bodyMedium,
-                      prefix: ' / ',
-                    ),
+                    if (selectedUnit == UnitDropdownItem.serving.toString() ||
+                        selectedUnit == UnitDropdownItem.tsp.toString() ||
+                        selectedUnit == UnitDropdownItem.tbsp.toString())
+                      Text(
+                        ' / ${quantityTextController.text} ${MealPortionHelper.unitLabel(meal, selectedUnit)}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      )
+                    else
+                      MealValueUnitText(
+                        value: double.parse(totalQuantity),
+                        meal: meal,
+                        displayUnit: selectedUnit,
+                        usesImperialUnits: _usesImperialUnits,
+                        textStyle: Theme.of(context).textTheme.bodyMedium,
+                        prefix: ' / ',
+                      ),
                   ],
                 ),
                 const SizedBox(height: 8.0),
@@ -365,7 +370,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
       if (response.items.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not read label. Try a clearer photo.')),
+          const SnackBar(
+              content: Text('Could not read label. Try a clearer photo.')),
         );
         return;
       }
@@ -385,6 +391,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       final correctedMeal = MealEntity(
         code: meal.code,
         name: item.name.isNotEmpty ? item.name : meal.name,
+        localFoodId: meal.localFoodId,
         brands: meal.brands,
         url: meal.url,
         thumbnailImageUrl: meal.thumbnailImageUrl,
@@ -402,20 +409,23 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       if (meal.code != null && meal.code!.isNotEmpty) {
         final localFoodDataSource = locator<LocalFoodDataSource>();
         await localFoodDataSource.saveFood(
-            meal.code!, MealDBO.fromMealEntity(correctedMeal));
+          MealDBO.fromMealEntity(correctedMeal),
+          existingFoodId: correctedMeal.localFoodId,
+          lookupKeys: [meal.code!],
+        );
       }
 
       if (mounted) {
         // Replace current screen with corrected meal
         setState(() {
-          this.meal = correctedMeal;
+          meal = correctedMeal;
         });
         _mealDetailBloc.add(UpdateKcalEvent(
-            meal: correctedMeal,
-            totalQuantity: quantityTextController.text));
+            meal: correctedMeal, totalQuantity: quantityTextController.text));
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nutrition data corrected and saved locally.')),
+          const SnackBar(
+              content: Text('Nutrition data corrected and saved locally.')),
         );
       }
     } catch (e) {

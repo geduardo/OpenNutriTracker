@@ -13,7 +13,9 @@ import 'package:opennutritracker/features/profile/presentation/widgets/set_gende
 import 'package:opennutritracker/features/profile/presentation/widgets/set_goal_dialog.dart';
 import 'package:opennutritracker/features/profile/presentation/widgets/set_height_dialog.dart';
 import 'package:opennutritracker/features/profile/presentation/widgets/set_pal_category_dialog.dart';
+import 'package:opennutritracker/features/profile/presentation/widgets/set_weekly_rate_dialog.dart';
 import 'package:opennutritracker/features/profile/presentation/widgets/set_weight_dialog.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/goal_strategy_dbo.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -43,8 +45,13 @@ class _ProfilePageState extends State<ProfilePage> {
         } else if (state is ProfileLoadingState) {
           return _getLoadingContent();
         } else if (state is ProfileLoadedState) {
-          return _getLoadedContent(context, state.userBMI, state.userEntity,
-              state.usesImperialUnits);
+          return _getLoadedContent(
+              context,
+              state.userBMI,
+              state.userEntity,
+              state.usesImperialUnits,
+              state.desiredWeeklyRatePct,
+              state.desiredWeeklyRateKg);
         } else {
           return _getLoadingContent();
         }
@@ -58,8 +65,13 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _getLoadedContent(BuildContext context, UserBMIEntity userBMIEntity,
-      UserEntity user, bool usesImperialUnits) {
+  Widget _getLoadedContent(
+      BuildContext context,
+      UserBMIEntity userBMIEntity,
+      UserEntity user,
+      bool usesImperialUnits,
+      double desiredWeeklyRatePct,
+      double desiredWeeklyRateKg) {
     return ListView(
       children: [
         const SizedBox(height: 32.0),
@@ -97,6 +109,29 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Icon(Icons.flag_outlined),
           ),
           onTap: () => _showSetGoalDialog(context, user),
+        ),
+        ListTile(
+          title: Text(
+            'Desired Weekly Change',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          subtitle: Text(
+            _formatWeeklyRate(
+                desiredWeeklyRateKg, desiredWeeklyRatePct, usesImperialUnits),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          leading: const SizedBox(
+            height: double.infinity,
+            child: Icon(Icons.show_chart_outlined),
+          ),
+          onTap: user.goal == UserWeightGoalEntity.maintainWeight
+              ? null
+              : () => _showSetWeeklyRateDialog(
+                    context,
+                    user,
+                    usesImperialUnits,
+                    desiredWeeklyRatePct,
+                  ),
         ),
         ListTile(
           title: Text(
@@ -233,6 +268,30 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _showSetWeeklyRateDialog(
+      BuildContext context,
+      UserEntity userEntity,
+      bool usesImperialUnits,
+      double currentRatePct) async {
+    final selectedRatePct = await showDialog<double>(
+      context: context,
+      builder: (context) => SetWeeklyRateDialog(
+        mode: switch (userEntity.goal) {
+          UserWeightGoalEntity.loseWeight => StrategyGoalModeDBO.lose,
+          UserWeightGoalEntity.maintainWeight => StrategyGoalModeDBO.maintain,
+          UserWeightGoalEntity.gainWeight => StrategyGoalModeDBO.gain,
+        },
+        initialRatePctPerWeek: currentRatePct,
+        bodyWeightKg: userEntity.weightKG,
+        usesImperialUnits: usesImperialUnits,
+      ),
+    );
+
+    if (selectedRatePct != null) {
+      await _profileBloc.updateDesiredWeeklyRate(userEntity, selectedRatePct);
+    }
+  }
+
   Future<void> _showSetBirthdayDialog(
       BuildContext context, UserEntity userEntity) async {
     final selectedDate = await showDatePicker(
@@ -256,5 +315,20 @@ class _ProfilePageState extends State<ProfilePage> {
 
       _profileBloc.updateUser(userEntity);
     }
+  }
+
+  String _formatWeeklyRate(
+      double desiredWeeklyRateKg, double desiredWeeklyRatePct, bool imperial) {
+    final sign = desiredWeeklyRateKg > 0
+        ? '+'
+        : desiredWeeklyRateKg < 0
+            ? '-'
+            : '';
+    final magnitude = imperial
+        ? desiredWeeklyRateKg.abs() * 2.20462
+        : desiredWeeklyRateKg.abs();
+    final unit = imperial ? 'lbs/week' : 'kg/week';
+
+    return '$sign${magnitude.toStringAsFixed(2)} $unit (${desiredWeeklyRatePct.toStringAsFixed(2)}%/week)';
   }
 }

@@ -54,6 +54,8 @@ class WeightEntrySourceDBOAdapter extends TypeAdapter<WeightEntrySourceDBO> {
         return WeightEntrySourceDBO.manual;
       case 1:
         return WeightEntrySourceDBO.migratedProfileWeight;
+      case 2:
+        return WeightEntrySourceDBO.healthConnect;
       default:
         return WeightEntrySourceDBO.manual;
     }
@@ -67,6 +69,9 @@ class WeightEntrySourceDBOAdapter extends TypeAdapter<WeightEntrySourceDBO> {
         break;
       case WeightEntrySourceDBO.migratedProfileWeight:
         writer.writeByte(1);
+        break;
+      case WeightEntrySourceDBO.healthConnect:
+        writer.writeByte(2);
         break;
     }
   }

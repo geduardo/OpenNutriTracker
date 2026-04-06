@@ -26,13 +26,15 @@ class TrackedDayDBOAdapter extends TypeAdapter<TrackedDayDBO> {
       proteinTracked: fields[8] as double?,
       logQuality: fields[9] as DayLogQualityDBO?,
       manuallyMarked: fields[10] as bool?,
+      sodiumGoal: fields[11] as double?,
+      sodiumTracked: fields[12] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, TrackedDayDBO obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.day)
       ..writeByte(1)
@@ -54,7 +56,11 @@ class TrackedDayDBOAdapter extends TypeAdapter<TrackedDayDBO> {
       ..writeByte(9)
       ..write(obj.logQuality)
       ..writeByte(10)
-      ..write(obj.manuallyMarked);
+      ..write(obj.manuallyMarked)
+      ..writeByte(11)
+      ..write(obj.sodiumGoal)
+      ..writeByte(12)
+      ..write(obj.sodiumTracked);
   }
 
   @override

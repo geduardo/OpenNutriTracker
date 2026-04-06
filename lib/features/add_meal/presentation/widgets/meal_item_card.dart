@@ -1,13 +1,12 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
+import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
@@ -46,24 +45,20 @@ class MealItemCard extends StatelessWidget {
           height: 100,
           child: Center(
               child: ListTile(
-            leading: mealEntity.thumbnailImageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: CachedNetworkImage(
-                      cacheManager: locator<CacheManager>(),
-                      fit: BoxFit.cover,
-                      width: 60,
-                      height: 60,
-                      imageUrl: mealEntity.thumbnailImageUrl ?? "",
-                    ))
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                        width: 60,
-                        height: 60,
-                        color: Theme.of(context).colorScheme.secondaryContainer,
-                        child: const Icon(Icons.restaurant_outlined)),
+            leading: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: FoodImage(
+                  imageUrl: mealEntity.thumbnailImageUrl,
+                  width: 60,
+                  height: 60,
+                  placeholder: Container(
+                    width: 60,
+                    height: 60,
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    child: const Icon(Icons.restaurant_outlined),
                   ),
+                ),
+              ),
             title: AutoSizeText.rich(
                 TextSpan(
                     text: mealEntity.name ?? "?",
@@ -228,7 +223,8 @@ class MealItemCard extends StatelessWidget {
     addTrackedDayUsecase.addDayMacrosTracked(day,
         carbsTracked: intake.totalCarbsGram,
         fatTracked: intake.totalFatsGram,
-        proteinTracked: intake.totalProteinsGram);
+        proteinTracked: intake.totalProteinsGram,
+        sodiumTracked: intake.totalSodiumMg);
 
     locator<HomeBloc>().add(const LoadItemsEvent());
 

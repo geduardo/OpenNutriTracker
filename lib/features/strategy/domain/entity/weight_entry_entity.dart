@@ -1,6 +1,6 @@
 import 'package:opennutritracker/features/strategy/data/dbo/weight_entry_dbo.dart';
 
-enum WeightEntrySource { manual, migratedProfileWeight }
+enum WeightEntrySource { manual, migratedProfileWeight, healthConnect }
 
 class WeightEntryEntity {
   final DateTime day;
@@ -20,9 +20,12 @@ class WeightEntryEntity {
       day: dbo.day,
       weightKg: dbo.weightKg,
       note: dbo.note,
-      source: dbo.source == WeightEntrySourceDBO.manual
-          ? WeightEntrySource.manual
-          : WeightEntrySource.migratedProfileWeight,
+      source: switch (dbo.source) {
+        WeightEntrySourceDBO.manual => WeightEntrySource.manual,
+        WeightEntrySourceDBO.migratedProfileWeight =>
+          WeightEntrySource.migratedProfileWeight,
+        WeightEntrySourceDBO.healthConnect => WeightEntrySource.healthConnect,
+      },
     );
   }
 
@@ -31,9 +34,12 @@ class WeightEntryEntity {
       day: day,
       weightKg: weightKg,
       note: note,
-      source: source == WeightEntrySource.manual
-          ? WeightEntrySourceDBO.manual
-          : WeightEntrySourceDBO.migratedProfileWeight,
+      source: switch (source) {
+        WeightEntrySource.manual => WeightEntrySourceDBO.manual,
+        WeightEntrySource.migratedProfileWeight =>
+          WeightEntrySourceDBO.migratedProfileWeight,
+        WeightEntrySource.healthConnect => WeightEntrySourceDBO.healthConnect,
+      },
     );
   }
 }

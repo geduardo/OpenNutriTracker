@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 
@@ -26,6 +27,7 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
       String nameText,
       String brandsText,
       String mealQuantityText,
+      String servingLabelText,
       String servingQuantityText,
       String baseQuantity,
       String? unitText,
@@ -53,6 +55,14 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
         fiber100: multiplyIfNotNull(oldMealEntity.nutriments.fiber100),
         sodiumMg100: multiplyIfNotNull(oldMealEntity.nutriments.sodiumMg100));
 
+    final servingQuantity = servingQuantityText.toDoubleOrNull();
+    final baseUnit = unitText ?? oldMealEntity.mealUnit ?? 'g';
+    final servingSize = MealPortionHelper.buildServingDisplayLabel(
+      label: servingLabelText,
+      amount: servingQuantity ?? 0,
+      unit: baseUnit,
+    );
+
     return MealEntity(
         code: oldMealEntity.code,
         name: nameText.toStringOrNull(),
@@ -61,10 +71,10 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
         thumbnailImageUrl: oldMealEntity.thumbnailImageUrl,
         mainImageUrl: oldMealEntity.mainImageUrl,
         mealQuantity: mealQuantityText.toStringOrNull(),
-        mealUnit: unitText,
-        servingQuantity: servingQuantityText.toDoubleOrNull(),
-        servingUnit: servingQuantityText.toStringOrNull(),
-        servingSize: oldMealEntity.servingSize,
+        mealUnit: baseUnit,
+        servingQuantity: servingSize == null ? null : servingQuantity,
+        servingUnit: servingSize == null ? null : baseUnit,
+        servingSize: servingSize,
         nutriments: newMealNutriments,
         source: oldMealEntity.source);
   }

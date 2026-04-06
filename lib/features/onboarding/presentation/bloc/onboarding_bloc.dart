@@ -7,6 +7,8 @@ import 'package:opennutritracker/core/domain/usecase/add_user_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
 import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 import 'package:opennutritracker/features/onboarding/domain/entity/user_data_mask_entity.dart';
+import 'package:opennutritracker/features/strategy/data/repository/weight_entry_repository.dart';
+import 'package:opennutritracker/features/strategy/domain/entity/weight_entry_entity.dart';
 
 part 'onboarding_event.dart';
 
@@ -16,8 +18,10 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final userSelection = UserDataMaskEntity();
   final AddUserUsecase _addUserUsecase;
   final AddConfigUsecase _addConfigUsecase;
+  final WeightEntryRepository _weightEntryRepository;
 
-  OnboardingBloc(this._addUserUsecase, this._addConfigUsecase)
+  OnboardingBloc(
+      this._addUserUsecase, this._addConfigUsecase, this._weightEntryRepository)
       : super(OnboardingInitialState()) {
     on<LoadOnboardingEvent>((event, emit) async {
       emit(OnboardingLoadingState());
@@ -28,10 +32,15 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
   void saveOnboardingData(BuildContext context, UserEntity userEntity,
       bool hasAcceptedDataCollection, bool usesImperialUnits) async {
-    _addUserUsecase.addUser(userEntity);
-    _addConfigUsecase
+    await _addUserUsecase.addUser(userEntity);
+    await _weightEntryRepository.addEntry(WeightEntryEntity(
+      day: DateTime.now(),
+      weightKg: userEntity.weightKG,
+      source: WeightEntrySource.manual,
+    ));
+    await _addConfigUsecase
         .setConfigHasAcceptedAnonymousData(hasAcceptedDataCollection);
-    _addConfigUsecase.setConfigUsesImperialUnits(usesImperialUnits);
+    await _addConfigUsecase.setConfigUsesImperialUnits(usesImperialUnits);
   }
 
   double? getOverviewCalorieGoal() {

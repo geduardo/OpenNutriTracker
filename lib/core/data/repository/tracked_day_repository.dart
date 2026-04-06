@@ -1,6 +1,7 @@
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
 
 class TrackedDayRepository {
   final TrackedDayDataSource _trackedDayDataSource;
@@ -52,6 +53,8 @@ class TrackedDayRepository {
     _trackedDayDataSource.reduceDayCalorieGoal(day, amount);
   }
 
+  static const double defaultSodiumGoalMg = 2300;
+
   Future<void> addNewTrackedDay(
       DateTime day,
       double totalKcalGoal,
@@ -67,7 +70,11 @@ class TrackedDayRepository {
         fatGoal: totalFatGoal,
         fatTracked: 0,
         proteinGoal: totalProteinGoal,
-        proteinTracked: 0));
+        proteinTracked: 0,
+        sodiumGoal: defaultSodiumGoalMg,
+        sodiumTracked: 0,
+        logQuality: DayLogQualityDBO.complete,
+        manuallyMarked: false));
   }
 
   Future<void> addAllTrackedDays(List<TrackedDayDBO> trackedDaysDBO) async {
@@ -108,20 +115,24 @@ class TrackedDayRepository {
   Future<void> addDayMacrosTracked(DateTime day,
       {double? carbsTracked,
       double? fatTracked,
-      double? proteinTracked}) async {
+      double? proteinTracked,
+      double? sodiumTracked}) async {
     _trackedDayDataSource.addDayMacroTracked(day,
         carbsAmount: carbsTracked,
         fatAmount: fatTracked,
-        proteinAmount: proteinTracked);
+        proteinAmount: proteinTracked,
+        sodiumAmount: sodiumTracked);
   }
 
   Future<void> removeDayMacrosTracked(DateTime day,
       {double? carbsTracked,
       double? fatTracked,
-      double? proteinTracked}) async {
+      double? proteinTracked,
+      double? sodiumTracked}) async {
     _trackedDayDataSource.removeDayMacroTracked(day,
         carbsAmount: carbsTracked,
         fatAmount: fatTracked,
-        proteinAmount: proteinTracked);
+        proteinAmount: proteinTracked,
+        sodiumAmount: sodiumTracked);
   }
 }

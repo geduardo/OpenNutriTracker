@@ -3,14 +3,35 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/env.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/gemini_provider.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/openai_provider.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/add_meal/presentation/ai_result_screen.dart';
 
 enum MagicMode { singleItem, mealBreakdown }
+
+enum AiProviderType { gemini, openai }
+
+extension AiProviderTypeLabel on AiProviderType {
+  String get label => switch (this) {
+        AiProviderType.gemini => 'Gemini',
+        AiProviderType.openai => 'OpenAI',
+      };
+
+  List<String> get models => switch (this) {
+        AiProviderType.gemini => GeminiProvider.availableModels,
+        AiProviderType.openai => OpenAiProvider.availableModels,
+      };
+
+  String get defaultModel => switch (this) {
+        AiProviderType.gemini => GeminiProvider.defaultModel,
+        AiProviderType.openai => OpenAiProvider.defaultModel,
+      };
+}
 
 class MagicScreen extends StatefulWidget {
   const MagicScreen({super.key});
@@ -25,12 +46,18 @@ class _MagicScreenState extends State<MagicScreen> {
 
   Uint8List? _imageBytes;
   String? _imageMimeType;
+  String? _imageFilePath;
   MagicMode _mode = MagicMode.singleItem;
   bool _isLoading = false;
   String? _errorMessage;
 
   late AddMealType _mealType;
   late DateTime _day;
+  late bool _selectionMode;
+
+  late final List<AiProviderType> _availableProviders;
+  late AiProviderType _selectedProvider;
+  late String _selectedModel;
 
   @override
   void didChangeDependencies() {
@@ -38,6 +65,7 @@ class _MagicScreenState extends State<MagicScreen> {
         ModalRoute.of(context)?.settings.arguments as MagicScreenArguments;
     _mealType = args.mealType;
     _day = args.day;
+    _selectionMode = args.selectionMode;
     super.didChangeDependencies();
   }
 
@@ -45,6 +73,13 @@ class _MagicScreenState extends State<MagicScreen> {
   void initState() {
     super.initState();
     _textController.addListener(() => setState(() {}));
+
+    _availableProviders = [
+      if (Env.geminiApiKey.isNotEmpty) AiProviderType.gemini,
+      if (Env.openaiApiKey.isNotEmpty) AiProviderType.openai,
+    ];
+    _selectedProvider = _availableProviders.first;
+    _selectedModel = _selectedProvider.defaultModel;
   }
 
   @override
@@ -121,6 +156,85 @@ class _MagicScreenState extends State<MagicScreen> {
                   ? null
                   : (selection) => setState(() => _mode = selection.first),
             ),
+            const SizedBox(height: 16),
+
+            // Provider & model selection
+            if (_availableProviders.length > 1)
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<AiProviderType>(
+                      initialValue: _selectedProvider,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Provider',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      items: _availableProviders
+                          .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
+                          .toList(),
+                      onChanged: _isLoading
+                          ? null
+                          : (p) {
+                              if (p != null) {
+                                setState(() {
+                                  _selectedProvider = p;
+                                  _selectedModel = p.defaultModel;
+                                });
+                              }
+                            },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: DropdownButtonFormField<String>(
+                      key: ValueKey(_selectedProvider),
+                      initialValue: _selectedModel,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Model',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      items: _selectedProvider.models
+                          .map((m) => DropdownMenuItem(
+                                value: m,
+                                child: Text(m, overflow: TextOverflow.ellipsis),
+                              ))
+                          .toList(),
+                      onChanged: _isLoading
+                          ? null
+                          : (m) {
+                              if (m != null) setState(() => _selectedModel = m);
+                            },
+                    ),
+                  ),
+                ],
+              )
+            else
+              DropdownButtonFormField<String>(
+                initialValue: _selectedModel,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: '${_selectedProvider.label} Model',
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: _selectedProvider.models
+                    .map((m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(m, overflow: TextOverflow.ellipsis),
+                        ))
+                    .toList(),
+                onChanged: _isLoading
+                    ? null
+                    : (m) {
+                        if (m != null) setState(() => _selectedModel = m);
+                      },
+              ),
             const SizedBox(height: 24),
 
             // Error message
@@ -172,6 +286,7 @@ class _MagicScreenState extends State<MagicScreen> {
                 : () => setState(() {
                       _imageBytes = null;
                       _imageMimeType = null;
+                      _imageFilePath = null;
                     }),
             icon: const Icon(Icons.close),
             style: IconButton.styleFrom(
@@ -220,6 +335,7 @@ class _MagicScreenState extends State<MagicScreen> {
         setState(() {
           _imageBytes = bytes;
           _imageMimeType = picked.mimeType ?? 'image/jpeg';
+          _imageFilePath = picked.path;
           _errorMessage = null;
         });
       }
@@ -235,7 +351,12 @@ class _MagicScreenState extends State<MagicScreen> {
     });
 
     try {
-      final aiProvider = locator<AiProvider>();
+      final AiProvider aiProvider = switch (_selectedProvider) {
+        AiProviderType.gemini =>
+          GeminiProvider(Env.geminiApiKey, model: _selectedModel),
+        AiProviderType.openai =>
+          OpenAiProvider(Env.openaiApiKey, model: _selectedModel),
+      };
       final userText = _textController.text.trim();
 
       // Build context string with mode instruction + user text
@@ -274,15 +395,35 @@ class _MagicScreenState extends State<MagicScreen> {
           return;
         }
       } else if (response.items.isNotEmpty) {
-        Navigator.of(context).pushNamed(
-          NavigationOptions.aiResultRoute,
-          arguments: AiResultScreenArguments(
-            response: response,
-            mealType: _mealType,
-            day: _day,
-            mode: _mode,
-          ),
-        );
+        if (_selectionMode) {
+          final pickedItems = await Navigator.of(context).pushNamed(
+            NavigationOptions.aiResultRoute,
+            arguments: AiResultScreenArguments(
+              response: response,
+              mealType: _mealType,
+              day: _day,
+              mode: _mode,
+              imageBytes: _imageBytes,
+              imageFilePath: _imageFilePath,
+              selectionMode: true,
+            ),
+          );
+          if (pickedItems != null && mounted) {
+            Navigator.of(context).pop(pickedItems);
+          }
+        } else {
+          Navigator.of(context).pushNamed(
+            NavigationOptions.aiResultRoute,
+            arguments: AiResultScreenArguments(
+              response: response,
+              mealType: _mealType,
+              day: _day,
+              mode: _mode,
+              imageBytes: _imageBytes,
+              imageFilePath: _imageFilePath,
+            ),
+          );
+        }
       } else {
         setState(() => _errorMessage = 'Could not identify any food items.');
       }
@@ -359,6 +500,11 @@ class _MagicScreenState extends State<MagicScreen> {
 class MagicScreenArguments {
   final DateTime day;
   final AddMealType mealType;
+  final bool selectionMode;
 
-  MagicScreenArguments(this.day, this.mealType);
+  MagicScreenArguments(
+    this.day,
+    this.mealType, {
+    this.selectionMode = false,
+  });
 }

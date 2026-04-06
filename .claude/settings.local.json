@@ -1,0 +1,14 @@
+{
+  "env": {
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "200000"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(xargs grep:*)",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:developers.openai.com)",
+      "Bash(dart analyze:*)"
+    ]
+  }
+}

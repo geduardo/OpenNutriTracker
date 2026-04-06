@@ -8,6 +8,7 @@ import 'package:opennutritracker/core/data/dbo/intake_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/local_food_record_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_dbo.dart';
@@ -26,7 +27,8 @@ class HiveDBProvider extends ChangeNotifier {
   static const userBoxName = 'UserBox';
   static const trackedDayBoxName = 'TrackedDayBox';
   static const mealPresetBoxName = 'MealPresetBox';
-  static const localFoodBoxName = 'LocalFoodBox';
+  static const localFoodBoxName = 'LocalFoodRecordBox';
+  static const localFoodAliasBoxName = 'LocalFoodAliasBox';
   static const weightEntryBoxName = 'WeightEntryBox';
   static const expenditureStateBoxName = 'ExpenditureStateBox';
   static const goalStrategyBoxName = 'GoalStrategyBox';
@@ -37,7 +39,8 @@ class HiveDBProvider extends ChangeNotifier {
   late Box<UserDBO> userBox;
   late Box<TrackedDayDBO> trackedDayBox;
   late Box<MealPresetDBO> mealPresetBox;
-  late Box<MealDBO> localFoodBox;
+  late Box<LocalFoodRecordDBO> localFoodBox;
+  late Box<String> localFoodAliasBox;
   late Box<WeightEntryDBO> weightEntryBox;
   late Box<ExpenditureStateDBO> expenditureStateBox;
   late Box<GoalStrategyDBO> goalStrategyBox;
@@ -60,6 +63,7 @@ class HiveDBProvider extends ChangeNotifier {
     Hive.registerAdapter(AppThemeDBOAdapter());
     Hive.registerAdapter(MealPresetDBOAdapter());
     Hive.registerAdapter(MealPresetItemDBOAdapter());
+    Hive.registerAdapter(LocalFoodRecordDBOAdapter());
     Hive.registerAdapter(WeightEntryDBOAdapter());
     Hive.registerAdapter(WeightEntrySourceDBOAdapter());
     Hive.registerAdapter(DayLogQualityDBOAdapter());
@@ -81,6 +85,8 @@ class HiveDBProvider extends ChangeNotifier {
     mealPresetBox = await Hive.openBox(mealPresetBoxName,
         encryptionCipher: encryptionCypher);
     localFoodBox = await Hive.openBox(localFoodBoxName,
+        encryptionCipher: encryptionCypher);
+    localFoodAliasBox = await Hive.openBox(localFoodAliasBoxName,
         encryptionCipher: encryptionCypher);
     weightEntryBox = await Hive.openBox(weightEntryBoxName,
         encryptionCipher: encryptionCypher);

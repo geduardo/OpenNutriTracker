@@ -15,9 +15,9 @@
               "state": {
                 "file": "Project.canvas",
                 "viewState": {
-                  "x": 567.9345916346524,
-                  "y": 2361.4825337372786,
-                  "zoom": -0.7945906657525798
+                  "x": 3405.0278721411014,
+                  "y": 1530.4157870679057,
+                  "zoom": -2.1279239700215533
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -189,30 +189,31 @@
   },
   "active": "94cf316fbe2d7bf0",
   "lastOpenFiles": [
-    "lib/features/strategy/presentation/widgets/weight_trend_chart.dart",
-    "build/cee98645",
-    "build/app/intermediates/cxx/debug/43426f20/logs/x86_64/generate_cxx_metadata_78_timing.txt",
-    "build/app/intermediates/cxx/debug/43426f20/logs/armeabi-v7a/generate_cxx_metadata_78_timing.txt",
-    "build/app/intermediates/cxx/debug/43426f20/logs/arm64-v8a/generate_cxx_metadata_78_timing.txt",
+    "build/c620dd8d",
     "build/app/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/flutter_assets/kernel_blob.bin.jar",
-    "build/app/intermediates/cxx/debug/43426f20/logs/armeabi-v7a/generate_cxx_metadata_552_timing.txt",
-    "build/app/intermediates/cxx/debug/43426f20/logs/arm64-v8a/generate_cxx_metadata_552_timing.txt",
+    "build/app/intermediates/cxx/debug/5581a5m2/logs/armeabi-v7a/generate_cxx_metadata_1482_timing.txt",
+    "build/app/intermediates/cxx/debug/5581a5m2/logs/arm64-v8a/generate_cxx_metadata_1482_timing.txt",
     "build/app/intermediates/flutter/debug/flutter_assets/shaders/ink_sparkle.frag.spirv",
-    "build/app/intermediates/flutter/debug/flutter_assets/4bd48523",
-    "lib/features/strategy/domain/service/trend_weight_service.dart.tmp.42112.1775473553671",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_logo_square.svg",
+    "build/app/intermediates/flutter/debug/flutter_assets/shaders/stretch_effect.frag.spirv",
+    "build/app/intermediates/flutter/debug/flutter_assets/8c4138e3",
+    "build/test_cache/build/6f11be97",
+    "lib/features/food_library/meal_builder_page.dart",
+    "build/cbb69232",
+    "build/app/intermediates/flutter/debug/flutter_assets/cbfa0059",
+    "docs/Untitled.md",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_logo_square_light.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_logo_square.png",
-    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_banner_top_light.png",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_banner_top.png",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_logo_square.svg",
+    "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_banner_top_light.png",
+    "Project.canvas",
+    "build/unit_test_assets/assets/icon/ont_logo_square_light.png",
+    "build/unit_test_assets/assets/icon/ont_logo_square.svg",
+    "build/unit_test_assets/assets/icon/ont_logo_square.png",
+    "build/unit_test_assets/assets/icon/ont_banner_top_light.png",
+    "build/unit_test_assets/assets/icon/ont_banner_top.png",
     "docs/adaptive-calorie-control-theory.md",
     "docs/adaptive-calorie-engine-plan.md",
-    "Project.canvas",
-    "GettingStarted.md",
-    "docs/figures/adaptive_control_maintenance_deadband.svg",
-    "docs/figures/adaptive_control_rate_limited_controller.svg",
-    "docs/figures/adaptive_control_expenditure_observer.svg",
-    "docs/figures/adaptive_control_weight_smoothing.svg",
-    "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/launcher_icon.png"
+    "GettingStarted.md"
   ]
 }

@@ -22,6 +22,26 @@ class WeightEntryDBO extends HiveObject {
     this.note,
     required this.source,
   });
+
+  factory WeightEntryDBO.fromJson(Map<String, dynamic> json) => WeightEntryDBO(
+        day: DateTime.parse(json['day'] as String),
+        weightKg: (json['weightKg'] as num).toDouble(),
+        note: json['note'] as String?,
+        source: _sourceFromJson(json['source'] as String?),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'day': day.toIso8601String(),
+        'weightKg': weightKg,
+        'note': note,
+        'source': source.name,
+      };
+
+  static WeightEntrySourceDBO _sourceFromJson(String? value) => switch (value) {
+        'healthConnect' => WeightEntrySourceDBO.healthConnect,
+        'migratedProfileWeight' => WeightEntrySourceDBO.migratedProfileWeight,
+        _ => WeightEntrySourceDBO.manual,
+      };
 }
 
 @HiveType(typeId: 20)
@@ -29,5 +49,7 @@ enum WeightEntrySourceDBO {
   @HiveField(0)
   manual,
   @HiveField(1)
-  migratedProfileWeight;
+  migratedProfileWeight,
+  @HiveField(2)
+  healthConnect;
 }

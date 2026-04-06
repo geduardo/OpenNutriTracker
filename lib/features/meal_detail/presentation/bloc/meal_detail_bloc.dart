@@ -11,6 +11,7 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -52,11 +53,11 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
 
         // Convert quantity based on selected unit
         double convertedQuantity = quantity;
-        if (selectedUnit == UnitDropdownItem.serving.toString()) {
-          // For serving size, multiply by the product's serving quantity
-          if (event.meal.servingQuantity != null) {
-            convertedQuantity = quantity * event.meal.servingQuantity!;
-          }
+        if (selectedUnit == UnitDropdownItem.serving.toString() ||
+            selectedUnit == UnitDropdownItem.tsp.toString() ||
+            selectedUnit == UnitDropdownItem.tbsp.toString()) {
+          convertedQuantity =
+              MealPortionHelper.toBaseAmount(event.meal, quantity, selectedUnit);
         } else if (selectedUnit == UnitDropdownItem.oz.toString()) {
           convertedQuantity = UnitCalc.ozToG(quantity);
         } else if (selectedUnit == UnitDropdownItem.flOz.toString()) {
@@ -119,7 +120,8 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
     _addTrackedDayUsecase.addDayMacrosTracked(day,
         carbsTracked: intakeEntity.totalCarbsGram,
         fatTracked: intakeEntity.totalFatsGram,
-        proteinTracked: intakeEntity.totalProteinsGram);
+        proteinTracked: intakeEntity.totalProteinsGram,
+        sodiumTracked: intakeEntity.totalSodiumMg);
   }
 }
 
@@ -129,7 +131,9 @@ enum UnitDropdownItem {
   gml,
   oz,
   flOz,
-  serving;
+  serving,
+  tsp,
+  tbsp;
 
   UnitDropdownItem fromString(String value) {
     switch (value) {
@@ -145,6 +149,10 @@ enum UnitDropdownItem {
         return UnitDropdownItem.flOz;
       case 'serving':
         return UnitDropdownItem.serving;
+      case 'tsp':
+        return UnitDropdownItem.tsp;
+      case 'tbsp':
+        return UnitDropdownItem.tbsp;
       default:
         return UnitDropdownItem.gml;
     }
@@ -165,6 +173,10 @@ enum UnitDropdownItem {
         return 'fl.oz';
       case UnitDropdownItem.serving:
         return 'serving';
+      case UnitDropdownItem.tsp:
+        return 'tsp';
+      case UnitDropdownItem.tbsp:
+        return 'tbsp';
     }
   }
 }

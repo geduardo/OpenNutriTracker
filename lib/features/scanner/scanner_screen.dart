@@ -29,8 +29,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   final log = Logger('ScannerScreen');
 
   String? _scannedBarcode;
-  late IntakeTypeEntity _intakeTypeEntity;
-  late DateTime _day;
+  late ScannerScreenArguments _args;
 
   late ScannerBloc _scannerBloc;
 
@@ -42,10 +41,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   void didChangeDependencies() {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as ScannerScreenArguments;
-    _intakeTypeEntity = args.intakeTypeEntity;
-    _day = args.day;
+    _args = ModalRoute.of(context)?.settings.arguments as ScannerScreenArguments;
     super.didChangeDependencies();
   }
 
@@ -62,12 +58,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
               body: const Center(child: CircularProgressIndicator()));
         } else if (state is ScannerLoadedState) {
           // Push new route after build
-          Future.microtask(() {
+          Future<void>.microtask(() {
             if (context.mounted) {
-              return Navigator.of(context).pushReplacementNamed(
-                  NavigationOptions.mealDetailRoute,
-                  arguments: MealDetailScreenArguments(state.product,
-                      _intakeTypeEntity, _day, state.usesImperialUnits));
+              if (_args.selectionMode) {
+                Navigator.of(context).pop(state.product);
+                return;
+              }
+              Navigator.of(context).pushReplacementNamed(
+                NavigationOptions.mealDetailRoute,
+                arguments: MealDetailScreenArguments(
+                  state.product,
+                  _args.intakeTypeEntity,
+                  _args.day,
+                  state.usesImperialUnits,
+                ),
+              );
             }
           });
         } else if (state is ScannerFailedState) {
@@ -171,32 +176,33 @@ class _ScannerScreenState extends State<ScannerScreen> {
               const SizedBox(height: 24),
               if (_labelError != null) ...[
                 Text(_labelError!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 16),
               ],
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () => _extractFromLabel(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Photograph the label'),
-                  ),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _extractFromLabel(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Photograph the label'),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _extractFromLabel(ImageSource.gallery),
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Pick label from gallery'),
-                  ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _extractFromLabel(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Pick label from gallery'),
                 ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: _onRefreshButtonPressed,
-                  child: Text(S.of(context).retryLabel),
-                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _onRefreshButtonPressed,
+                child: Text(S.of(context).retryLabel),
+              ),
             ],
           ),
         ),
@@ -238,7 +244,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
       if (response.items.isEmpty) {
         setState(() {
-          _labelError = 'Could not read the label. Try again with a clearer photo.';
+          _labelError =
+              'Could not read the label. Try again with a clearer photo.';
           _isExtractingLabel = false;
         });
         return;
@@ -276,15 +283,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
       if (_scannedBarcode != null) {
         final localFoodDataSource = locator<LocalFoodDataSource>();
         await localFoodDataSource.saveFood(
-            _scannedBarcode!, MealDBO.fromMealEntity(meal));
+          MealDBO.fromMealEntity(meal),
+          existingFoodId: meal.localFoodId,
+          lookupKeys: [_scannedBarcode!],
+        );
       }
 
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed(
-          NavigationOptions.mealDetailRoute,
-          arguments: MealDetailScreenArguments(
-              meal, _intakeTypeEntity, _day, false),
-        );
+        if (_args.selectionMode) {
+          Navigator.of(context).pop(meal);
+        } else {
+          Navigator.of(context).pushReplacementNamed(
+            NavigationOptions.mealDetailRoute,
+            arguments: MealDetailScreenArguments(
+                meal, _args.intakeTypeEntity, _args.day, false),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -310,6 +324,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
 class ScannerScreenArguments {
   final DateTime day;
   final IntakeTypeEntity intakeTypeEntity;
+  final bool selectionMode;
 
-  ScannerScreenArguments(this.day, this.intakeTypeEntity);
+  ScannerScreenArguments(
+    this.day,
+    this.intakeTypeEntity, {
+    this.selectionMode = false,
+  });
 }

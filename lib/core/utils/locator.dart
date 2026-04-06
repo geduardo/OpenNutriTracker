@@ -3,9 +3,14 @@ import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/check_in_record_data_source.dart';
 import 'package:opennutritracker/features/strategy/data/data_source/expenditure_state_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/goal_strategy_data_source.dart';
 import 'package:opennutritracker/features/strategy/data/data_source/weight_entry_data_source.dart';
 import 'package:opennutritracker/features/strategy/data/repository/weight_entry_repository.dart';
+import 'package:opennutritracker/features/strategy/domain/service/health_connect_weight_service.dart';
+import 'package:opennutritracker/features/strategy/domain/usecase/get_adaptive_strategy_snapshot_usecase.dart';
+import 'package:opennutritracker/features/strategy/domain/usecase/sync_health_connect_weights_usecase.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
@@ -77,8 +82,14 @@ Future<void> initLocator() async {
 
   // BLoCs
   locator.registerLazySingleton<OnboardingBloc>(
-      () => OnboardingBloc(locator(), locator()));
-  locator.registerLazySingleton<HomeBloc>(() => HomeBloc(
+      () => OnboardingBloc(locator(), locator(), locator()));
+  locator.registerLazySingleton<HomeBloc>(() => HomeBloc(locator(), locator(),
+      locator(), locator(), locator(), locator(), locator(), locator()));
+  locator.registerLazySingleton(() => DiaryBloc(locator(), locator()));
+  locator.registerLazySingleton(
+      () => CalendarDayBloc(locator(), locator(), locator(), locator()));
+  locator.registerLazySingleton<ProfileBloc>(() => ProfileBloc(
+      locator(),
       locator(),
       locator(),
       locator(),
@@ -87,17 +98,12 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator()));
-  locator.registerLazySingleton(() => DiaryBloc(locator(), locator()));
-  locator.registerLazySingleton(() => CalendarDayBloc(
-      locator(), locator(), locator(), locator()));
-  locator.registerLazySingleton<ProfileBloc>(
-      () => ProfileBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton(() =>
       SettingsBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory(() => ExportImportBloc(locator(), locator()));
 
-  locator.registerFactory<MealDetailBloc>(
-      () => MealDetailBloc(locator(), locator(), locator(), locator(), locator()));
+  locator.registerFactory<MealDetailBloc>(() =>
+      MealDetailBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory<ScannerBloc>(() => ScannerBloc(locator(), locator()));
   locator.registerFactory<EditMealBloc>(() => EditMealBloc(locator()));
   locator.registerFactory<AddMealBloc>(() => AddMealBloc(locator()));
@@ -131,13 +137,39 @@ Future<void> initLocator() async {
       () => GetTrackedDayUsecase(locator()));
   locator.registerLazySingleton<AddTrackedDayUsecase>(
       () => AddTrackedDayUsecase(locator()));
+  locator.registerLazySingleton(() => GetAdaptiveStrategySnapshotUsecase(
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+      ));
+  locator.registerLazySingleton(() => SyncHealthConnectWeightsUsecase(
+        locator(),
+        locator(),
+        locator(),
+      ));
+  locator.registerLazySingleton(() => GetKcalGoalUsecase(locator(), locator()));
   locator.registerLazySingleton(
-      () => GetKcalGoalUsecase(locator(), locator(), locator()));
-  locator.registerLazySingleton(() => GetMacroGoalUsecase(locator()));
-  locator.registerLazySingleton(
-      () => ExportDataUsecase(locator(), locator()));
-  locator.registerLazySingleton(
-      () => ImportDataUsecase(locator(), locator()));
+      () => GetMacroGoalUsecase(locator(), locator(), locator(), locator()));
+  locator.registerLazySingleton(() => ExportDataUsecase(
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+      ));
+  locator.registerLazySingleton(() => ImportDataUsecase(
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+      ));
 
   // Repositories
   locator.registerLazySingleton(() => ConfigRepository(locator()));
@@ -172,19 +204,26 @@ Future<void> initLocator() async {
       () => TrackedDayDataSource(hiveDBProvider.trackedDayBox));
   locator.registerLazySingleton(
       () => MealPresetDataSource(hiveDBProvider.mealPresetBox));
-  locator.registerLazySingleton(
-      () => LocalFoodDataSource(hiveDBProvider.localFoodBox));
+  locator.registerLazySingleton(() => LocalFoodDataSource(
+        hiveDBProvider.localFoodBox,
+        hiveDBProvider.localFoodAliasBox,
+      ));
   locator.registerLazySingleton(
       () => WeightEntryDataSource(hiveDBProvider.weightEntryBox));
   locator.registerLazySingleton(
       () => ExpenditureStateDataSource(hiveDBProvider.expenditureStateBox));
+  locator.registerLazySingleton(
+      () => GoalStrategyDataSource(hiveDBProvider.goalStrategyBox));
+  locator.registerLazySingleton(
+      () => CheckInRecordDataSource(hiveDBProvider.checkInRecordBox));
+  locator.registerLazySingleton(() => HealthConnectWeightService());
 
   // Strategy repositories
-  locator.registerLazySingleton(
-      () => WeightEntryRepository(locator()));
+  locator.registerLazySingleton(() => WeightEntryRepository(locator()));
 
   await _initializeConfig(locator());
-  await MigrationRunner(locator(), locator(), locator(), locator()).runMigrations();
+  await MigrationRunner(locator(), locator(), locator(), locator())
+      .runMigrations();
 }
 
 Future<void> _initializeConfig(ConfigDataSource configDataSource) async {

@@ -5,43 +5,77 @@ import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:opennutritracker/core/data/repository/intake_repository.dart';
 import 'package:opennutritracker/core/data/repository/tracked_day_repository.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/check_in_record_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/expenditure_state_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/goal_strategy_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/weight_entry_data_source.dart';
 
 class ExportDataUsecase {
   final IntakeRepository _intakeRepository;
   final TrackedDayRepository _trackedDayRepository;
+  final WeightEntryDataSource _weightEntryDataSource;
+  final ExpenditureStateDataSource _expenditureStateDataSource;
+  final GoalStrategyDataSource _goalStrategyDataSource;
+  final CheckInRecordDataSource _checkInRecordDataSource;
 
-  ExportDataUsecase(this._intakeRepository, this._trackedDayRepository);
+  ExportDataUsecase(
+    this._intakeRepository,
+    this._trackedDayRepository,
+    this._weightEntryDataSource,
+    this._expenditureStateDataSource,
+    this._goalStrategyDataSource,
+    this._checkInRecordDataSource,
+  );
 
-  /// Exports intake and tracked day data to a zip of json
-  /// files at a user specified location.
   Future<bool> exportData(
-      String exportZipFileName,
-      String userIntakeJsonFileName,
-      String trackedDayJsonFileName) async {
-    // Export intake data to Json File Bytes
+    String exportZipFileName,
+    String userIntakeJsonFileName,
+    String trackedDayJsonFileName,
+    String weightEntryJsonFileName,
+    String expenditureStateJsonFileName,
+    String goalStrategyJsonFileName,
+    String checkInRecordJsonFileName,
+  ) async {
     final fullIntake = await _intakeRepository.getAllIntakesDBO();
-    final fullIntakeJson =
-        jsonEncode(fullIntake.map((intake) => intake.toJson()).toList());
-    final intakeJsonBytes = utf8.encode(fullIntakeJson);
-
-    // Export tracked day data to Json File Bytes
     final fullTrackedDay = await _trackedDayRepository.getAllTrackedDaysDBO();
-    final fullTrackedDayJson = jsonEncode(
-        fullTrackedDay.map((trackedDay) => trackedDay.toJson()).toList());
-    final trackedDayJsonBytes = utf8.encode(fullTrackedDayJson);
+    final fullWeightEntries = await _weightEntryDataSource.getAllEntries();
+    final fullExpenditureStates =
+        await _expenditureStateDataSource.getAllStates();
+    final goalStrategy = await _goalStrategyDataSource.getCurrentStrategy();
+    final fullCheckInRecords = await _checkInRecordDataSource.getAllRecords();
 
-    // Create a zip file with the exported data
     final archive = Archive();
-    archive.addFile(
-      ArchiveFile(
-          userIntakeJsonFileName, intakeJsonBytes.length, intakeJsonBytes),
+    _addJsonFile(
+      archive,
+      userIntakeJsonFileName,
+      fullIntake.map((intake) => intake.toJson()).toList(),
     );
-    archive.addFile(
-      ArchiveFile(trackedDayJsonFileName, trackedDayJsonBytes.length,
-          trackedDayJsonBytes),
+    _addJsonFile(
+      archive,
+      trackedDayJsonFileName,
+      fullTrackedDay.map((trackedDay) => trackedDay.toJson()).toList(),
+    );
+    _addJsonFile(
+      archive,
+      weightEntryJsonFileName,
+      fullWeightEntries.map((entry) => entry.toJson()).toList(),
+    );
+    _addJsonFile(
+      archive,
+      expenditureStateJsonFileName,
+      fullExpenditureStates.map((state) => state.toJson()).toList(),
+    );
+    _addJsonFile(
+      archive,
+      goalStrategyJsonFileName,
+      goalStrategy?.toJson(),
+    );
+    _addJsonFile(
+      archive,
+      checkInRecordJsonFileName,
+      fullCheckInRecords.map((record) => record.toJson()).toList(),
     );
 
-    // Save the zip file to the user specified location
     final zipBytes = ZipEncoder().encode(archive);
     final result = await FilePicker.platform.saveFile(
       fileName: exportZipFileName,
@@ -51,5 +85,10 @@ class ExportDataUsecase {
     );
 
     return result != null && result.isNotEmpty;
+  }
+
+  void _addJsonFile(Archive archive, String fileName, Object? content) {
+    final jsonBytes = utf8.encode(jsonEncode(content));
+    archive.addFile(ArchiveFile(fileName, jsonBytes.length, jsonBytes));
   }
 }

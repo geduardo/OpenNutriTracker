@@ -27,12 +27,61 @@ class GoalStrategyDBO extends HiveObject {
     required this.adaptiveEnabled,
   });
 
+  GoalStrategyDBO copyWith({
+    StrategyGoalModeDBO? mode,
+    double? targetWeightKg,
+    bool clearTargetWeightKg = false,
+    double? targetRatePctPerWeek,
+    MacroProgramStyleDBO? macroStyle,
+    bool? adaptiveEnabled,
+  }) {
+    return GoalStrategyDBO(
+      mode: mode ?? this.mode,
+      targetWeightKg:
+          clearTargetWeightKg ? null : (targetWeightKg ?? this.targetWeightKg),
+      targetRatePctPerWeek: targetRatePctPerWeek ?? this.targetRatePctPerWeek,
+      macroStyle: macroStyle ?? this.macroStyle,
+      adaptiveEnabled: adaptiveEnabled ?? this.adaptiveEnabled,
+    );
+  }
+
+  factory GoalStrategyDBO.fromJson(Map<String, dynamic> json) =>
+      GoalStrategyDBO(
+        mode: _modeFromJson(json['mode'] as String?),
+        targetWeightKg: (json['targetWeightKg'] as num?)?.toDouble(),
+        targetRatePctPerWeek: (json['targetRatePctPerWeek'] as num).toDouble(),
+        macroStyle: _macroStyleFromJson(json['macroStyle'] as String?),
+        adaptiveEnabled: json['adaptiveEnabled'] as bool? ?? true,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'mode': mode.name,
+        'targetWeightKg': targetWeightKg,
+        'targetRatePctPerWeek': targetRatePctPerWeek,
+        'macroStyle': macroStyle.name,
+        'adaptiveEnabled': adaptiveEnabled,
+      };
+
   factory GoalStrategyDBO.defaultStrategy() => GoalStrategyDBO(
         mode: StrategyGoalModeDBO.maintain,
         targetRatePctPerWeek: 0.0,
         macroStyle: MacroProgramStyleDBO.balanced,
         adaptiveEnabled: false,
       );
+
+  static StrategyGoalModeDBO _modeFromJson(String? value) => switch (value) {
+        'lose' => StrategyGoalModeDBO.lose,
+        'gain' => StrategyGoalModeDBO.gain,
+        _ => StrategyGoalModeDBO.maintain,
+      };
+
+  static MacroProgramStyleDBO _macroStyleFromJson(String? value) =>
+      switch (value) {
+        'highCarbLowFat' => MacroProgramStyleDBO.highCarbLowFat,
+        'lowCarbHighFat' => MacroProgramStyleDBO.lowCarbHighFat,
+        'manual' => MacroProgramStyleDBO.manual,
+        _ => MacroProgramStyleDBO.balanced,
+      };
 }
 
 @HiveType(typeId: 25)

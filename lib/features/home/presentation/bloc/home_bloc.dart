@@ -156,7 +156,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           fatTracked:
               oldIntakeObject.totalFatsGram - newIntakeObject.totalFatsGram,
           proteinTracked: oldIntakeObject.totalProteinsGram -
-              newIntakeObject.totalProteinsGram);
+              newIntakeObject.totalProteinsGram,
+          sodiumTracked: oldIntakeObject.totalSodiumMg -
+              newIntakeObject.totalSodiumMg);
     } else if (newIntakeObject.amount > oldIntakeObject.amount) {
       // Amounts gained
       await _addTrackedDayUseCase.addDayCaloriesTracked(
@@ -167,7 +169,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           fatTracked:
               newIntakeObject.totalFatsGram - oldIntakeObject.totalFatsGram,
           proteinTracked: newIntakeObject.totalProteinsGram -
-              oldIntakeObject.totalProteinsGram);
+              oldIntakeObject.totalProteinsGram,
+          sodiumTracked: newIntakeObject.totalSodiumMg -
+              oldIntakeObject.totalSodiumMg);
     }
     _updateDiaryPage(dateTime);
   }
@@ -180,7 +184,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _addTrackedDayUseCase.removeDayMacrosTracked(dateTime,
         carbsTracked: intakeEntity.totalCarbsGram,
         fatTracked: intakeEntity.totalFatsGram,
-        proteinTracked: intakeEntity.totalProteinsGram);
+        proteinTracked: intakeEntity.totalProteinsGram,
+        sodiumTracked: intakeEntity.totalSodiumMg);
 
     _updateDiaryPage(dateTime);
   }

@@ -12,28 +12,40 @@ import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import '../fixture/meal_entity_fixtures.dart';
 
 void main() {
+  const boxName = 'intake_test';
 
   group('IntakeRepository test', () {
-    setUp(() {
+    setUpAll(() async {
       TestWidgetsFlutterBinding.ensureInitialized();
-      // final temp = await getTemporaryDirectory();
       Hive.init(".");
-      Hive.registerAdapter(IntakeDBOAdapter());
-      Hive.registerAdapter(IntakeTypeDBOAdapter());
-      Hive.registerAdapter(MealDBOAdapter());
-      Hive.registerAdapter(MealSourceDBOAdapter());
-      Hive.registerAdapter(MealNutrimentsDBOAdapter());
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(IntakeDBOAdapter());
+      }
+      if (!Hive.isAdapterRegistered(4)) {
+        Hive.registerAdapter(IntakeTypeDBOAdapter());
+      }
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(MealDBOAdapter());
+      }
+      if (!Hive.isAdapterRegistered(14)) {
+        Hive.registerAdapter(MealSourceDBOAdapter());
+      }
+      if (!Hive.isAdapterRegistered(3)) {
+        Hive.registerAdapter(MealNutrimentsDBOAdapter());
+      }
     });
 
-    tearDown(() {
-      Hive.deleteFromDisk();
+    tearDown(() async {
+      if (Hive.isBoxOpen(boxName)) {
+        await Hive.box<IntakeDBO>(boxName).close();
+      }
+      await Hive.deleteBoxFromDisk(boxName);
     });
 
     test('returns last added first', () async {
-      final box = await Hive.openBox<IntakeDBO>('intake_test');
+      final box = await Hive.openBox<IntakeDBO>(boxName);
 
       final repo = IntakeRepository(IntakeDataSource(box));
-
 
       await repo.addIntake(IntakeEntity(
           id: "1",

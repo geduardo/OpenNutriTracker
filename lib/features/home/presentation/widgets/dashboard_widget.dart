@@ -34,19 +34,27 @@ class DashboardWidget extends StatefulWidget {
 class _DashboardWidgetState extends State<DashboardWidget> {
   @override
   Widget build(BuildContext context) {
-    double kcalLeftLabel = 0;
+    final bool isOver = widget.totalKcalLeft < 0;
     double gaugeValue = 0;
     if (widget.totalKcalLeft > widget.totalKcalDaily) {
-      kcalLeftLabel = widget.totalKcalDaily;
       gaugeValue = 0;
-    } else if (widget.totalKcalLeft < 0) {
-      kcalLeftLabel = 0;
+    } else if (widget.totalKcalLeft <= 0) {
       gaugeValue = 1;
     } else {
-      kcalLeftLabel = widget.totalKcalLeft;
       gaugeValue = (widget.totalKcalDaily - widget.totalKcalLeft) /
           widget.totalKcalDaily;
     }
+
+    final progressColor = isOver
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.primary;
+    final centerColor = isOver
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.onSurface;
+    final centerLabel = isOver
+        ? S.of(context).kcalLeftLabel // "kcal left" but value is negative
+        : S.of(context).kcalLeftLabel;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -88,30 +96,27 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                     animation: true,
                     percent: gaugeValue,
                     arcType: ArcType.FULL,
-                    progressColor: Theme.of(context).colorScheme.primary,
-                    arcBackgroundColor:
-                        Theme.of(context).colorScheme.primary.withAlpha(50),
+                    progressColor: progressColor,
+                    arcBackgroundColor: progressColor.withAlpha(50),
                     center: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         AnimatedFlipCounter(
                             duration: const Duration(milliseconds: 1000),
-                            value: kcalLeftLabel.toInt(),
+                            value: widget.totalKcalLeft.toInt(),
                             textStyle: Theme.of(context)
                                 .textTheme
                                 .headlineMedium
                                 ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.onSurface,
+                                    color: centerColor,
                                     letterSpacing: -1)),
                         Text(
-                          S.of(context).kcalLeftLabel,
+                          centerLabel,
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
                               ?.copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface),
+                                  color: centerColor),
                         )
                       ],
                     ),

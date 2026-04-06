@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
@@ -83,14 +84,20 @@ class MealDetailBottomSheet extends StatelessWidget {
                           const SizedBox(width: 16.0),
                           Expanded(
                               child: DropdownButtonFormField(
+                                  key: ValueKey(selectedUnit),
                                   isExpanded: true,
-                                  value: selectedUnit,
+                                  initialValue: selectedUnit,
                                   decoration: InputDecoration(
                                       border: const OutlineInputBorder(),
                                       labelText: S.of(context).unitLabel),
                                   items: <DropdownMenuItem<String>>[
                                     if (product.hasServingValues)
                                       _getServingDropdownItem(context),
+                                    if (MealPortionHelper.supportsSpoonUnits(
+                                        product)) ...[
+                                      _getTablespoonDropdownItem(),
+                                      _getTeaspoonDropdownItem(),
+                                    ],
                                     if (product.isSolid ||
                                         !product.isLiquid && !product.isSolid)
                                       ..._getSolidUnitDropdownItems(context),
@@ -182,10 +189,32 @@ class MealDetailBottomSheet extends StatelessWidget {
     return DropdownMenuItem(
       value: UnitDropdownItem.serving.toString(),
       child: Text(
-          product.servingSize ??
-              '${S.of(context).servingLabel} (${product.servingQuantity} ${product.servingUnit})',
+          MealPortionHelper.dropdownLabel(
+              product, UnitDropdownItem.serving.toString()),
           overflow: TextOverflow.ellipsis,
           maxLines: 1),
+    );
+  }
+
+  DropdownMenuItem<String> _getTablespoonDropdownItem() {
+    return DropdownMenuItem(
+      value: UnitDropdownItem.tbsp.toString(),
+      child: Text(
+        MealPortionHelper.dropdownLabel(product, UnitDropdownItem.tbsp.toString()),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
+    );
+  }
+
+  DropdownMenuItem<String> _getTeaspoonDropdownItem() {
+    return DropdownMenuItem(
+      value: UnitDropdownItem.tsp.toString(),
+      child: Text(
+        MealPortionHelper.dropdownLabel(product, UnitDropdownItem.tsp.toString()),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
     );
   }
 
