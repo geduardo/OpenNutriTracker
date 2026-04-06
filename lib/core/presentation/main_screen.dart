@@ -6,6 +6,7 @@ import 'package:opennutritracker/features/food_library/food_library_page.dart';
 import 'package:opennutritracker/features/home/home_page.dart';
 import 'package:opennutritracker/core/presentation/widgets/main_appbar.dart';
 import 'package:opennutritracker/features/profile/profile_page.dart';
+import 'package:opennutritracker/features/strategy/presentation/pages/strategy_page.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class MainScreen extends StatefulWidget {
@@ -26,12 +27,14 @@ class _MainScreenState extends State<MainScreen> {
     _bodyPages = [
       const HomePage(),
       const FoodLibraryPage(),
+      const StrategyPage(),
       const DiaryPage(),
       const ProfilePage(),
     ];
     _appbarPages = [
       const HomeAppbar(),
       MainAppbar(title: 'My Foods', iconData: Icons.restaurant_menu),
+      MainAppbar(title: 'Strategy', iconData: Icons.insights),
       MainAppbar(title: S.of(context).diaryLabel, iconData: Icons.book),
       MainAppbar(
           title: S.of(context).profileLabel, iconData: Icons.account_circle)
@@ -67,11 +70,16 @@ class _MainScreenState extends State<MainScreen> {
               label: 'My Foods'),
           NavigationDestination(
               icon: _selectedPageIndex == 2
+                  ? const Icon(Icons.insights)
+                  : const Icon(Icons.insights_outlined),
+              label: 'Strategy'),
+          NavigationDestination(
+              icon: _selectedPageIndex == 3
                   ? const Icon(Icons.book)
                   : const Icon((Icons.book_outlined)),
               label: S.of(context).diaryLabel),
           NavigationDestination(
-              icon: _selectedPageIndex == 3
+              icon: _selectedPageIndex == 4
                   ? const Icon(Icons.account_circle)
                   : const Icon(Icons.account_circle_outlined),
               label: S.of(context).profileLabel)

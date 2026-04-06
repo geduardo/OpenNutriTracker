@@ -16,7 +16,7 @@
                 "file": "Project.canvas",
                 "viewState": {
                   "x": 567.9345916346524,
-                  "y": 1501.1283168133552,
+                  "y": 2361.4825337372786,
                   "zoom": -0.7945906657525798
                 }
               },
@@ -189,17 +189,17 @@
   },
   "active": "94cf316fbe2d7bf0",
   "lastOpenFiles": [
+    "lib/features/strategy/presentation/pages/strategy_page.dart",
+    "lib/features/strategy/presentation/pages/weight_entry_page.dart",
+    "lib/features/strategy/presentation/pages",
+    "lib/features/strategy/presentation/widgets",
+    "lib/features/strategy/presentation",
     "lib/core/utils/hive_db_provider.dart.tmp.42112.1775470809319",
     "lib/core/utils/hive_db_provider.dart.tmp.42112.1775470794391",
     "lib/features/strategy/domain/service/macro_program_service.dart",
     "lib/features/strategy/domain/service/weekly_calorie_controller.dart",
     "lib/features/strategy/data/dbo/check_in_record_dbo_adapter.dart",
     "lib/features/strategy/data/dbo/check_in_record_dbo.dart",
-    "lib/core/utils/locator.dart.tmp.42112.1775470616193",
-    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775470578680",
-    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775470550714",
-    "lib/features/strategy/domain/service/expenditure_estimator_service.dart",
-    "lib/features/strategy/data/data_source/expenditure_state_data_source.dart",
     "docs/adaptive-calorie-control-theory.md",
     "docs/adaptive-calorie-engine-plan.md",
     "Project.canvas",
