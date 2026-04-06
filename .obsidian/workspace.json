@@ -189,6 +189,8 @@
   },
   "active": "94cf316fbe2d7bf0",
   "lastOpenFiles": [
+    "lib/features/add_meal/presentation/ai_result_screen.dart.tmp.25280.1775436326042",
+    "lib/features/add_meal/presentation/ai_result_screen.dart.tmp.25280.1775436312377",
     "lib/features/food_library/preset_detail_page.dart.tmp.25280.1775435800730",
     "lib/features/food_library/preset_detail_page.dart.tmp.25280.1775435696300",
     "build/752f82b9",
@@ -198,8 +200,6 @@
     "build/app/intermediates/flutter/debug/flutter_assets/shaders/ink_sparkle.frag.spirv",
     "build/app/intermediates/flutter/debug/flutter_assets/bcdd3530",
     "lib/core/presentation/main_screen.dart.tmp.25280.1775435283369",
-    "lib/features/food_library/preset_detail_page.dart",
-    "build/package_info_plus/intermediates/annotations_typedef_file/debug/extractDebugAnnotations/typedefs.txt",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_banner_top.png",
     "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/launcher_icon.png",
     "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xhdpi-v4/ic_launcher.png",

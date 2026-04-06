@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
+import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
@@ -238,6 +240,84 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
   }
 
   Future<void> _addItemToPreset() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('Pick from existing foods'),
+              onTap: () => Navigator.pop(ctx, 'existing'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Create manually'),
+              onTap: () => Navigator.pop(ctx, 'manual'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == null || !mounted) return;
+
+    if (choice == 'existing') {
+      await _addExistingFoodToPreset();
+    } else {
+      await _addManualItemToPreset();
+    }
+  }
+
+  Future<void> _addExistingFoodToPreset() async {
+    // Load all available foods
+    final intakeDataSource = locator<IntakeDataSource>();
+    final localFoodDataSource = locator<LocalFoodDataSource>();
+
+    final recentIntakes = await intakeDataSource.getRecentlyAddedIntake(number: 200);
+    final localFoods = await localFoodDataSource.getAllLocalFoods();
+
+    final seen = <String>{};
+    final allFoods = <MealEntity>[];
+    for (final dbo in localFoods) {
+      final meal = MealEntity.fromMealDBO(dbo);
+      final key = meal.code ?? meal.name ?? '';
+      if (key.isNotEmpty && seen.add(key)) allFoods.add(meal);
+    }
+    for (final dbo in recentIntakes) {
+      final meal = MealEntity.fromMealDBO(dbo.meal);
+      final key = meal.code ?? meal.name ?? '';
+      if (key.isNotEmpty && seen.add(key)) allFoods.add(meal);
+    }
+
+    if (!mounted) return;
+
+    final result = await showModalBottomSheet<_FoodPickResult>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _FoodPickerSheet(foods: allFoods),
+    );
+
+    if (result == null || !mounted) return;
+
+    final updatedItems = List<MealPresetItemDBO>.from(_preset.items)
+      ..add(MealPresetItemDBO(
+        meal: MealDBO.fromMealEntity(result.food),
+        amount: result.amount,
+        unit: 'g',
+      ));
+
+    final updated = MealPresetDBO(
+      id: _preset.id,
+      name: _preset.name,
+      items: updatedItems,
+    );
+    await locator<MealPresetDataSource>().updatePreset(updated);
+    setState(() => _preset = updated);
+  }
+
+  Future<void> _addManualItemToPreset() async {
     final nameController = TextEditingController();
     final amountController = TextEditingController(text: '100');
     final kcalController = TextEditingController();
@@ -248,7 +328,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add item'),
+        title: const Text('Add item manually'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -266,67 +346,40 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                     labelText: 'Amount (g)', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: kcalController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                          labelText: 'kcal/100g', border: OutlineInputBorder(), isDense: true),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: proteinController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                          labelText: 'P g/100g', border: OutlineInputBorder(), isDense: true),
-                    ),
-                  ),
-                ],
-              ),
+              Row(children: [
+                Expanded(child: TextField(
+                  controller: kcalController, keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'kcal/100g', border: OutlineInputBorder(), isDense: true),
+                )),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(
+                  controller: proteinController, keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'P g/100g', border: OutlineInputBorder(), isDense: true),
+                )),
+              ]),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: carbsController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                          labelText: 'C g/100g', border: OutlineInputBorder(), isDense: true),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: fatController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                          labelText: 'F g/100g', border: OutlineInputBorder(), isDense: true),
-                    ),
-                  ),
-                ],
-              ),
+              Row(children: [
+                Expanded(child: TextField(
+                  controller: carbsController, keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'C g/100g', border: OutlineInputBorder(), isDense: true),
+                )),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(
+                  controller: fatController, keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'F g/100g', border: OutlineInputBorder(), isDense: true),
+                )),
+              ]),
             ],
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.of(ctx).dialogCancelLabel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(S.of(ctx).addLabel),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.of(ctx).dialogCancelLabel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(S.of(ctx).addLabel)),
         ],
       ),
     );
 
     if (confirmed != true) return;
-
     final name = nameController.text.trim();
     if (name.isEmpty) return;
 
@@ -335,25 +388,15 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       proteins100: double.tryParse(proteinController.text),
       carbohydrates100: double.tryParse(carbsController.text),
       fat100: double.tryParse(fatController.text),
-      sugars100: null,
-      saturatedFat100: null,
-      fiber100: null,
+      sugars100: null, saturatedFat100: null, fiber100: null,
     );
 
     final meal = MealEntity(
-      code: null,
-      name: name,
-      brands: null,
-      url: null,
-      thumbnailImageUrl: null,
-      mainImageUrl: null,
-      mealQuantity: null,
-      mealUnit: 'g',
-      servingQuantity: null,
-      servingUnit: null,
-      servingSize: null,
-      nutriments: nutriments,
-      source: MealSourceEntity.custom,
+      code: null, name: name, brands: null, url: null,
+      thumbnailImageUrl: null, mainImageUrl: null,
+      mealQuantity: null, mealUnit: 'g',
+      servingQuantity: null, servingUnit: null, servingSize: null,
+      nutriments: nutriments, source: MealSourceEntity.custom,
     );
 
     final updatedItems = List<MealPresetItemDBO>.from(_preset.items)
@@ -363,11 +406,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
         unit: 'g',
       ));
 
-    final updated = MealPresetDBO(
-      id: _preset.id,
-      name: _preset.name,
-      items: updatedItems,
-    );
+    final updated = MealPresetDBO(id: _preset.id, name: _preset.name, items: updatedItems);
     await locator<MealPresetDataSource>().updatePreset(updated);
     setState(() => _preset = updated);
   }
@@ -487,6 +526,16 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
         items: newItems,
       );
       await locator<MealPresetDataSource>().updatePreset(updated);
+      // Save each AI item to local food DB so it appears in My Foods
+      final localFoodDataSource = locator<LocalFoodDataSource>();
+      for (final item in newItems) {
+        final meal = MealEntity.fromMealDBO(item.meal);
+        final key = meal.name ?? '';
+        if (key.isNotEmpty) {
+          await localFoodDataSource.saveFood(key, item.meal);
+        }
+      }
+
       _nameController.text = newName;
       setState(() => _preset = updated);
 
@@ -501,6 +550,114 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           SnackBar(content: Text('AI error: $e')),
         );
       }
+    }
+  }
+}
+
+class _FoodPickResult {
+  final MealEntity food;
+  final double amount;
+
+  _FoodPickResult(this.food, this.amount);
+}
+
+class _FoodPickerSheet extends StatefulWidget {
+  final List<MealEntity> foods;
+
+  const _FoodPickerSheet({required this.foods});
+
+  @override
+  State<_FoodPickerSheet> createState() => _FoodPickerSheetState();
+}
+
+class _FoodPickerSheetState extends State<_FoodPickerSheet> {
+  String _query = '';
+
+  List<MealEntity> get _filtered {
+    if (_query.isEmpty) return widget.foods;
+    final q = _query.toLowerCase();
+    return widget.foods
+        .where((f) =>
+            (f.name ?? '').toLowerCase().contains(q) ||
+            (f.brands ?? '').toLowerCase().contains(q))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.7,
+      maxChildSize: 0.9,
+      builder: (ctx, scrollController) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              onChanged: (v) => setState(() => _query = v),
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Search foods...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                isDense: true,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              controller: scrollController,
+              itemCount: _filtered.length,
+              itemBuilder: (ctx, index) {
+                final food = _filtered[index];
+                return ListTile(
+                  title: Text(food.name ?? '?'),
+                  subtitle: Text(
+                      '${food.nutriments.energyKcal100?.toInt() ?? '?'} kcal/100g'),
+                  onTap: () => _pickAmount(food),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _pickAmount(MealEntity food) async {
+    final controller = TextEditingController(text: '100');
+
+    final amount = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(food.name ?? '?'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Amount',
+            suffixText: 'g',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(ctx, double.tryParse(controller.text)),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (amount != null && amount > 0 && mounted) {
+      Navigator.pop(context, _FoodPickResult(food, amount));
     }
   }
 }

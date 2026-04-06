@@ -6,6 +6,7 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
@@ -296,6 +297,16 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
     // Save preset
     await saveAsPreset(context, name, presetItems);
+
+    // Save each item to local food DB so they appear in My Foods
+    final localFoodDataSource = locator<LocalFoodDataSource>();
+    for (final presetItem in presetItems) {
+      final meal = MealEntity.fromMealDBO(presetItem.meal);
+      final key = meal.name ?? '';
+      if (key.isNotEmpty) {
+        await localFoodDataSource.saveFood(key, presetItem.meal);
+      }
+    }
 
     // Also log it now (same as _saveAll but with preset name as groupName)
     await _saveAllWithGroupName(name);
