@@ -15,6 +15,7 @@ import 'package:opennutritracker/core/data/dbo/user_gender_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_pal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_weight_goal_dbo.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/check_in_record_dbo.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/expenditure_state_dbo.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/goal_strategy_dbo.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/weight_entry_dbo.dart';
@@ -29,6 +30,7 @@ class HiveDBProvider extends ChangeNotifier {
   static const weightEntryBoxName = 'WeightEntryBox';
   static const expenditureStateBoxName = 'ExpenditureStateBox';
   static const goalStrategyBoxName = 'GoalStrategyBox';
+  static const checkInRecordBoxName = 'CheckInRecordBox';
 
   late Box<ConfigDBO> configBox;
   late Box<IntakeDBO> intakeBox;
@@ -39,6 +41,7 @@ class HiveDBProvider extends ChangeNotifier {
   late Box<WeightEntryDBO> weightEntryBox;
   late Box<ExpenditureStateDBO> expenditureStateBox;
   late Box<GoalStrategyDBO> goalStrategyBox;
+  late Box<CheckInRecordDBO> checkInRecordBox;
 
   Future<void> initHiveDB(Uint8List encryptionKey) async {
     final encryptionCypher = HiveAesCipher(encryptionKey);
@@ -65,6 +68,7 @@ class HiveDBProvider extends ChangeNotifier {
     Hive.registerAdapter(GoalStrategyDBOAdapter());
     Hive.registerAdapter(StrategyGoalModeDBOAdapter());
     Hive.registerAdapter(MacroProgramStyleDBOAdapter());
+    Hive.registerAdapter(CheckInRecordDBOAdapter());
 
     configBox =
         await Hive.openBox(configBoxName, encryptionCipher: encryptionCypher);
@@ -83,6 +87,8 @@ class HiveDBProvider extends ChangeNotifier {
     expenditureStateBox = await Hive.openBox(expenditureStateBoxName,
         encryptionCipher: encryptionCypher);
     goalStrategyBox = await Hive.openBox(goalStrategyBoxName,
+        encryptionCipher: encryptionCypher);
+    checkInRecordBox = await Hive.openBox(checkInRecordBoxName,
         encryptionCipher: encryptionCypher);
   }
 
