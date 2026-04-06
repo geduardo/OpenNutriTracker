@@ -95,7 +95,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: InkWell(
-        onTap: () => _logPreset(preset),
+        onTap: () => _showPresetDetail(preset),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -127,14 +127,107 @@ class _PresetsScreenState extends State<PresetsScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () => _deletePreset(preset),
+                icon: const Icon(Icons.add_circle_outline),
+                tooltip: 'Quick log',
+                onPressed: () => _logPreset(preset),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _showPresetDetail(MealPresetDBO preset) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _PresetDetailSheet(
+        preset: preset,
+        onLog: () {
+          Navigator.pop(ctx);
+          _logPreset(preset);
+        },
+        onDelete: () {
+          Navigator.pop(ctx);
+          _deletePreset(preset);
+        },
+        onRename: () async {
+          Navigator.pop(ctx);
+          await _renamePreset(preset);
+        },
+        onUpdateItem: (index, newAmount) async {
+          final dataSource = locator<MealPresetDataSource>();
+          final updatedItems = List<MealPresetItemDBO>.from(preset.items);
+          updatedItems[index] = MealPresetItemDBO(
+            meal: updatedItems[index].meal,
+            amount: newAmount,
+            unit: updatedItems[index].unit,
+          );
+          final updated = MealPresetDBO(
+            id: preset.id,
+            name: preset.name,
+            items: updatedItems,
+          );
+          await dataSource.updatePreset(updated);
+          _loadPresets();
+        },
+        onRemoveItem: (index) async {
+          final dataSource = locator<MealPresetDataSource>();
+          final updatedItems = List<MealPresetItemDBO>.from(preset.items);
+          updatedItems.removeAt(index);
+          if (updatedItems.isEmpty) {
+            await dataSource.deletePreset(preset.id);
+          } else {
+            final updated = MealPresetDBO(
+              id: preset.id,
+              name: preset.name,
+              items: updatedItems,
+            );
+            await dataSource.updatePreset(updated);
+          }
+          _loadPresets();
+        },
+      ),
+    );
+  }
+
+  Future<void> _renamePreset(MealPresetDBO preset) async {
+    final controller = TextEditingController(text: preset.name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename preset'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.of(ctx).dialogCancelLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty) {
+      final dataSource = locator<MealPresetDataSource>();
+      final updated = MealPresetDBO(
+        id: preset.id,
+        name: newName,
+        items: preset.items,
+      );
+      await dataSource.updatePreset(updated);
+      _loadPresets();
+    }
   }
 
   Future<void> _logPreset(MealPresetDBO preset) async {
@@ -239,4 +332,157 @@ class PresetsScreenArguments {
   final DateTime day;
 
   PresetsScreenArguments(this.mealType, this.day);
+}
+
+class _PresetDetailSheet extends StatefulWidget {
+  final MealPresetDBO preset;
+  final VoidCallback onLog;
+  final VoidCallback onDelete;
+  final VoidCallback onRename;
+  final Future<void> Function(int index, double newAmount) onUpdateItem;
+  final Future<void> Function(int index) onRemoveItem;
+
+  const _PresetDetailSheet({
+    required this.preset,
+    required this.onLog,
+    required this.onDelete,
+    required this.onRename,
+    required this.onUpdateItem,
+    required this.onRemoveItem,
+  });
+
+  @override
+  State<_PresetDetailSheet> createState() => _PresetDetailSheetState();
+}
+
+class _PresetDetailSheetState extends State<_PresetDetailSheet> {
+  @override
+  Widget build(BuildContext context) {
+    final totalKcal = widget.preset.items.fold<double>(0, (sum, item) {
+      final meal = MealEntity.fromMealDBO(item.meal);
+      return sum + (item.amount * (meal.nutriments.energyPerUnit ?? 0));
+    });
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.preset.name,
+                          style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                          '${widget.preset.items.length} items · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
+                          style: Theme.of(context).textTheme.bodyMedium),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Rename',
+                  onPressed: widget.onRename,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Delete',
+                  onPressed: widget.onDelete,
+                ),
+              ],
+            ),
+            const Divider(),
+
+            // Items list
+            ...widget.preset.items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final meal = MealEntity.fromMealDBO(item.meal);
+              final itemKcal = item.amount * (meal.nutriments.energyPerUnit ?? 0);
+
+              return ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(meal.name ?? '?'),
+                subtitle: Text(
+                    '${item.amount.toInt()}g · ${itemKcal.toInt()} kcal'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18),
+                      onPressed: () => _editItemAmount(index, item),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 18),
+                      onPressed: () {
+                        widget.onRemoveItem(index);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }),
+
+            const SizedBox(height: 16),
+
+            // Log button
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: widget.onLog,
+                icon: const Icon(Icons.add),
+                label: Text('Log ${widget.preset.name}'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _editItemAmount(int index, MealPresetItemDBO item) {
+    final controller =
+        TextEditingController(text: item.amount.toInt().toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(MealEntity.fromMealDBO(item.meal).name ?? '?'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(
+            suffixText: 'g',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.of(ctx).dialogCancelLabel),
+          ),
+          TextButton(
+            onPressed: () {
+              final newAmount = double.tryParse(controller.text);
+              if (newAmount != null && newAmount > 0) {
+                widget.onUpdateItem(index, newAmount);
+                Navigator.pop(ctx);
+                Navigator.pop(context); // close bottom sheet too
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
 }
