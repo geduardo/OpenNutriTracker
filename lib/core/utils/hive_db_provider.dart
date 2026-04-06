@@ -14,6 +14,8 @@ import 'package:opennutritracker/core/data/dbo/user_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_gender_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_pal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/user_weight_goal_dbo.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/weight_entry_dbo.dart';
 
 class HiveDBProvider extends ChangeNotifier {
   static const configBoxName = 'ConfigBox';
@@ -22,6 +24,7 @@ class HiveDBProvider extends ChangeNotifier {
   static const trackedDayBoxName = 'TrackedDayBox';
   static const mealPresetBoxName = 'MealPresetBox';
   static const localFoodBoxName = 'LocalFoodBox';
+  static const weightEntryBoxName = 'WeightEntryBox';
 
   late Box<ConfigDBO> configBox;
   late Box<IntakeDBO> intakeBox;
@@ -29,6 +32,7 @@ class HiveDBProvider extends ChangeNotifier {
   late Box<TrackedDayDBO> trackedDayBox;
   late Box<MealPresetDBO> mealPresetBox;
   late Box<MealDBO> localFoodBox;
+  late Box<WeightEntryDBO> weightEntryBox;
 
   Future<void> initHiveDB(Uint8List encryptionKey) async {
     final encryptionCypher = HiveAesCipher(encryptionKey);
@@ -47,6 +51,9 @@ class HiveDBProvider extends ChangeNotifier {
     Hive.registerAdapter(AppThemeDBOAdapter());
     Hive.registerAdapter(MealPresetDBOAdapter());
     Hive.registerAdapter(MealPresetItemDBOAdapter());
+    Hive.registerAdapter(WeightEntryDBOAdapter());
+    Hive.registerAdapter(WeightEntrySourceDBOAdapter());
+    Hive.registerAdapter(DayLogQualityDBOAdapter());
 
     configBox =
         await Hive.openBox(configBoxName, encryptionCipher: encryptionCypher);
@@ -59,6 +66,8 @@ class HiveDBProvider extends ChangeNotifier {
     mealPresetBox = await Hive.openBox(mealPresetBoxName,
         encryptionCipher: encryptionCypher);
     localFoodBox = await Hive.openBox(localFoodBoxName,
+        encryptionCipher: encryptionCypher);
+    weightEntryBox = await Hive.openBox(weightEntryBoxName,
         encryptionCipher: encryptionCypher);
   }
 

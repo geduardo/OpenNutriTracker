@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
+import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
 
 part 'tracked_day_dbo.g.dart';
 part 'tracked_day_dbo_adapter.dart';
@@ -27,6 +28,12 @@ class TrackedDayDBO extends HiveObject {
   @HiveField(8)
   double? proteinTracked;
 
+  @HiveField(9)
+  DayLogQualityDBO? logQuality;
+
+  @HiveField(10)
+  bool? manuallyMarked;
+
   TrackedDayDBO(
       {required this.day,
       required this.calorieGoal,
@@ -36,7 +43,9 @@ class TrackedDayDBO extends HiveObject {
       this.fatGoal,
       this.fatTracked,
       this.proteinGoal,
-      this.proteinTracked});
+      this.proteinTracked,
+      this.logQuality,
+      this.manuallyMarked});
 
   factory TrackedDayDBO.fromTrackedDayEntity(TrackedDayEntity entity) {
     return TrackedDayDBO(

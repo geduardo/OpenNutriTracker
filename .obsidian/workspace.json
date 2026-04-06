@@ -11,17 +11,14 @@
             "id": "94cf316fbe2d7bf0",
             "type": "leaf",
             "state": {
-              "type": "canvas",
+              "type": "markdown",
               "state": {
-                "file": "Project.canvas",
-                "viewState": {
-                  "x": 3517.329398149064,
-                  "y": 1714.3308389646822,
-                  "zoom": -0.8888888695126488
-                }
+                "file": "docs/adaptive-calorie-control-theory.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-layout-dashboard",
-              "title": "Project"
+              "icon": "lucide-file",
+              "title": "adaptive-calorie-control-theory"
             }
           }
         ]
@@ -97,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Project.canvas",
+                "file": "docs/adaptive-calorie-control-theory.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -107,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Project"
+              "title": "Backlinks for adaptive-calorie-control-theory"
             }
           },
           {
@@ -116,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Project.canvas",
+                "file": "docs/adaptive-calorie-control-theory.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Project"
+              "title": "Outgoing links from adaptive-calorie-control-theory"
             }
           },
           {
@@ -159,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Project.canvas",
+                "file": "docs/adaptive-calorie-control-theory.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Project"
+              "title": "Outline of adaptive-calorie-control-theory"
             }
           }
         ]
@@ -189,28 +186,30 @@
   },
   "active": "94cf316fbe2d7bf0",
   "lastOpenFiles": [
-    "lib/features/settings/presentation/bloc/export_import_bloc.dart.tmp.25280.1775437433865",
-    "lib/features/onboarding/domain/entity/user_activity_selection_entity.dart",
-    "lib/features/onboarding/domain/entity/user_activity_selection_entity.dart.tmp.25280.1775437349766",
-    "lib/features/diary/presentation/bloc/calendar_day_bloc.dart.tmp.25280.1775437102133",
-    "lib/features/diary/presentation/bloc/calendar_day_bloc.dart.tmp.25280.1775437090916",
-    "lib/features/diary/diary_page.dart.tmp.25280.1775437060813",
-    "lib/features/diary/diary_page.dart.tmp.25280.1775437055471",
-    "lib/features/home/presentation/widgets/dashboard_widget.dart.tmp.25280.1775437036832",
-    "lib/features/home/presentation/bloc/home_bloc.dart.tmp.25280.1775437021526",
-    "lib/features/home/presentation/bloc/home_bloc.dart.tmp.25280.1775437017450",
-    "lib/features/home/presentation/bloc/home_bloc.dart.tmp.25280.1775437004421",
+    "lib/core/utils/locator.dart.tmp.42112.1775470074925",
+    "lib/core/utils/migration_runner.dart.tmp.42112.1775470051184",
+    "lib/core/utils/migration_runner.dart.tmp.42112.1775470027014",
+    "lib/core/utils/locator.dart.tmp.42112.1775470003680",
+    "lib/core/utils/locator.dart.tmp.42112.1775469985080",
+    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775469966501",
+    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775469958390",
+    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775469946793",
+    "lib/core/data/dbo/tracked_day_dbo_adapter.dart.tmp.42112.1775469922924",
+    "lib/core/data/dbo/tracked_day_dbo_adapter.dart.tmp.42112.1775469915771",
+    "lib/core/data/dbo/tracked_day_dbo.dart.tmp.42112.1775469900343",
+    "docs/adaptive-calorie-engine-plan.md",
+    "docs/adaptive-calorie-control-theory.md",
+    "Project.canvas",
+    "GettingStarted.md",
+    "docs/figures/adaptive_control_maintenance_deadband.svg",
+    "docs/figures/adaptive_control_rate_limited_controller.svg",
+    "docs/figures/adaptive_control_expenditure_observer.svg",
+    "docs/figures/adaptive_control_weight_smoothing.svg",
     "build/app/intermediates/assets/debug/mergeDebugAssets/flutter_assets/assets/icon/ont_banner_top.png",
     "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/launcher_icon.png",
     "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xhdpi-v4/ic_launcher.png",
     "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxxhdpi-v4/launcher_icon.png",
     "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxxhdpi-v4/ic_launcher.png",
-    "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/ic_launcher.png",
-    "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xhdpi-v4/launcher_icon.png",
-    "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-mdpi-v4/launcher_icon.png",
-    "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-mdpi-v4/ic_launcher.png",
-    "build/app/intermediates/packaged_res/debug/packageDebugResources/drawable-xxxhdpi-v4/ic_launcher_foreground.png",
-    "GettingStarted.md",
-    "Project.canvas"
+    "build/app/intermediates/packaged_res/debug/packageDebugResources/mipmap-xxhdpi-v4/ic_launcher.png"
   ]
 }

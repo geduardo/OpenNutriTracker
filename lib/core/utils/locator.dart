@@ -3,6 +3,8 @@ import 'package:get_it/get_it.dart';
 import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/weight_entry_data_source.dart';
+import 'package:opennutritracker/features/strategy/data/repository/weight_entry_repository.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
@@ -171,9 +173,15 @@ Future<void> initLocator() async {
       () => MealPresetDataSource(hiveDBProvider.mealPresetBox));
   locator.registerLazySingleton(
       () => LocalFoodDataSource(hiveDBProvider.localFoodBox));
+  locator.registerLazySingleton(
+      () => WeightEntryDataSource(hiveDBProvider.weightEntryBox));
+
+  // Strategy repositories
+  locator.registerLazySingleton(
+      () => WeightEntryRepository(locator()));
 
   await _initializeConfig(locator());
-  await MigrationRunner(locator()).runMigrations();
+  await MigrationRunner(locator(), locator(), locator(), locator()).runMigrations();
 }
 
 Future<void> _initializeConfig(ConfigDataSource configDataSource) async {
