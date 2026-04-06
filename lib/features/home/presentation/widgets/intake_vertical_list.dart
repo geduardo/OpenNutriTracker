@@ -306,16 +306,45 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(group.name ?? 'Meal',
-                  style: Theme.of(ctx).textTheme.titleLarge),
-              Text('${group.totalKcal.toInt()} ${S.of(ctx).kcalLabel}',
-                  style: Theme.of(ctx).textTheme.bodyMedium),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(group.name ?? 'Meal',
+                            style: Theme.of(ctx).textTheme.titleLarge),
+                        Text('${group.totalKcal.toInt()} ${S.of(ctx).kcalLabel}',
+                            style: Theme.of(ctx).textTheme.bodyMedium),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      // Delete all intakes in the group
+                      for (final intake in group.intakes) {
+                        widget.onDeleteIntakeCallback(
+                            intake, widget.trackedDayEntity);
+                      }
+                    },
+                  ),
+                ],
+              ),
               const Divider(),
               ...group.intakes.map((intake) => ListTile(
                     dense: true,
                     title: Text(intake.meal.name ?? '?'),
+                    subtitle: Text(
+                        'P: ${intake.totalProteinsGram.toInt()}g  C: ${intake.totalCarbsGram.toInt()}g  F: ${intake.totalFatsGram.toInt()}g'),
                     trailing: Text(
                         '${intake.amount.toInt()}g · ${intake.totalKcal.toInt()} kcal'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      widget.onItemTappedCallback
+                          ?.call(context, intake, widget.usesImperialUnits);
+                    },
                   )),
             ],
           ),
