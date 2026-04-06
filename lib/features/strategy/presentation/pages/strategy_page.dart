@@ -49,21 +49,29 @@ class _StrategyPageState extends State<StrategyPage> {
         ? ExpenditureStateEntity.fromDBO(previousState)
         : null;
 
-    // Debug logging
-    debugPrint('Strategy: ${trackedDays.length} tracked days, ${weightEntries.length} weight entries');
-    final completeDays = trackedDays.where((d) => d.logQuality == DayLogQualityDBO.complete).length;
-    debugPrint('Strategy: $completeDays complete days, staticTDEE=$staticTdee');
+    // Only recompute if we haven't already computed today
+    final today = DateUtils.dateOnly(DateTime.now());
+    ExpenditureStateEntity state;
 
-    final state = ExpenditureEstimatorService.estimate(
-      trackedDays: trackedDays,
-      weightEntries: weightEntries,
-      previousEstimate: previous,
-      seedTdee: staticTdee,
-    );
-    debugPrint('Strategy: status=${state.status}, validDays=${state.validNutritionDays}, weighIns=${state.recentWeighInCount}, exp=${state.estimatedExpenditureKcal.toInt()}');
+    if (previous != null && DateUtils.dateOnly(previous.day) == today) {
+      // Already computed today — use saved state
+      state = previous;
+      debugPrint('Strategy: using cached estimate for today');
+    } else {
+      // New day or no prior state — recompute
+      debugPrint('Strategy: ${trackedDays.length} tracked days, ${weightEntries.length} weight entries');
 
-    // Persist the new state
-    await expDataSource.saveState(state.toDBO());
+      state = ExpenditureEstimatorService.estimate(
+        trackedDays: trackedDays,
+        weightEntries: weightEntries,
+        previousEstimate: previous,
+        seedTdee: staticTdee,
+      );
+      debugPrint('Strategy: status=${state.status}, validDays=${state.validNutritionDays}, weighIns=${state.recentWeighInCount}, exp=${state.estimatedExpenditureKcal.toInt()}');
+
+      // Persist the new state
+      await expDataSource.saveState(state.toDBO());
+    }
 
     final trendWeight = TrendWeightService.getLatestTrendWeight(weightEntries);
 

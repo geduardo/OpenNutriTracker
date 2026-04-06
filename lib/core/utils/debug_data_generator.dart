@@ -7,6 +7,7 @@ import 'package:opennutritracker/core/data/dbo/tracked_day_dbo.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/weight_entry_dbo.dart';
+import 'package:opennutritracker/features/strategy/data/data_source/expenditure_state_data_source.dart';
 import 'package:opennutritracker/features/strategy/data/data_source/weight_entry_data_source.dart';
 
 /// Generates 30 days of fake data for testing the adaptive calorie engine.
@@ -78,6 +79,13 @@ class DebugDataGenerator {
       }
     }
 
+    // Clear today's cached expenditure state so it recomputes
+    final expDataSource = locator<ExpenditureStateDataSource>();
+    final allStates = await expDataSource.getAllStates();
+    for (final s in allStates) {
+      s.delete();
+    }
+
     _log.info('Fake data generation complete: 30 days');
   }
 
@@ -103,6 +111,13 @@ class DebugDataGenerator {
     final days = await trackedDayDataSource.getAllTrackedDays();
     for (final day in days) {
       day.delete();
+    }
+
+    // Clear expenditure states
+    final expDataSource = locator<ExpenditureStateDataSource>();
+    final states = await expDataSource.getAllStates();
+    for (final s in states) {
+      s.delete();
     }
 
     _log.info('All data cleared');
