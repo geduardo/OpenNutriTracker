@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
+import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/features/food_library/food_detail_page.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -105,6 +110,24 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               ),
             );
           }),
+
+          const SizedBox(height: 16),
+
+          // Add item button
+          OutlinedButton.icon(
+            onPressed: _addItemToPreset,
+            icon: const Icon(Icons.add),
+            label: const Text('Add item'),
+          ),
+
+          const SizedBox(height: 12),
+
+          // AI edit button
+          OutlinedButton.icon(
+            onPressed: _aiEditPreset,
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('AI edit'),
+          ),
         ],
       ),
     );
@@ -211,6 +234,273 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     if (confirmed == true) {
       await locator<MealPresetDataSource>().deletePreset(_preset.id);
       if (mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> _addItemToPreset() async {
+    final nameController = TextEditingController();
+    final amountController = TextEditingController(text: '100');
+    final kcalController = TextEditingController();
+    final proteinController = TextEditingController();
+    final carbsController = TextEditingController();
+    final fatController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add item'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                    labelText: 'Name', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                    labelText: 'Amount (g)', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: kcalController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'kcal/100g', border: OutlineInputBorder(), isDense: true),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: proteinController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'P g/100g', border: OutlineInputBorder(), isDense: true),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: carbsController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'C g/100g', border: OutlineInputBorder(), isDense: true),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: fatController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          labelText: 'F g/100g', border: OutlineInputBorder(), isDense: true),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(S.of(ctx).dialogCancelLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(S.of(ctx).addLabel),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final name = nameController.text.trim();
+    if (name.isEmpty) return;
+
+    final nutriments = MealNutrimentsEntity(
+      energyKcal100: double.tryParse(kcalController.text),
+      proteins100: double.tryParse(proteinController.text),
+      carbohydrates100: double.tryParse(carbsController.text),
+      fat100: double.tryParse(fatController.text),
+      sugars100: null,
+      saturatedFat100: null,
+      fiber100: null,
+    );
+
+    final meal = MealEntity(
+      code: null,
+      name: name,
+      brands: null,
+      url: null,
+      thumbnailImageUrl: null,
+      mainImageUrl: null,
+      mealQuantity: null,
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: null,
+      servingSize: null,
+      nutriments: nutriments,
+      source: MealSourceEntity.custom,
+    );
+
+    final updatedItems = List<MealPresetItemDBO>.from(_preset.items)
+      ..add(MealPresetItemDBO(
+        meal: MealDBO.fromMealEntity(meal),
+        amount: double.tryParse(amountController.text) ?? 100,
+        unit: 'g',
+      ));
+
+    final updated = MealPresetDBO(
+      id: _preset.id,
+      name: _preset.name,
+      items: updatedItems,
+    );
+    await locator<MealPresetDataSource>().updatePreset(updated);
+    setState(() => _preset = updated);
+  }
+
+  Future<void> _aiEditPreset() async {
+    final controller = TextEditingController();
+
+    final instruction = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('AI Edit'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Describe what changes you want:',
+                style: Theme.of(ctx).textTheme.bodyMedium),
+            const SizedBox(height: 8),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'e.g. "double the rice", "remove butter", "add 50g cheese"',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.of(ctx).dialogCancelLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+
+    if (instruction == null || instruction.isEmpty || !mounted) return;
+
+    // Show loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI is editing your preset...')),
+    );
+
+    try {
+      final aiProvider = locator<AiProvider>();
+
+      // Build context about current preset
+      final currentItems = _preset.items.map((item) {
+        final meal = MealEntity.fromMealDBO(item.meal);
+        return '${meal.name}: ${item.amount}g (${meal.nutriments.energyKcal100?.toInt() ?? 0} kcal/100g, P:${meal.nutriments.proteins100?.toInt() ?? 0}g C:${meal.nutriments.carbohydrates100?.toInt() ?? 0}g F:${meal.nutriments.fat100?.toInt() ?? 0}g per 100g)';
+      }).join('\n');
+
+      final prompt =
+          'Current preset "${_preset.name}" contains:\n$currentItems\n\nUser wants: $instruction';
+
+      // Use text-only estimation
+      final response = await aiProvider.estimateFromPhoto(
+        Uint8List(0),
+        'text/plain',
+        clarificationAnswer: 'Return the COMPLETE updated ingredient list after applying changes. $prompt',
+      );
+
+      if (!mounted) return;
+
+      if (response.items.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI could not process the edit.')),
+        );
+        return;
+      }
+
+      // Rebuild preset from AI response
+      final newItems = response.items.map((item) {
+        final nutriments = MealNutrimentsEntity(
+          energyKcal100: item.per100g.energyKcal,
+          proteins100: item.per100g.proteinG,
+          carbohydrates100: item.per100g.carbohydratesG,
+          fat100: item.per100g.fatG,
+          sugars100: item.per100g.sugarsG,
+          saturatedFat100: item.per100g.saturatedFatG,
+          fiber100: item.per100g.fiberG,
+          sodiumMg100: item.per100g.sodiumMg,
+        );
+
+        final meal = MealEntity(
+          code: null,
+          name: item.name,
+          brands: null,
+          url: null,
+          thumbnailImageUrl: null,
+          mainImageUrl: null,
+          mealQuantity: null,
+          mealUnit: 'g',
+          servingQuantity: null,
+          servingUnit: null,
+          servingSize: null,
+          nutriments: nutriments,
+          source: MealSourceEntity.ai,
+        );
+
+        return MealPresetItemDBO(
+          meal: MealDBO.fromMealEntity(meal),
+          amount: item.estimatedWeightG,
+          unit: 'g',
+        );
+      }).toList();
+
+      final newName = response.mealName ?? _preset.name;
+      final updated = MealPresetDBO(
+        id: _preset.id,
+        name: newName,
+        items: newItems,
+      );
+      await locator<MealPresetDataSource>().updatePreset(updated);
+      _nameController.text = newName;
+      setState(() => _preset = updated);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Preset updated by AI!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI error: $e')),
+        );
+      }
     }
   }
 }

@@ -3,10 +3,18 @@ import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
+import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
+import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
+import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
+import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/food_library/food_detail_page.dart';
 import 'package:opennutritracker/features/food_library/preset_detail_page.dart';
+import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class FoodLibraryPage extends StatefulWidget {
@@ -158,7 +166,17 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
           title: Text(food.name ?? '?'),
           subtitle: Text(
               '${kcal?.toInt() ?? '?'} kcal/100g${food.brands != null ? ' · ${food.brands}' : ''}'),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                tooltip: 'Log this food',
+                onPressed: () => _quickLogFood(food),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
           onTap: () async {
             await Navigator.push(
               context,
@@ -166,7 +184,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
                 builder: (_) => FoodDetailPage(food: food),
               ),
             );
-            _loadData(); // Refresh in case something changed
+            _loadData();
           },
         );
       },
@@ -195,7 +213,17 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
           title: Text(preset.name),
           subtitle: Text(
               '${preset.items.length} items · ${totalKcal.toInt()} ${S.of(context).kcalLabel}'),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                tooltip: 'Log this preset',
+                onPressed: () => _quickLogPreset(preset),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
           onTap: () async {
             await Navigator.push(
               context,
@@ -208,5 +236,129 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
         );
       },
     );
+  }
+
+  Future<AddMealType?> _pickMealCategory() async {
+    return showModalBottomSheet<AddMealType>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.free_breakfast),
+              title: Text(S.of(ctx).breakfastLabel),
+              onTap: () => Navigator.pop(ctx, AddMealType.breakfastType),
+            ),
+            ListTile(
+              leading: const Icon(Icons.lunch_dining),
+              title: Text(S.of(ctx).lunchLabel),
+              onTap: () => Navigator.pop(ctx, AddMealType.lunchType),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dinner_dining),
+              title: Text(S.of(ctx).dinnerLabel),
+              onTap: () => Navigator.pop(ctx, AddMealType.dinnerType),
+            ),
+            ListTile(
+              leading: const Icon(Icons.icecream),
+              title: Text(S.of(ctx).snackLabel),
+              onTap: () => Navigator.pop(ctx, AddMealType.snackType),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _ensureTrackedDay(DateTime day) async {
+    final addTrackedDayUsecase = locator<AddTrackedDayUsecase>();
+    final hasTrackedDay = await addTrackedDayUsecase.hasTrackedDay(day);
+    if (!hasTrackedDay) {
+      final getKcalGoalUsecase = locator<GetKcalGoalUsecase>();
+      final getMacroGoalUsecase = locator<GetMacroGoalUsecase>();
+      final totalKcalGoal = await getKcalGoalUsecase.getKcalGoal();
+      final totalCarbsGoal = await getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
+      final totalFatGoal = await getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
+      final totalProteinGoal = await getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
+      await addTrackedDayUsecase.addNewTrackedDay(
+          day, totalKcalGoal, totalCarbsGoal, totalFatGoal, totalProteinGoal);
+    }
+  }
+
+  Future<void> _quickLogFood(MealEntity food) async {
+    final mealType = await _pickMealCategory();
+    if (mealType == null || !mounted) return;
+
+    final day = DateTime.now();
+    final addIntakeUsecase = locator<AddIntakeUsecase>();
+    final addTrackedDayUsecase = locator<AddTrackedDayUsecase>();
+
+    await _ensureTrackedDay(day);
+
+    final intake = IntakeEntity(
+      id: IdGenerator.getUniqueID(),
+      unit: 'g',
+      amount: 100,
+      type: mealType.getIntakeType(),
+      meal: food,
+      dateTime: day,
+    );
+
+    await addIntakeUsecase.addIntake(intake);
+    addTrackedDayUsecase.addDayCaloriesTracked(day, intake.totalKcal);
+    addTrackedDayUsecase.addDayMacrosTracked(day,
+        carbsTracked: intake.totalCarbsGram,
+        fatTracked: intake.totalFatsGram,
+        proteinTracked: intake.totalProteinsGram);
+
+    locator<HomeBloc>().add(const LoadItemsEvent());
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${food.name} added to ${mealType.getTypeName(context)}')),
+      );
+    }
+  }
+
+  Future<void> _quickLogPreset(MealPresetDBO preset) async {
+    final mealType = await _pickMealCategory();
+    if (mealType == null || !mounted) return;
+
+    final day = DateTime.now();
+    final addIntakeUsecase = locator<AddIntakeUsecase>();
+    final addTrackedDayUsecase = locator<AddTrackedDayUsecase>();
+    final groupId = IdGenerator.getUniqueID();
+
+    await _ensureTrackedDay(day);
+
+    for (final item in preset.items) {
+      final meal = MealEntity.fromMealDBO(item.meal);
+      final intake = IntakeEntity(
+        id: IdGenerator.getUniqueID(),
+        unit: item.unit,
+        amount: item.amount,
+        type: mealType.getIntakeType(),
+        meal: meal,
+        dateTime: day,
+        groupId: groupId,
+        groupName: preset.name,
+      );
+
+      await addIntakeUsecase.addIntake(intake);
+      addTrackedDayUsecase.addDayCaloriesTracked(day, intake.totalKcal);
+      addTrackedDayUsecase.addDayMacrosTracked(day,
+          carbsTracked: intake.totalCarbsGram,
+          fatTracked: intake.totalFatsGram,
+          proteinTracked: intake.totalProteinsGram);
+    }
+
+    locator<HomeBloc>().add(const LoadItemsEvent());
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${preset.name} added to ${mealType.getTypeName(context)}')),
+      );
+    }
   }
 }
