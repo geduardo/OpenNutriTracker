@@ -4,8 +4,6 @@ import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
-import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
-import 'package:opennutritracker/core/presentation/widgets/activity_vertial_list.dart';
 import 'package:opennutritracker/core/presentation/widgets/edit_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dart';
@@ -59,7 +57,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               state.totalKcalDaily,
               state.totalKcalLeft,
               state.totalKcalSupplied,
-              state.totalKcalBurned,
               state.totalCarbsIntake,
               state.totalFatsIntake,
               state.totalProteinsIntake,
@@ -70,7 +67,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               state.lunchIntakeList,
               state.dinnerIntakeList,
               state.snackIntakeList,
-              state.userActivityList,
               state.usesImperialUnits);
         } else {
           return _getLoadingContent();
@@ -100,7 +96,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       double totalKcalDaily,
       double totalKcalLeft,
       double totalKcalSupplied,
-      double totalKcalBurned,
       double totalCarbsIntake,
       double totalFatsIntake,
       double totalProteinsIntake,
@@ -111,7 +106,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       List<IntakeEntity> lunchIntakeList,
       List<IntakeEntity> dinnerIntakeList,
       List<IntakeEntity> snackIntakeList,
-      List<UserActivityEntity> userActivities,
       bool usesImperialUnits) {
     if (showDisclaimerDialog) {
       _showDisclaimerDialog(context);
@@ -122,19 +116,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           totalKcalDaily: totalKcalDaily,
           totalKcalLeft: totalKcalLeft,
           totalKcalSupplied: totalKcalSupplied,
-          totalKcalBurned: totalKcalBurned,
           totalCarbsIntake: totalCarbsIntake,
           totalFatsIntake: totalFatsIntake,
           totalProteinsIntake: totalProteinsIntake,
           totalCarbsGoal: totalCarbsGoal,
           totalFatsGoal: totalFatsGoal,
           totalProteinsGoal: totalProteinsGoal,
-        ),
-        ActivityVerticalList(
-          day: DateTime.now(),
-          title: S.of(context).activityLabel,
-          userActivityList: userActivities,
-          onItemLongPressedCallback: onActivityItemLongPressed,
         ),
         IntakeVerticalList(
           day: DateTime.now(),
@@ -211,21 +198,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               )))
     ]);
-  }
-
-  void onActivityItemLongPressed(
-      BuildContext context, UserActivityEntity activityEntity) async {
-    final deleteIntake = await showDialog<bool>(
-        context: context, builder: (context) => const DeleteDialog());
-
-    if (deleteIntake != null) {
-      _homeBloc.deleteUserActivityItem(activityEntity);
-      _homeBloc.add(const LoadItemsEvent());
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(S.of(context).itemDeletedSnackbar)));
-      }
-    }
   }
 
   void onIntakeItemLongPressed(

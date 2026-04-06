@@ -4,30 +4,22 @@ import 'package:opennutritracker/core/data/data_source/config_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
-import 'package:opennutritracker/core/data/data_source/physical_activity_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
-import 'package:opennutritracker/core/data/data_source/user_activity_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/intake_repository.dart';
-import 'package:opennutritracker/core/data/repository/physical_activity_repository.dart';
 import 'package:opennutritracker/core/data/repository/tracked_day_repository.dart';
-import 'package:opennutritracker/core/data/repository/user_activity_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/core/domain/usecase/add_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
-import 'package:opennutritracker/core/domain/usecase/add_user_activity_usercase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_user_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/delete_intake_usecase.dart';
-import 'package:opennutritracker/core/domain/usecase/delete_user_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
-import 'package:opennutritracker/core/domain/usecase/get_physical_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_tracked_day_usecase.dart';
-import 'package:opennutritracker/core/domain/usecase/get_user_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_user_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/utils/env.dart';
@@ -38,9 +30,6 @@ import 'package:opennutritracker/core/utils/hive_db_provider.dart';
 import 'package:opennutritracker/core/utils/migration_runner.dart';
 import 'package:opennutritracker/core/utils/ont_image_cache_manager.dart';
 import 'package:opennutritracker/core/utils/secure_app_storage_provider.dart';
-import 'package:opennutritracker/features/activity_detail/presentation/bloc/activity_detail_bloc.dart';
-import 'package:opennutritracker/features/add_activity/presentation/bloc/activities_bloc.dart';
-import 'package:opennutritracker/features/add_activity/presentation/bloc/recent_activities_bloc.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/fdc_data_source.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/off_data_source.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/sp_fdc_data_source.dart';
@@ -94,23 +83,16 @@ Future<void> initLocator() async {
       locator(),
       locator(),
       locator(),
-      locator(),
-      locator(),
       locator()));
   locator.registerLazySingleton(() => DiaryBloc(locator(), locator()));
   locator.registerLazySingleton(() => CalendarDayBloc(
-      locator(), locator(), locator(), locator(), locator(), locator()));
+      locator(), locator(), locator(), locator()));
   locator.registerLazySingleton<ProfileBloc>(
       () => ProfileBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerLazySingleton(() =>
       SettingsBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory(() => ExportImportBloc(locator(), locator()));
 
-  locator.registerFactory<ActivitiesBloc>(() => ActivitiesBloc(locator()));
-  locator.registerFactory<RecentActivitiesBloc>(
-      () => RecentActivitiesBloc(locator()));
-  locator.registerFactory<ActivityDetailBloc>(() => ActivityDetailBloc(
-      locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory<MealDetailBloc>(
       () => MealDetailBloc(locator(), locator(), locator(), locator(), locator()));
   locator.registerFactory<ScannerBloc>(() => ScannerBloc(locator(), locator()));
@@ -142,25 +124,17 @@ Future<void> initLocator() async {
       () => DeleteIntakeUsecase(locator()));
   locator.registerLazySingleton<UpdateIntakeUsecase>(
       () => UpdateIntakeUsecase(locator()));
-  locator.registerLazySingleton<GetUserActivityUsecase>(
-      () => GetUserActivityUsecase(locator()));
-  locator.registerLazySingleton<AddUserActivityUsecase>(
-      () => AddUserActivityUsecase(locator()));
-  locator.registerLazySingleton<DeleteUserActivityUsecase>(
-      () => DeleteUserActivityUsecase(locator()));
-  locator.registerLazySingleton<GetPhysicalActivityUsecase>(
-      () => GetPhysicalActivityUsecase(locator()));
   locator.registerLazySingleton<GetTrackedDayUsecase>(
       () => GetTrackedDayUsecase(locator()));
   locator.registerLazySingleton<AddTrackedDayUsecase>(
       () => AddTrackedDayUsecase(locator()));
   locator.registerLazySingleton(
-      () => GetKcalGoalUsecase(locator(), locator(), locator()));
+      () => GetKcalGoalUsecase(locator(), locator()));
   locator.registerLazySingleton(() => GetMacroGoalUsecase(locator()));
   locator.registerLazySingleton(
-      () => ExportDataUsecase(locator(), locator(), locator()));
+      () => ExportDataUsecase(locator(), locator()));
   locator.registerLazySingleton(
-      () => ImportDataUsecase(locator(), locator(), locator()));
+      () => ImportDataUsecase(locator(), locator()));
 
   // Repositories
   locator.registerLazySingleton(() => ConfigRepository(locator()));
@@ -170,10 +144,6 @@ Future<void> initLocator() async {
       () => IntakeRepository(locator()));
   locator.registerLazySingleton<ProductsRepository>(
       () => ProductsRepository(locator(), locator(), locator(), locator()));
-  locator.registerLazySingleton<UserActivityRepository>(
-      () => UserActivityRepository(locator()));
-  locator.registerLazySingleton<PhysicalActivityRepository>(
-      () => PhysicalActivityRepository(locator()));
   locator.registerLazySingleton<TrackedDayRepository>(
       () => TrackedDayRepository(locator()));
 
@@ -184,10 +154,6 @@ Future<void> initLocator() async {
       () => UserDataSource(hiveDBProvider.userBox));
   locator.registerLazySingleton<IntakeDataSource>(
       () => IntakeDataSource(hiveDBProvider.intakeBox));
-  locator.registerLazySingleton<UserActivityDataSource>(
-      () => UserActivityDataSource(hiveDBProvider.userActivityBox));
-  locator.registerLazySingleton<PhysicalActivityDataSource>(
-      () => PhysicalActivityDataSource());
   // AI Provider — uses Gemini by default, falls back to OpenAI if no Gemini key
   locator.registerLazySingleton<AiProvider>(() {
     if (Env.geminiApiKey.isNotEmpty) {

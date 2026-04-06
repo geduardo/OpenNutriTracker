@@ -2,19 +2,15 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
-import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/delete_intake_usecase.dart';
-import 'package:opennutritracker/core/domain/usecase/delete_user_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
-import 'package:opennutritracker/core/domain/usecase/get_user_activity_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
-import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
@@ -29,8 +25,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetIntakeUsecase _getIntakeUsecase;
   final DeleteIntakeUsecase _deleteIntakeUsecase;
   final UpdateIntakeUsecase _updateIntakeUsecase;
-  final GetUserActivityUsecase _getUserActivityUsecase;
-  final DeleteUserActivityUsecase _deleteUserActivityUsecase;
   final AddTrackedDayUsecase _addTrackedDayUseCase;
   final GetKcalGoalUsecase _getKcalGoalUsecase;
   final GetMacroGoalUsecase _getMacroGoalUsecase;
@@ -43,8 +37,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       this._getIntakeUsecase,
       this._deleteIntakeUsecase,
       this._updateIntakeUsecase,
-      this._getUserActivityUsecase,
-      this._deleteUserActivityUsecase,
       this._addTrackedDayUseCase,
       this._getKcalGoalUsecase,
       this._getMacroGoalUsecase)
@@ -99,11 +91,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           totalDinnerProteins +
           totalSnackProteins;
 
-      final userActivities =
-          await _getUserActivityUsecase.getTodayUserActivity();
-      final totalKcalActivities =
-          userActivities.map((activity) => activity.burnedKcal).toList().sum;
-
       final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal();
       final totalCarbsGoal =
           await _getMacroGoalUsecase.getCarbsGoal(totalKcalGoal);
@@ -120,7 +107,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           totalKcalDaily: totalKcalGoal,
           totalKcalLeft: totalKcalLeft,
           totalKcalSupplied: totalKcalIntake,
-          totalKcalBurned: totalKcalActivities,
           totalCarbsIntake: totalCarbsIntake,
           totalFatsIntake: totalFatsIntake,
           totalCarbsGoal: totalCarbsGoal,
@@ -131,7 +117,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           lunchIntakeList: lunchIntakeList,
           dinnerIntakeList: dinnerIntakeList,
           snackIntakeList: snackIntakeList,
-          userActivityList: userActivities,
           usesImperialUnits: usesImperialUnits));
     });
   }
@@ -197,24 +182,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         fatTracked: intakeEntity.totalFatsGram,
         proteinTracked: intakeEntity.totalProteinsGram);
 
-    _updateDiaryPage(dateTime);
-  }
-
-  Future<void> deleteUserActivityItem(UserActivityEntity activityEntity) async {
-    final dateTime = DateTime.now();
-    await _deleteUserActivityUsecase.deleteUserActivity(activityEntity);
-    _addTrackedDayUseCase.reduceDayCalorieGoal(
-        dateTime, activityEntity.burnedKcal);
-
-    final carbsAmount = MacroCalc.getTotalCarbsGoal(activityEntity.burnedKcal);
-    final fatAmount = MacroCalc.getTotalFatsGoal(activityEntity.burnedKcal);
-    final proteinAmount =
-        MacroCalc.getTotalProteinsGoal(activityEntity.burnedKcal);
-
-    _addTrackedDayUseCase.reduceDayMacroGoals(dateTime,
-        carbsAmount: carbsAmount,
-        fatAmount: fatAmount,
-        proteinAmount: proteinAmount);
     _updateDiaryPage(dateTime);
   }
 

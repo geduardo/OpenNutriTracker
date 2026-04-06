@@ -4,7 +4,6 @@ import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
-import 'package:opennutritracker/core/domain/entity/user_activity_entity.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
@@ -102,15 +101,12 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
               return DayInfoWidget(
                 trackedDayEntity: state.trackedDayEntity,
                 selectedDay: _selectedDate,
-                userActivities: state.userActivityList,
                 breakfastIntake: state.breakfastIntakeList,
                 lunchIntake: state.lunchIntakeList,
                 dinnerIntake: state.dinnerIntakeList,
                 snackIntake: state.snackIntakeList,
                 onDeleteIntake: _onDeleteIntakeItem,
-                onDeleteActivity: _onDeleteActivityItem,
                 onCopyIntake: _onCopyIntakeItem,
-                onCopyActivity: _onCopyActivityItem,
                 usesImperialUnits: usesImperialUnits,
               );
             }
@@ -125,19 +121,6 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
       IntakeEntity intakeEntity, TrackedDayEntity? trackedDayEntity) async {
     await _calendarDayBloc.deleteIntakeItem(
         context, intakeEntity, trackedDayEntity?.day ?? DateTime.now());
-    _diaryBloc.add(const LoadDiaryYearEvent());
-    _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
-    _diaryBloc.updateHomePage();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).itemDeletedSnackbar)));
-    }
-  }
-
-  void _onDeleteActivityItem(UserActivityEntity userActivityEntity,
-      TrackedDayEntity? trackedDayEntity) async {
-    await _calendarDayBloc.deleteUserActivityItem(
-        context, userActivityEntity, trackedDayEntity?.day ?? DateTime.now());
     _diaryBloc.add(const LoadDiaryYearEvent());
     _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
     _diaryBloc.updateHomePage();
@@ -163,11 +146,6 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
         intakeEntity.meal,
         DateTime.now());
     _diaryBloc.updateHomePage();
-  }
-
-  void _onCopyActivityItem(UserActivityEntity userActivityEntity,
-      TrackedDayEntity? trackedDayEntity) async {
-    log.info("Should copy activity");
   }
 
   void _onDateSelected(

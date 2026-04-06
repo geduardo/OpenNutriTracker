@@ -9,7 +9,6 @@ part 'export_import_state.dart';
 
 class ExportImportBloc extends Bloc<ExportImportEvent, ExportImportState> {
   static const exportZipFileName = 'opennutritracker-export.zip';
-  static const userActivityJsonFileName = 'user_activity.json';
   static const userIntakeJsonFileName = 'user_intake.json';
   static const trackedDayJsonFileName = 'user_tracked_day.json';
 
@@ -24,7 +23,6 @@ class ExportImportBloc extends Bloc<ExportImportEvent, ExportImportState> {
 
         final result = await _exportDataUsecase.exportData(
           exportZipFileName,
-          userActivityJsonFileName,
           userIntakeJsonFileName,
           trackedDayJsonFileName,
         );
@@ -44,7 +42,6 @@ class ExportImportBloc extends Bloc<ExportImportEvent, ExportImportState> {
         emit(ExportImportLoadingState());
 
         final result = await _importDataUsecase.importData(
-            userActivityJsonFileName,
             userIntakeJsonFileName,
             trackedDayJsonFileName);
         if (result) {
