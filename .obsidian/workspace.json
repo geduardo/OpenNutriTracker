@@ -11,14 +11,17 @@
             "id": "94cf316fbe2d7bf0",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "canvas",
               "state": {
-                "file": "docs/adaptive-calorie-control-theory.md",
-                "mode": "source",
-                "source": false
+                "file": "Project.canvas",
+                "viewState": {
+                  "x": 1126.7939431823063,
+                  "y": 1244.7407375208736,
+                  "zoom": -0.7945906657525798
+                }
               },
-              "icon": "lucide-file",
-              "title": "adaptive-calorie-control-theory"
+              "icon": "lucide-layout-dashboard",
+              "title": "Project"
             }
           }
         ]
@@ -94,7 +97,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/adaptive-calorie-control-theory.md",
+                "file": "Project.canvas",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +107,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for adaptive-calorie-control-theory"
+              "title": "Backlinks for Project"
             }
           },
           {
@@ -113,12 +116,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/adaptive-calorie-control-theory.md",
+                "file": "Project.canvas",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from adaptive-calorie-control-theory"
+              "title": "Outgoing links from Project"
             }
           },
           {
@@ -156,13 +159,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/adaptive-calorie-control-theory.md",
+                "file": "Project.canvas",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of adaptive-calorie-control-theory"
+              "title": "Outline of Project"
             }
           }
         ]
@@ -186,19 +189,19 @@
   },
   "active": "94cf316fbe2d7bf0",
   "lastOpenFiles": [
-    "lib/core/utils/locator.dart.tmp.42112.1775470074925",
-    "lib/core/utils/migration_runner.dart.tmp.42112.1775470051184",
-    "lib/core/utils/migration_runner.dart.tmp.42112.1775470027014",
-    "lib/core/utils/locator.dart.tmp.42112.1775470003680",
-    "lib/core/utils/locator.dart.tmp.42112.1775469985080",
-    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775469966501",
-    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775469958390",
-    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775469946793",
-    "lib/core/data/dbo/tracked_day_dbo_adapter.dart.tmp.42112.1775469922924",
-    "lib/core/data/dbo/tracked_day_dbo_adapter.dart.tmp.42112.1775469915771",
-    "lib/core/data/dbo/tracked_day_dbo.dart.tmp.42112.1775469900343",
-    "docs/adaptive-calorie-engine-plan.md",
+    "lib/core/utils/locator.dart.tmp.42112.1775470616193",
+    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775470578680",
+    "lib/core/utils/hive_db_provider.dart.tmp.42112.1775470550714",
+    "lib/features/strategy/domain/service/expenditure_estimator_service.dart",
+    "lib/features/strategy/data/data_source/expenditure_state_data_source.dart",
+    "lib/features/strategy/domain/entity/expenditure_state_entity.dart",
+    "lib/features/strategy/data/dbo/goal_strategy_dbo_adapter.dart",
+    "lib/features/strategy/data/dbo/goal_strategy_dbo.dart",
+    "lib/features/strategy/data/dbo/expenditure_state_dbo_adapter.dart",
+    "lib/features/strategy/data/dbo/expenditure_state_dbo.dart",
     "docs/adaptive-calorie-control-theory.md",
+    "lib/core/utils/locator.dart.tmp.42112.1775470074925",
+    "docs/adaptive-calorie-engine-plan.md",
     "Project.canvas",
     "GettingStarted.md",
     "docs/figures/adaptive_control_maintenance_deadband.svg",

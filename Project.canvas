@@ -82,8 +82,8 @@
 			"x": 80,
 			"y": 164,
 			"width": 420,
-			"height": 240,
-			"color": "5"
+			"height": 589,
+			"color": "4"
 		},
 		{
 			"id": "e0fb4738",
@@ -92,8 +92,8 @@
 			"x": 570,
 			"y": 164,
 			"width": 420,
-			"height": 180,
-			"color": "5"
+			"height": 516,
+			"color": "4"
 		},
 		{
 			"id": "4f627ba4",
@@ -103,6 +103,26 @@
 			"y": 1474,
 			"width": 420,
 			"height": 180,
+			"color": "0"
+		},
+		{
+			"id": "ec8aa5fb",
+			"type": "text",
+			"text": "## AS-03 Adaptive expenditure estimator\nEstimate expenditure from logged intake plus change in trend weight over a rolling window, with seeded startup behavior and holding/updating status when data quality is insufficient.\n\n### Changes\n- ExpenditureStateDBO (typeId 22) + ExpenditureStatusDBO (typeId 23) with adapters\n- GoalStrategyDBO (typeId 24) + StrategyGoalModeDBO (25) + MacroProgramStyleDBO (26)\n- ExpenditureStateDataSource: persist daily expenditure estimates\n- ExpenditureEstimatorService: 21-day energy balance, EMA smoothing (14-day half-life), confidence scoring, seeded/holding/updating state machine\n- ExpenditureStateEntity with DBO mapping\n- All registered in Hive + locator",
+			"x": 80,
+			"y": 1160,
+			"width": 420,
+			"height": 240,
+			"color": "5"
+		},
+		{
+			"id": "649512b0",
+			"type": "text",
+			"text": "## AS-05 Strategy integration and check-in flow\nReplace static TDEE-plus-offset targets with strategy-driven targets in use cases and add a minimal Strategy surface for expenditure, trend weight, and weekly check-ins.",
+			"x": 80,
+			"y": 1720,
+			"width": 420,
+			"height": 213,
 			"color": "0"
 		},
 		{
@@ -264,26 +284,6 @@
 			"width": 420,
 			"height": 276,
 			"color": "5"
-		},
-		{
-			"id": "ec8aa5fb",
-			"type": "text",
-			"text": "## AS-03 Adaptive expenditure estimator\nEstimate expenditure from logged intake plus change in trend weight over a rolling window, with seeded startup behavior and holding/updating status when data quality is insufficient.",
-			"x": 80,
-			"y": 1160,
-			"width": 420,
-			"height": 240,
-			"color": "0"
-		},
-		{
-			"id": "649512b0",
-			"type": "text",
-			"text": "## AS-05 Strategy integration and check-in flow\nReplace static TDEE-plus-offset targets with strategy-driven targets in use cases and add a minimal Strategy surface for expenditure, trend weight, and weekly check-ins.",
-			"x": 80,
-			"y": 1720,
-			"width": 420,
-			"height": 213,
-			"color": "0"
 		}
 	],
 	"edges": [
@@ -393,13 +393,6 @@
 			"toSide": "top"
 		},
 		{
-			"id": "edge-016",
-			"fromNode": "184fa73b",
-			"fromSide": "bottom",
-			"toNode": "ec8aa5fb",
-			"toSide": "top"
-		},
-		{
 			"id": "edge-017",
 			"fromNode": "e0fb4738",
 			"fromSide": "bottom",
@@ -418,6 +411,13 @@
 			"fromNode": "4f627ba4",
 			"fromSide": "bottom",
 			"toNode": "649512b0",
+			"toSide": "top"
+		},
+		{
+			"id": "edge-016",
+			"fromNode": "184fa73b",
+			"fromSide": "bottom",
+			"toNode": "ec8aa5fb",
 			"toSide": "top"
 		}
 	]
