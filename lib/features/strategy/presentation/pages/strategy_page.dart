@@ -7,6 +7,7 @@ import 'package:opennutritracker/features/strategy/data/repository/weight_entry_
 import 'package:opennutritracker/features/strategy/domain/entity/expenditure_state_entity.dart';
 import 'package:opennutritracker/features/strategy/domain/service/expenditure_estimator_service.dart';
 import 'package:opennutritracker/features/strategy/domain/service/trend_weight_service.dart';
+import 'package:opennutritracker/core/utils/debug_data_generator.dart';
 import 'package:opennutritracker/features/strategy/presentation/pages/weight_entry_page.dart';
 
 class StrategyPage extends StatefulWidget {
@@ -146,6 +147,61 @@ class _StrategyPageState extends State<StrategyPage> {
               icon: const Icon(Icons.monitor_weight),
               label: Text('Weight History ($_totalWeighIns entries)'),
             ),
+          ),
+          const SizedBox(height: 24),
+
+          // Debug section
+          Text('Debug', style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.outline)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await DebugDataGenerator.generate30Days();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('30 days of fake data generated')),
+                      );
+                      _computeState();
+                    }
+                  },
+                  icon: const Icon(Icons.science, size: 18),
+                  label: const Text('Generate 30d'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Clear all data?'),
+                        content: const Text('This deletes ALL weight entries and tracked days.'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Clear')),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true && mounted) {
+                      await DebugDataGenerator.clearAllData();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('All data cleared')),
+                      );
+                      _computeState();
+                    }
+                  },
+                  icon: const Icon(Icons.delete_sweep, size: 18),
+                  label: const Text('Clear all'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
