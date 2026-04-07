@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_or_delete_dialog.dart';
@@ -43,131 +42,110 @@ class DayInfoWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(DateFormat.yMMMMEEEEd().format(selectedDay),
-              style: Theme.of(context).textTheme.headlineSmall),
-        ),
-        const SizedBox(height: 8.0),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            trackedDay == null
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(S.of(context).nothingAddedLabel,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7))),
-                  )
-                : const SizedBox(),
-            trackedDay != null
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Card(
-                          elevation: 0.0,
-                          margin: const EdgeInsets.all(0.0),
-                          color: trackedDayEntity
-                              ?.getRatingDayTextBackgroundColor(context),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
-                            child: Text(
-                              _getCaloriesTrackedDisplayString(trackedDay),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                      color: trackedDayEntity
-                                          ?.getRatingDayTextColor(context),
-                                      fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4.0),
-                        Text(_getMacroTrackedDisplayString(trackedDay),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.7))),
-                      ],
+        if (trackedDay == null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(S.of(context).nothingAddedLabel,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7))),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Card(
+                  elevation: 0.0,
+                  margin: const EdgeInsets.all(0.0),
+                  color: trackedDay.getRatingDayTextBackgroundColor(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 8.0),
+                    child: Text(
+                      _getCaloriesTrackedDisplayString(trackedDay),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                              color:
+                                  trackedDay.getRatingDayTextColor(context),
+                              fontWeight: FontWeight.bold),
                     ),
-                  )
-                : const SizedBox(),
-            const SizedBox(height: 8.0),
-            IntakeVerticalList(
-              day: selectedDay,
-              title: S.of(context).breakfastLabel,
-              listIcon: Icons.bakery_dining_outlined,
-              addMealType: AddMealType.breakfastType,
-              intakeList: breakfastIntake,
-              onDeleteIntakeCallback: onDeleteIntake,
-              onItemLongPressedCallback: onIntakeItemLongPressed,
-              onCopyIntakeCallback:
-                  DateUtils.isSameDay(selectedDay, DateTime.now())
-                      ? null
-                      : onCopyIntake,
-              usesImperialUnits: usesImperialUnits,
-              trackedDayEntity: trackedDay,
+                  ),
+                ),
+                const SizedBox(height: 4.0),
+                Text(_getMacroTrackedDisplayString(trackedDay),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7))),
+              ],
             ),
-            IntakeVerticalList(
-              day: selectedDay,
-              title: S.of(context).lunchLabel,
-              listIcon: Icons.lunch_dining_outlined,
-              addMealType: AddMealType.lunchType,
-              intakeList: lunchIntake,
-              onDeleteIntakeCallback: onDeleteIntake,
-              onItemLongPressedCallback: onIntakeItemLongPressed,
-              usesImperialUnits: usesImperialUnits,
-              onCopyIntakeCallback:
-                  DateUtils.isSameDay(selectedDay, DateTime.now())
-                      ? null
-                      : onCopyIntake,
-              trackedDayEntity: trackedDay,
-            ),
-            IntakeVerticalList(
-              day: selectedDay,
-              title: S.of(context).dinnerLabel,
-              listIcon: Icons.dinner_dining_outlined,
-              addMealType: AddMealType.dinnerType,
-              intakeList: dinnerIntake,
-              onDeleteIntakeCallback: onDeleteIntake,
-              onItemLongPressedCallback: onIntakeItemLongPressed,
-              onCopyIntakeCallback:
-                  DateUtils.isSameDay(selectedDay, DateTime.now())
-                      ? null
-                      : onCopyIntake,
-              usesImperialUnits: usesImperialUnits,
-            ),
-            IntakeVerticalList(
-              day: selectedDay,
-              title: S.of(context).snackLabel,
-              listIcon: CustomIcons.food_apple_outline,
-              addMealType: AddMealType.snackType,
-              intakeList: snackIntake,
-              onDeleteIntakeCallback: onDeleteIntake,
-              onItemLongPressedCallback: onIntakeItemLongPressed,
-              usesImperialUnits: usesImperialUnits,
-              onCopyIntakeCallback:
-                  DateUtils.isSameDay(selectedDay, DateTime.now())
-                      ? null
-                      : onCopyIntake,
-              trackedDayEntity: trackedDay,
-            ),
-            const SizedBox(height: 16.0)
-          ],
-        )
+          ),
+        const SizedBox(height: 8.0),
+        IntakeVerticalList(
+          day: selectedDay,
+          title: S.of(context).breakfastLabel,
+          listIcon: Icons.bakery_dining_outlined,
+          addMealType: AddMealType.breakfastType,
+          intakeList: breakfastIntake,
+          onDeleteIntakeCallback: onDeleteIntake,
+          onItemLongPressedCallback: onIntakeItemLongPressed,
+          onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
+              ? null
+              : onCopyIntake,
+          usesImperialUnits: usesImperialUnits,
+          trackedDayEntity: trackedDay,
+        ),
+        IntakeVerticalList(
+          day: selectedDay,
+          title: S.of(context).lunchLabel,
+          listIcon: Icons.lunch_dining_outlined,
+          addMealType: AddMealType.lunchType,
+          intakeList: lunchIntake,
+          onDeleteIntakeCallback: onDeleteIntake,
+          onItemLongPressedCallback: onIntakeItemLongPressed,
+          usesImperialUnits: usesImperialUnits,
+          onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
+              ? null
+              : onCopyIntake,
+          trackedDayEntity: trackedDay,
+        ),
+        IntakeVerticalList(
+          day: selectedDay,
+          title: S.of(context).dinnerLabel,
+          listIcon: Icons.dinner_dining_outlined,
+          addMealType: AddMealType.dinnerType,
+          intakeList: dinnerIntake,
+          onDeleteIntakeCallback: onDeleteIntake,
+          onItemLongPressedCallback: onIntakeItemLongPressed,
+          onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
+              ? null
+              : onCopyIntake,
+          usesImperialUnits: usesImperialUnits,
+        ),
+        IntakeVerticalList(
+          day: selectedDay,
+          title: S.of(context).snackLabel,
+          listIcon: CustomIcons.food_apple_outline,
+          addMealType: AddMealType.snackType,
+          intakeList: snackIntake,
+          onDeleteIntakeCallback: onDeleteIntake,
+          onItemLongPressedCallback: onIntakeItemLongPressed,
+          usesImperialUnits: usesImperialUnits,
+          onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
+              ? null
+              : onCopyIntake,
+          trackedDayEntity: trackedDay,
+        ),
+        const SizedBox(height: 16.0),
       ],
     );
   }

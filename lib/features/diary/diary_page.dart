@@ -8,6 +8,7 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
+import 'package:opennutritracker/features/diary/presentation/widgets/day_navigation_bar.dart';
 import 'package:opennutritracker/features/diary/presentation/widgets/diary_histogram_chart.dart';
 import 'package:opennutritracker/features/diary/presentation/widgets/day_info_widget.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
@@ -27,7 +28,7 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
   late CalendarDayBloc _calendarDayBloc;
   late MealDetailBloc _mealDetailBloc;
 
-  var _selectedDate = DateTime.now();
+  var _selectedDate = DateUtils.dateOnly(DateTime.now());
 
   @override
   void initState() {
@@ -66,7 +67,12 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       log.info('App resumed');
-      _refreshPageOnDayChange();
+      // Snap back to today on resume — handles overnight rollover where the
+      // user left the app on "today" and the calendar day has since changed.
+      final today = DateUtils.dateOnly(DateTime.now());
+      setState(() => _selectedDate = today);
+      _calendarDayBloc.add(LoadCalendarDayEvent(today));
+      _diaryBloc.add(const LoadDiaryYearEvent());
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -78,38 +84,51 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
       Map<String, TrackedDayEntity> trackedDaysMap, bool usesImperialUnits) {
     return ListView(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: DiaryHistogramChart(
-            trackedDaysMap: trackedDaysMap,
-            selectedDate: _selectedDate,
-            onDateSelected: (date) => _onDateSelected(date, trackedDaysMap),
-          ),
+        DayNavigationBar(
+          selectedDate: _selectedDate,
+          onDateChanged: _selectDate,
         ),
-        const SizedBox(height: 16.0),
         BlocBuilder<CalendarDayBloc, CalendarDayState>(
           bloc: _calendarDayBloc,
           builder: (context, state) {
             if (state is CalendarDayInitial) {
               _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
             } else if (state is CalendarDayLoading) {
-              return _getLoadingContent();
+              // Fixed-height placeholder to prevent the histogram below from
+              // popping up during reloads (delete/copy/day-change).
+              return const SizedBox(
+                height: 480,
+                child: Center(child: CircularProgressIndicator()),
+              );
             } else if (state is CalendarDayLoaded) {
-              return DayInfoWidget(
-                trackedDayEntity: state.trackedDayEntity,
-                selectedDay: _selectedDate,
-                breakfastIntake: state.breakfastIntakeList,
-                lunchIntake: state.lunchIntakeList,
-                dinnerIntake: state.dinnerIntakeList,
-                snackIntake: state.snackIntakeList,
-                onDeleteIntake: _onDeleteIntakeItem,
-                onCopyIntake: _onCopyIntakeItem,
-                usesImperialUnits: usesImperialUnits,
+              return GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: _onMealsHorizontalDragEnd,
+                child: DayInfoWidget(
+                  trackedDayEntity: state.trackedDayEntity,
+                  selectedDay: _selectedDate,
+                  breakfastIntake: state.breakfastIntakeList,
+                  lunchIntake: state.lunchIntakeList,
+                  dinnerIntake: state.dinnerIntakeList,
+                  snackIntake: state.snackIntakeList,
+                  onDeleteIntake: _onDeleteIntakeItem,
+                  onCopyIntake: _onCopyIntakeItem,
+                  usesImperialUnits: usesImperialUnits,
+                ),
               );
             }
             return const SizedBox();
           },
-        )
+        ),
+        const SizedBox(height: 8.0),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: DiaryHistogramChart(
+            trackedDaysMap: trackedDaysMap,
+            selectedDate: _selectedDate,
+            onDateSelected: _selectDate,
+          ),
+        ),
       ],
     );
   }
@@ -145,18 +164,30 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
     _diaryBloc.updateHomePage();
   }
 
-  void _onDateSelected(
-      DateTime newDate, Map<String, TrackedDayEntity> trackedDaysMap) {
+  void _selectDate(DateTime newDate) {
+    final normalized = DateUtils.dateOnly(newDate);
+    if (DateUtils.isSameDay(normalized, _selectedDate)) {
+      return;
+    }
     setState(() {
-      _selectedDate = newDate;
-      _calendarDayBloc.add(LoadCalendarDayEvent(newDate));
+      _selectedDate = normalized;
     });
+    _calendarDayBloc.add(LoadCalendarDayEvent(normalized));
   }
 
-  void _refreshPageOnDayChange() {
-    if (DateUtils.isSameDay(_selectedDate, DateTime.now())) {
-      _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
-      _diaryBloc.add(const LoadDiaryYearEvent());
+  void _onMealsHorizontalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity;
+    if (velocity == null || velocity.abs() < 250) {
+      return;
     }
+    // Swipe left (negative velocity) → next day; swipe right → previous day.
+    final delta = velocity < 0 ? 1 : -1;
+    final today = DateUtils.dateOnly(DateTime.now());
+    if (delta > 0 && DateUtils.isSameDay(_selectedDate, today)) {
+      // Don't allow swiping into the future.
+      return;
+    }
+    final next = DateUtils.addDaysToDate(_selectedDate, delta);
+    _selectDate(next);
   }
 }

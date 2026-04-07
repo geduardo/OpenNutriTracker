@@ -89,29 +89,22 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Range selector + selected date
-        Row(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: HistogramRange.values.map((range) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: ChoiceChip(
-                        label: Text(range.label),
-                        selected: range == _range,
-                        onSelected: (_) => setState(() => _range = range),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    );
-                  }).toList(),
+        // Range selector
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: HistogramRange.values.map((range) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: ChoiceChip(
+                  label: Text(range.label),
+                  selected: range == _range,
+                  onSelected: (_) => setState(() => _range = range),
+                  visualDensity: VisualDensity.compact,
                 ),
-              ),
-            ),
-            _SelectedDateChip(date: selectedDay),
-          ],
+              );
+            }).toList(),
+          ),
         ),
         const SizedBox(height: 8),
 
@@ -606,31 +599,3 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
   }
 }
 
-class _SelectedDateChip extends StatelessWidget {
-  final DateTime date;
-  const _SelectedDateChip({required this.date});
-
-  @override
-  Widget build(BuildContext context) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final label =
-        '${weekdays[date.weekday - 1]}, ${date.day} ${months[date.month - 1]}';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
-  }
-}
