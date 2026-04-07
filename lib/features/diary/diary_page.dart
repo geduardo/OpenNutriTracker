@@ -29,6 +29,10 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
   late MealDetailBloc _mealDetailBloc;
 
   var _selectedDate = DateUtils.dateOnly(DateTime.now());
+  // +1 = new day is later than previous (slide in from right)
+  // -1 = new day is earlier than previous (slide in from left)
+  // 0 = first build / no animation
+  int _slideDirection = 0;
 
   @override
   void initState() {
@@ -36,6 +40,12 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
     _diaryBloc = locator<DiaryBloc>();
     _calendarDayBloc = locator<CalendarDayBloc>();
     _mealDetailBloc = locator<MealDetailBloc>();
+    // Both blocs are lazy singletons (see locator.dart) so they survive page
+    // recreations. Always force a fresh load on entry to avoid showing stale
+    // data from a previous diary visit (e.g. after meals were added via the
+    // home page in between).
+    _diaryBloc.add(const LoadDiaryYearEvent());
+    _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
     super.initState();
   }
 
@@ -49,10 +59,16 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return BlocBuilder<DiaryBloc, DiaryState>(
       bloc: _diaryBloc,
+      // Don't flash a full-screen spinner during silent refreshes — keep the
+      // previous loaded frame visible until the new data arrives.
+      buildWhen: (previous, current) {
+        if (current is DiaryLoadingState && previous is DiaryLoadedState) {
+          return false;
+        }
+        return true;
+      },
       builder: (context, state) {
-        if (state is DiaryInitial) {
-          _diaryBloc.add(const LoadDiaryYearEvent());
-        } else if (state is DiaryLoadingState) {
+        if (state is DiaryLoadingState || state is DiaryInitial) {
           return _getLoadingContent();
         } else if (state is DiaryLoadedState) {
           return _getLoadedContent(
@@ -70,7 +86,10 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
       // Snap back to today on resume — handles overnight rollover where the
       // user left the app on "today" and the calendar day has since changed.
       final today = DateUtils.dateOnly(DateTime.now());
-      setState(() => _selectedDate = today);
+      setState(() {
+        _slideDirection = 0;
+        _selectedDate = today;
+      });
       _calendarDayBloc.add(LoadCalendarDayEvent(today));
       _diaryBloc.add(const LoadDiaryYearEvent());
     }
@@ -90,12 +109,18 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
         ),
         BlocBuilder<CalendarDayBloc, CalendarDayState>(
           bloc: _calendarDayBloc,
+          // Same trick as the outer DiaryBloc — keep the previous loaded
+          // frame visible during a silent refresh on tab re-entry.
+          buildWhen: (previous, current) {
+            if (current is CalendarDayLoading && previous is CalendarDayLoaded) {
+              return false;
+            }
+            return true;
+          },
           builder: (context, state) {
-            if (state is CalendarDayInitial) {
-              _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
-            } else if (state is CalendarDayLoading) {
+            if (state is CalendarDayLoading || state is CalendarDayInitial) {
               // Fixed-height placeholder to prevent the histogram below from
-              // popping up during reloads (delete/copy/day-change).
+              // popping up during the first load.
               return const SizedBox(
                 height: 480,
                 child: Center(child: CircularProgressIndicator()),
@@ -104,16 +129,50 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
               return GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onHorizontalDragEnd: _onMealsHorizontalDragEnd,
-                child: DayInfoWidget(
-                  trackedDayEntity: state.trackedDayEntity,
-                  selectedDay: _selectedDate,
-                  breakfastIntake: state.breakfastIntakeList,
-                  lunchIntake: state.lunchIntakeList,
-                  dinnerIntake: state.dinnerIntakeList,
-                  snackIntake: state.snackIntakeList,
-                  onDeleteIntake: _onDeleteIntakeItem,
-                  onCopyIntake: _onCopyIntakeItem,
-                  usesImperialUnits: usesImperialUnits,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        ...previousChildren,
+                        if (currentChild != null) currentChild,
+                      ],
+                    );
+                  },
+                  transitionBuilder: (child, animation) {
+                    final dir = _slideDirection;
+                    final beginOffset = dir == 0
+                        ? Offset.zero
+                        : Offset(dir.toDouble() * 0.15, 0);
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: beginOffset,
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<String>(
+                        '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}'),
+                    child: DayInfoWidget(
+                      trackedDayEntity: state.trackedDayEntity,
+                      selectedDay: _selectedDate,
+                      breakfastIntake: state.breakfastIntakeList,
+                      lunchIntake: state.lunchIntakeList,
+                      dinnerIntake: state.dinnerIntakeList,
+                      snackIntake: state.snackIntakeList,
+                      onDeleteIntake: _onDeleteIntakeItem,
+                      onCopyIntake: _onCopyIntakeItem,
+                      usesImperialUnits: usesImperialUnits,
+                    ),
+                  ),
                 ),
               );
             }
@@ -154,13 +213,15 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
     } else {
       finalType = type.getIntakeType();
     }
-    _mealDetailBloc.addIntake(
+    await _mealDetailBloc.addIntake(
         context,
         intakeEntity.unit,
         intakeEntity.amount.toString(),
         finalType,
         intakeEntity.meal,
         DateTime.now());
+    _diaryBloc.add(const LoadDiaryYearEvent());
+    _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
     _diaryBloc.updateHomePage();
   }
 
@@ -169,7 +230,9 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
     if (DateUtils.isSameDay(normalized, _selectedDate)) {
       return;
     }
+    final direction = normalized.isAfter(_selectedDate) ? 1 : -1;
     setState(() {
+      _slideDirection = direction;
       _selectedDate = normalized;
     });
     _calendarDayBloc.add(LoadCalendarDayEvent(normalized));

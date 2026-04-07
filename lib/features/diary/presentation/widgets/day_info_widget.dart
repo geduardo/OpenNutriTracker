@@ -4,8 +4,10 @@ import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_or_delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
+import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 import 'package:opennutritracker/core/utils/custom_icons.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
+import 'package:opennutritracker/features/home/presentation/widgets/dashboard_widget.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/intake_vertical_list.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -39,6 +41,14 @@ class DayInfoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trackedDay = trackedDayEntity;
+    // Always compute the displayed totals from the loaded intake lists rather
+    // than reading the cached aggregate on TrackedDayEntity. The cache can
+    // drift out of sync with the actual intakes (rapid edit/delete sequences,
+    // crashes mid-update, legacy records without macro fields, etc.) and the
+    // home page never trusts it either — it sums on every render. Only the
+    // goals come from the cached entity.
+    final kcalSupplied = _sumKcal();
+    final kcalGoal = trackedDay?.calorieGoal ?? 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -53,41 +63,21 @@ class DayInfoWidget extends StatelessWidget {
                         .withValues(alpha: 0.7))),
           )
         else
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Card(
-                  elevation: 0.0,
-                  margin: const EdgeInsets.all(0.0),
-                  color: trackedDay.getRatingDayTextBackgroundColor(context),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 8.0),
-                    child: Text(
-                      _getCaloriesTrackedDisplayString(trackedDay),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(
-                              color:
-                                  trackedDay.getRatingDayTextColor(context),
-                              fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4.0),
-                Text(_getMacroTrackedDisplayString(trackedDay),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7))),
-              ],
-            ),
+          DashboardWidget(
+            showDateHeader: false,
+            totalKcalSupplied: kcalSupplied,
+            totalKcalDaily: kcalGoal,
+            totalKcalLeft: kcalGoal - kcalSupplied,
+            totalCarbsIntake: _sumCarbs(),
+            totalFatsIntake: _sumFats(),
+            totalProteinsIntake: _sumProteins(),
+            totalSugarsIntake: _sumSugars(),
+            totalSodiumIntake: _sumSodium(),
+            totalCarbsGoal: trackedDay.carbsGoal ?? 0,
+            totalFatsGoal: trackedDay.fatGoal ?? 0,
+            totalProteinsGoal: trackedDay.proteinGoal ?? 0,
+            totalSodiumGoal:
+                trackedDay.sodiumGoal ?? MacroCalc.defaultSodiumGoalMg,
           ),
         const SizedBox(height: 8.0),
         IntakeVerticalList(
@@ -150,43 +140,30 @@ class DayInfoWidget extends StatelessWidget {
     );
   }
 
-  String _getCaloriesTrackedDisplayString(TrackedDayEntity trackedDay) {
-    int caloriesTracked;
-    if (trackedDay.caloriesTracked.isNegative) {
-      caloriesTracked = 0;
-    } else {
-      caloriesTracked = trackedDay.caloriesTracked.toInt();
-    }
-
-    return '$caloriesTracked/${trackedDay.calorieGoal.toInt()} kcal';
+  Iterable<IntakeEntity> get _allIntakes sync* {
+    yield* breakfastIntake;
+    yield* lunchIntake;
+    yield* dinnerIntake;
+    yield* snackIntake;
   }
 
-  String _getMacroTrackedDisplayString(TrackedDayEntity trackedDay) {
-    final carbsTracked = trackedDay.carbsTracked?.floor().toString() ?? '?';
-    final fatTracked = trackedDay.fatTracked?.floor().toString() ?? '?';
-    final proteinTracked = trackedDay.proteinTracked?.floor().toString() ?? '?';
-    final sugarTracked = _getSugarTracked().floor();
+  double _sumKcal() =>
+      _allIntakes.fold<double>(0, (s, i) => s + i.totalKcal);
 
-    final carbsGoal = trackedDay.carbsGoal?.floor().toString() ?? '?';
-    final fatGoal = trackedDay.fatGoal?.floor().toString() ?? '?';
-    final proteinGoal = trackedDay.proteinGoal?.floor().toString() ?? '?';
+  double _sumCarbs() =>
+      _allIntakes.fold<double>(0, (s, i) => s + i.totalCarbsGram);
 
-    return 'Carbs: $carbsTracked/${carbsGoal}g (of which sugars: ${sugarTracked}g), Fat: $fatTracked/${fatGoal}g, Protein: $proteinTracked/${proteinGoal}g';
-  }
+  double _sumFats() =>
+      _allIntakes.fold<double>(0, (s, i) => s + i.totalFatsGram);
 
-  double _getSugarTracked() {
-    final allIntakes = [
-      ...breakfastIntake,
-      ...lunchIntake,
-      ...dinnerIntake,
-      ...snackIntake,
-    ];
+  double _sumProteins() =>
+      _allIntakes.fold<double>(0, (s, i) => s + i.totalProteinsGram);
 
-    return allIntakes.fold<double>(
-      0,
-      (sum, intake) => sum + intake.totalSugarsGram,
-    );
-  }
+  double _sumSugars() =>
+      _allIntakes.fold<double>(0, (s, i) => s + i.totalSugarsGram);
+
+  double _sumSodium() =>
+      _allIntakes.fold<double>(0, (s, i) => s + i.totalSodiumMg);
 
   void showCopyOrDeleteIntakeDialog(
       BuildContext context, IntakeEntity intakeEntity) async {

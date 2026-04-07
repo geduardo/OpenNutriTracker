@@ -16,9 +16,11 @@ class MealNutrimentsEntity extends Equatable {
   final double? saturatedFat100;
   final double? fiber100;
   final double? sodiumMg100;
+  final double? caffeineMg100;
 
   double? get energyPerUnit => _getValuePerUnit(energyKcal100);
   double? get sodiumMgPerUnit => _getValuePerUnit(sodiumMg100);
+  double? get caffeineMgPerUnit => _getValuePerUnit(caffeineMg100);
 
   double? get carbohydratesPerUnit => _getValuePerUnit(carbohydrates100);
 
@@ -36,7 +38,8 @@ class MealNutrimentsEntity extends Equatable {
       required this.sugars100,
       required this.saturatedFat100,
       required this.fiber100,
-      this.sodiumMg100});
+      this.sodiumMg100,
+      this.caffeineMg100});
 
   factory MealNutrimentsEntity.empty() => const MealNutrimentsEntity(
       energyKcal100: null,
@@ -46,7 +49,8 @@ class MealNutrimentsEntity extends Equatable {
       sugars100: null,
       saturatedFat100: null,
       fiber100: null,
-      sodiumMg100: null);
+      sodiumMg100: null,
+      caffeineMg100: null);
 
   factory MealNutrimentsEntity.fromMealNutrimentsDBO(
       MealNutrimentsDBO nutriments) {
@@ -58,7 +62,8 @@ class MealNutrimentsEntity extends Equatable {
         sugars100: nutriments.sugars100,
         saturatedFat100: nutriments.saturatedFat100,
         fiber100: nutriments.fiber100,
-        sodiumMg100: nutriments.sodiumMg100);
+        sodiumMg100: nutriments.sodiumMg100,
+        caffeineMg100: nutriments.caffeineMg100);
   }
 
   factory MealNutrimentsEntity.fromOffNutriments(
@@ -78,7 +83,9 @@ class MealNutrimentsEntity extends Equatable {
             (offNutriments.saturated_fat_100g as Object?).asDoubleOrNull(),
         fiber100: (offNutriments.fiber_100g as Object?).asDoubleOrNull(),
         sodiumMg100: _offSodiumToMg(
-            (offNutriments.sodium_100g as Object?).asDoubleOrNull()));
+            (offNutriments.sodium_100g as Object?).asDoubleOrNull()),
+        caffeineMg100:
+            (offNutriments.caffeine_100g as Object?).asDoubleOrNull());
   }
 
   /// OFF stores sodium in grams, convert to mg
@@ -138,6 +145,11 @@ class MealNutrimentsEntity extends Equatable {
             (nutriment) => nutriment.nutrientId == FDCConst.fdcTotalSodiumId)
         ?.amount;
 
+    final caffeineTotal = fdcNutriment
+        .firstWhereOrNull((nutriment) =>
+            nutriment.nutrientId == FDCConst.fdcTotalCaffeineId)
+        ?.amount;
+
     return MealNutrimentsEntity(
         energyKcal100: energyTotal,
         carbohydrates100: carbsTotal,
@@ -146,7 +158,8 @@ class MealNutrimentsEntity extends Equatable {
         sugars100: sugarTotal,
         saturatedFat100: saturatedFatTotal,
         fiber100: fiberTotal,
-        sodiumMg100: sodiumTotal);
+        sodiumMg100: sodiumTotal,
+        caffeineMg100: caffeineTotal);
   }
 
   static double? _getValuePerUnit(double? valuePer100) {

@@ -447,7 +447,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
             carbsTracked: intake.totalCarbsGram,
             fatTracked: intake.totalFatsGram,
             proteinTracked: intake.totalProteinsGram,
-            sodiumTracked: intake.totalSodiumMg);
+            sodiumTracked: intake.totalSodiumMg,
+            caffeineTracked: intake.totalCaffeineMg);
 
         // Save to local food DB so it appears in My Foods.
         // Strip the plate photo from individual ingredients — the photo
@@ -490,6 +491,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
       saturatedFat100: item.per100g.saturatedFatG,
       fiber100: item.per100g.fiberG,
       sodiumMg100: item.per100g.sodiumMg,
+      caffeineMg100: item.per100g.caffeineMg,
     );
 
     return MealEntity(

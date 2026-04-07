@@ -157,6 +157,11 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
             selectedDay, selectedTracked,
             (t) => t.sodiumTracked, (t) => t.sodiumGoal,
             unit: 'mg'),
+        const SizedBox(height: 12),
+        _buildMacroChart(context, 'Caffeine', _caffeineColor, days, dayData,
+            selectedDay, selectedTracked,
+            (t) => t.caffeineTracked, (t) => t.caffeineGoal,
+            unit: 'mg'),
       ],
     );
   }
@@ -203,7 +208,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
           barTouchData: _barTouchData(days),
           titlesData: _buildTitlesData(context, days, maxY, yStep),
           gridData: _buildGridData(context, yStep),
-          borderData: FlBorderData(show: false),
+          borderData: _buildBorderData(context),
           extraLinesData: ExtraLinesData(
             horizontalLines: [_goalLine(context, calorieGoal)],
           ),
@@ -337,7 +342,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
               barTouchData: _barTouchData(days),
               titlesData: _buildTitlesData(context, days, maxY, yStep),
               gridData: _buildGridData(context, yStep),
-              borderData: FlBorderData(show: false),
+              borderData: _buildBorderData(context),
               extraLinesData: goal > 0
                   ? ExtraLinesData(
                       horizontalLines: [_goalLine(context, goal)])
@@ -457,9 +462,20 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
           getTitlesWidget: (value, meta) {
             final i = value.toInt();
             if (i < 0 || i >= days.length) return const SizedBox();
-            if (i != 0 &&
-                i != days.length - 1 &&
-                i % _xLabelInterval != 0) {
+            final lastIdx = days.length - 1;
+            // Always show "today" (the last index) since it's the user's
+            // main reference point. Otherwise show every Nth day starting
+            // from index 0 — but suppress any stride label that would
+            // collide with "today" (closer than half the stride). This
+            // avoids the overlap that used to happen on 1M / 3M ranges
+            // where the last stride label (e.g. day 84) sat right next to
+            // "today" (day 89).
+            final isLast = i == lastIdx;
+            final isOnStride = i % _xLabelInterval == 0;
+            if (!isLast && !isOnStride) return const SizedBox();
+            if (!isLast &&
+                isOnStride &&
+                (lastIdx - i) < (_xLabelInterval / 2)) {
               return const SizedBox();
             }
             final day = days[i];
@@ -546,6 +562,23 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
     );
   }
 
+  /// Subtle rectangular frame around the plot area so the 0 baseline (bottom)
+  /// and the maxY ceiling (top) are visually anchored. Without this the bars
+  /// float in empty space and it's hard to gauge magnitudes.
+  FlBorderData _buildBorderData(BuildContext context) {
+    final outline =
+        Theme.of(context).colorScheme.outline.withValues(alpha: 0.45);
+    return FlBorderData(
+      show: true,
+      border: Border(
+        left: BorderSide(color: outline, width: 1),
+        bottom: BorderSide(color: outline, width: 1),
+        top: BorderSide(color: outline, width: 1),
+        right: BorderSide(color: outline, width: 1),
+      ),
+    );
+  }
+
   HorizontalLine _goalLine(BuildContext context, double y) {
     return HorizontalLine(
       y: y,
@@ -558,11 +591,18 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
 
   // ── Colors & legend ──────────────────────────────────────
 
-  Color _carbsColor(BuildContext context) =>
-      Theme.of(context).colorScheme.primary;
-  Color get _fatColor => Colors.amber.shade600;
-  Color get _proteinColor => Colors.green.shade400;
-  Color get _sodiumColor => Colors.deepPurple.shade300;
+  // Palette matches the home dashboard macro indicators so the two views
+  // read as the same visual language. Keep in sync with
+  // `macro_nutriments_widget.dart`.
+  static const Color _carbsColorConst = Color(0xFF4CAF50); // green
+  static const Color _fatColor = Color(0xFFFFB300); // amber
+  static const Color _proteinColor = Color(0xFFFF7043); // deep orange
+  static const Color _sodiumColor = Color(0xFF42A5F5); // blue
+  Color get _caffeineColor => Colors.brown.shade400;
+
+  // Kept as a method for call-site parity (unused BuildContext arg); returns
+  // the fixed palette color above.
+  Color _carbsColor(BuildContext context) => _carbsColorConst;
 
   Widget _legendSquare(BuildContext context, Color color, String label) {
     return Row(

@@ -17,6 +17,8 @@ class TrackedDayEntity extends Equatable {
   final double? proteinTracked;
   final double? sodiumGoal;
   final double? sodiumTracked;
+  final double? caffeineGoal;
+  final double? caffeineTracked;
 
   const TrackedDayEntity(
       {required this.day,
@@ -29,7 +31,9 @@ class TrackedDayEntity extends Equatable {
       this.proteinGoal,
       this.proteinTracked,
       this.sodiumGoal,
-      this.sodiumTracked});
+      this.sodiumTracked,
+      this.caffeineGoal,
+      this.caffeineTracked});
 
   factory TrackedDayEntity.fromTrackedDayDBO(TrackedDayDBO trackedDayDBO) {
     return TrackedDayEntity(
@@ -43,7 +47,9 @@ class TrackedDayEntity extends Equatable {
         proteinGoal: trackedDayDBO.proteinGoal,
         proteinTracked: trackedDayDBO.proteinTracked,
         sodiumGoal: trackedDayDBO.sodiumGoal,
-        sodiumTracked: trackedDayDBO.sodiumTracked);
+        sodiumTracked: trackedDayDBO.sodiumTracked,
+        caffeineGoal: trackedDayDBO.caffeineGoal,
+        caffeineTracked: trackedDayDBO.caffeineTracked);
   }
 
   // TODO: make enum class for rating
@@ -94,6 +100,8 @@ class TrackedDayEntity extends Equatable {
         proteinGoal,
         proteinTracked,
         sodiumGoal,
-        sodiumTracked
+        sodiumTracked,
+        caffeineGoal,
+        caffeineTracked
       ];
 }

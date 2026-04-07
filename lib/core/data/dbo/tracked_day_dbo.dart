@@ -36,6 +36,11 @@ class TrackedDayDBO extends HiveObject {
   @HiveField(12)
   double? sodiumTracked;
 
+  @HiveField(13)
+  double? caffeineGoal;
+  @HiveField(14)
+  double? caffeineTracked;
+
   TrackedDayDBO(
       {required this.day,
       required this.calorieGoal,
@@ -49,7 +54,9 @@ class TrackedDayDBO extends HiveObject {
       this.logQuality,
       this.manuallyMarked,
       this.sodiumGoal,
-      this.sodiumTracked});
+      this.sodiumTracked,
+      this.caffeineGoal,
+      this.caffeineTracked});
 
   factory TrackedDayDBO.fromTrackedDayEntity(TrackedDayEntity entity) {
     return TrackedDayDBO(
@@ -63,7 +70,9 @@ class TrackedDayDBO extends HiveObject {
         proteinGoal: entity.proteinGoal,
         proteinTracked: entity.proteinTracked,
         sodiumGoal: entity.sodiumGoal,
-        sodiumTracked: entity.sodiumTracked);
+        sodiumTracked: entity.sodiumTracked,
+        caffeineGoal: entity.caffeineGoal,
+        caffeineTracked: entity.caffeineTracked);
   }
 
   factory TrackedDayDBO.fromJson(Map<String, dynamic> json) => TrackedDayDBO(
@@ -80,6 +89,8 @@ class TrackedDayDBO extends HiveObject {
         manuallyMarked: json['manuallyMarked'] as bool?,
         sodiumGoal: (json['sodiumGoal'] as num?)?.toDouble(),
         sodiumTracked: (json['sodiumTracked'] as num?)?.toDouble(),
+        caffeineGoal: (json['caffeineGoal'] as num?)?.toDouble(),
+        caffeineTracked: (json['caffeineTracked'] as num?)?.toDouble(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -96,6 +107,8 @@ class TrackedDayDBO extends HiveObject {
         'manuallyMarked': manuallyMarked,
         'sodiumGoal': sodiumGoal,
         'sodiumTracked': sodiumTracked,
+        'caffeineGoal': caffeineGoal,
+        'caffeineTracked': caffeineTracked,
       };
 
   static DayLogQualityDBO? _logQualityFromJson(String? value) {

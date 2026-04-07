@@ -23,9 +23,12 @@ void main() {
         totalCarbsIntake: 200,
         totalFatsIntake: 50,
         totalProteinsIntake: 100,
+        totalSugarsIntake: 30,
+        totalSodiumIntake: 1200,
         totalCarbsGoal: 250,
         totalFatsGoal: 60,
         totalProteinsGoal: 120,
+        totalSodiumGoal: 2300,
       ),
     ));
     await tester.pumpAndSettle();

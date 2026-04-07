@@ -96,6 +96,31 @@ class TrackedDayDataSource {
     }
   }
 
+  /// Overwrite the cached aggregate fields for a day with the supplied
+  /// authoritative totals (used by the diary self-healing pass that
+  /// recomputes from actual intakes). Goals are left untouched. Does
+  /// nothing if the day has no TrackedDay record.
+  Future<void> setDayAggregates(
+    DateTime day, {
+    required double caloriesTracked,
+    required double carbsTracked,
+    required double fatTracked,
+    required double proteinTracked,
+    required double sodiumTracked,
+    required double caffeineTracked,
+  }) async {
+    final updateDay = await getTrackedDay(day);
+    if (updateDay == null) return;
+    updateDay.caloriesTracked = caloriesTracked;
+    updateDay.carbsTracked = carbsTracked;
+    updateDay.fatTracked = fatTracked;
+    updateDay.proteinTracked = proteinTracked;
+    updateDay.sodiumTracked = sodiumTracked;
+    updateDay.caffeineTracked = caffeineTracked;
+    _applyAutomaticLogQuality(updateDay);
+    await updateDay.save();
+  }
+
   Future<void> decreaseDayCaloriesTracked(
       DateTime day, double addCalories) async {
     log.fine('Decreasing tracked day calories');
@@ -176,7 +201,11 @@ class TrackedDayDataSource {
   }
 
   Future<void> addDayMacroTracked(DateTime day,
-      {double? carbsAmount, double? fatAmount, double? proteinAmount, double? sodiumAmount}) async {
+      {double? carbsAmount,
+      double? fatAmount,
+      double? proteinAmount,
+      double? sodiumAmount,
+      double? caffeineAmount}) async {
     log.fine('Adding new tracked day macro');
     final updateDay = await getTrackedDay(day);
 
@@ -195,13 +224,21 @@ class TrackedDayDataSource {
         updateDay.sodiumTracked =
             (updateDay.sodiumTracked ?? 0) + sodiumAmount;
       }
+      if (caffeineAmount != null) {
+        updateDay.caffeineTracked =
+            (updateDay.caffeineTracked ?? 0) + caffeineAmount;
+      }
       _applyAutomaticLogQuality(updateDay);
       updateDay.save();
     }
   }
 
   Future<void> removeDayMacroTracked(DateTime day,
-      {double? carbsAmount, double? fatAmount, double? proteinAmount, double? sodiumAmount}) async {
+      {double? carbsAmount,
+      double? fatAmount,
+      double? proteinAmount,
+      double? sodiumAmount,
+      double? caffeineAmount}) async {
     log.fine('Removing tracked day macro');
     final updateDay = await getTrackedDay(day);
 
@@ -219,6 +256,10 @@ class TrackedDayDataSource {
       if (sodiumAmount != null) {
         updateDay.sodiumTracked =
             (updateDay.sodiumTracked ?? 0) - sodiumAmount;
+      }
+      if (caffeineAmount != null) {
+        updateDay.caffeineTracked =
+            (updateDay.caffeineTracked ?? 0) - caffeineAmount;
       }
       _applyAutomaticLogQuality(updateDay);
       updateDay.save();

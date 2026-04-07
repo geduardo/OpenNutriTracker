@@ -58,6 +58,7 @@ class TrackedDayRepository {
   }
 
   static const double defaultSodiumGoalMg = 2300;
+  static const double defaultCaffeineGoalMg = 400;
 
   Future<void> addNewTrackedDay(
       DateTime day,
@@ -77,6 +78,8 @@ class TrackedDayRepository {
         proteinTracked: 0,
         sodiumGoal: defaultSodiumGoalMg,
         sodiumTracked: 0,
+        caffeineGoal: defaultCaffeineGoalMg,
+        caffeineTracked: 0,
         logQuality: DayLogQualityDBO.complete,
         manuallyMarked: false));
   }
@@ -120,23 +123,49 @@ class TrackedDayRepository {
       {double? carbsTracked,
       double? fatTracked,
       double? proteinTracked,
-      double? sodiumTracked}) async {
+      double? sodiumTracked,
+      double? caffeineTracked}) async {
     _trackedDayDataSource.addDayMacroTracked(day,
         carbsAmount: carbsTracked,
         fatAmount: fatTracked,
         proteinAmount: proteinTracked,
-        sodiumAmount: sodiumTracked);
+        sodiumAmount: sodiumTracked,
+        caffeineAmount: caffeineTracked);
   }
 
   Future<void> removeDayMacrosTracked(DateTime day,
       {double? carbsTracked,
       double? fatTracked,
       double? proteinTracked,
-      double? sodiumTracked}) async {
+      double? sodiumTracked,
+      double? caffeineTracked}) async {
     _trackedDayDataSource.removeDayMacroTracked(day,
         carbsAmount: carbsTracked,
         fatAmount: fatTracked,
         proteinAmount: proteinTracked,
-        sodiumAmount: sodiumTracked);
+        sodiumAmount: sodiumTracked,
+        caffeineAmount: caffeineTracked);
+  }
+
+  /// Overwrite all aggregate fields for a day with the supplied authoritative
+  /// totals. Used by the diary self-healing pass to fix cache drift.
+  Future<void> setDayAggregates(
+    DateTime day, {
+    required double caloriesTracked,
+    required double carbsTracked,
+    required double fatTracked,
+    required double proteinTracked,
+    required double sodiumTracked,
+    required double caffeineTracked,
+  }) async {
+    await _trackedDayDataSource.setDayAggregates(
+      day,
+      caloriesTracked: caloriesTracked,
+      carbsTracked: carbsTracked,
+      fatTracked: fatTracked,
+      proteinTracked: proteinTracked,
+      sodiumTracked: sodiumTracked,
+      caffeineTracked: caffeineTracked,
+    );
   }
 }

@@ -54,6 +54,9 @@ class IntakeEntity extends Equatable {
   double get totalSodiumMg =>
       amount * (meal.nutriments.sodiumMgPerUnit ?? 0);
 
+  double get totalCaffeineMg =>
+      amount * (meal.nutriments.caffeineMgPerUnit ?? 0);
+
   @override
   List<Object?> get props => [id, unit, amount, type, dateTime];
 }

@@ -40,6 +40,12 @@ class GetIntakeUsecase {
     return _intakeRepository.getRecentIntake();
   }
 
+  /// Every persisted intake. Used by the diary self-healing pass that
+  /// recomputes per-day aggregates from the authoritative intake list.
+  Future<List<IntakeEntity>> getAllIntakes() async {
+    return _intakeRepository.getAllIntakes();
+  }
+
   Future<IntakeEntity?> getIntakeById(String intakeId) async {
     return _intakeRepository.getIntakeById(intakeId);
   }

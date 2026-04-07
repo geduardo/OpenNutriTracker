@@ -23,13 +23,14 @@ class MealNutrimentsDBOAdapter extends TypeAdapter<MealNutrimentsDBO> {
       saturatedFat100: fields[5] as double?,
       fiber100: fields[6] as double?,
       sodiumMg100: fields[7] as double?,
+      caffeineMg100: fields[8] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealNutrimentsDBO obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.energyKcal100)
       ..writeByte(1)
@@ -45,7 +46,9 @@ class MealNutrimentsDBOAdapter extends TypeAdapter<MealNutrimentsDBO> {
       ..writeByte(6)
       ..write(obj.fiber100)
       ..writeByte(7)
-      ..write(obj.sodiumMg100);
+      ..write(obj.sodiumMg100)
+      ..writeByte(8)
+      ..write(obj.caffeineMg100);
   }
 
   @override

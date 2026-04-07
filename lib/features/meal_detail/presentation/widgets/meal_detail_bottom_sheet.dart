@@ -3,7 +3,6 @@ import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/core/utils/custom_text_input_formatter.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
-import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
@@ -156,8 +155,12 @@ class MealDetailBottomSheet extends StatelessWidget {
     }
   }
 
-  void onAddButtonPressed(BuildContext context) {
-    mealDetailBloc.addIntake(
+  void onAddButtonPressed(BuildContext context) async {
+    // Await the DB write so the refresh events below see the new row.
+    // (Previously this was fire-and-forget, so the diary/home would re-query
+    // before the intake had actually been persisted and the page would
+    // appear unchanged after adding an item to a past day.)
+    await mealDetailBloc.addIntake(
         context,
         mealDetailBloc.state.selectedUnit,
         mealDetailBloc.state.totalQuantityConverted,
@@ -165,18 +168,24 @@ class MealDetailBottomSheet extends StatelessWidget {
         product,
         day);
 
+    if (!context.mounted) return;
+
     // Refresh Home Page
     locator<HomeBloc>().add(const LoadItemsEvent());
 
-    // Refresh Diary Page
+    // Refresh Diary Page — load the actual day the intake was added to so
+    // the diary's calendar-day bloc is in sync with that day, not whatever
+    // it happened to be cached on.
     locator<DiaryBloc>().add(const LoadDiaryYearEvent());
-    locator<CalendarDayBloc>().add(RefreshCalendarDayEvent());
+    locator<CalendarDayBloc>().add(LoadCalendarDayEvent(day));
 
-    // Show snackbar and return to dashboard
+    // Show snackbar and pop just this detail screen, leaving the user on
+    // whichever screen they came from (search / recently added / saved
+    // meals / scanner). That way logging multiple items in a row only
+    // requires one tap-back per item instead of re-navigating from main.
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.of(context).infoAddedIntakeLabel)));
-    Navigator.of(context)
-        .popUntil(ModalRoute.withName(NavigationOptions.mainRoute));
+    Navigator.of(context).pop();
   }
 
   DropdownMenuItem<String> _getServingDropdownItem(BuildContext context) {

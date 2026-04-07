@@ -33,6 +33,16 @@ class IntakeRepository {
     return await _intakeDataSource.getAllIntakes();
   }
 
+  /// Returns every persisted intake as an entity. Used by the diary
+  /// self-healing pass that recomputes per-day aggregates from the
+  /// authoritative intake list.
+  Future<List<IntakeEntity>> getAllIntakes() async {
+    final intakeDBOList = await _intakeDataSource.getAllIntakes();
+    return intakeDBOList
+        .map((intakeDBO) => IntakeEntity.fromIntakeDBO(intakeDBO))
+        .toList();
+  }
+
   Future<void> clearAll() async {
     await _intakeDataSource.clear();
   }

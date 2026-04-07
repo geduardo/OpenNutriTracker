@@ -67,6 +67,7 @@ class AiNutrimentsPer100gDTO {
   final double? sugarsG;
   final double? fiberG;
   final double? sodiumMg;
+  final double? caffeineMg;
 
   const AiNutrimentsPer100gDTO({
     required this.energyKcal,
@@ -77,6 +78,7 @@ class AiNutrimentsPer100gDTO {
     this.sugarsG,
     this.fiberG,
     this.sodiumMg,
+    this.caffeineMg,
   });
 
   factory AiNutrimentsPer100gDTO.fromJson(Map<String, dynamic> json) {
@@ -89,6 +91,7 @@ class AiNutrimentsPer100gDTO {
       sugarsG: (json['sugars_g'] as num?)?.toDouble(),
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
       sodiumMg: (json['sodium_mg'] as num?)?.toDouble(),
+      caffeineMg: (json['caffeine_mg'] as num?)?.toDouble(),
     );
   }
 }

@@ -264,6 +264,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         saturatedFat100: item.per100g.saturatedFatG,
         fiber100: item.per100g.fiberG,
         sodiumMg100: item.per100g.sodiumMg,
+        caffeineMg100: item.per100g.caffeineMg,
       );
 
       final meal = MealEntity(

@@ -509,6 +509,8 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       sugars100: null,
       saturatedFat100: null,
       fiber100: null,
+      sodiumMg100: null,
+      caffeineMg100: null,
     );
 
     final meal = MealEntity(
@@ -645,6 +647,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
             saturatedFat100: item.per100g.saturatedFatG,
             fiber100: item.per100g.fiberG,
             sodiumMg100: item.per100g.sodiumMg,
+            caffeineMg100: item.per100g.caffeineMg,
           ),
           source: MealSourceEntity.ai,
         );

@@ -68,6 +68,7 @@ class CalendarDayBloc extends Bloc<CalendarDayEvent, CalendarDayState> {
         carbsTracked: intakeEntity.totalCarbsGram,
         fatTracked: intakeEntity.totalFatsGram,
         proteinTracked: intakeEntity.totalProteinsGram,
-        sodiumTracked: intakeEntity.totalSodiumMg);
+        sodiumTracked: intakeEntity.totalSodiumMg,
+        caffeineTracked: intakeEntity.totalCaffeineMg);
   }
 }

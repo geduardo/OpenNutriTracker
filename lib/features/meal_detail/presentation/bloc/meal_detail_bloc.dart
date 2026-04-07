@@ -85,7 +85,7 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
     return lastIntake?.amount;
   }
 
-  void addIntake(BuildContext context, String unit, String amountText,
+  Future<void> addIntake(BuildContext context, String unit, String amountText,
       IntakeTypeEntity type, MealEntity meal, DateTime day) async {
     final quantity = double.parse(amountText.replaceAll(',', '.'));
 
@@ -97,7 +97,7 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
         meal: meal,
         dateTime: day);
     await _addIntakeUseCase.addIntake(intakeEntity);
-    _updateTrackedDay(intakeEntity, day);
+    await _updateTrackedDay(intakeEntity, day);
   }
 
   Future<void> _updateTrackedDay(
@@ -116,12 +116,14 @@ class MealDetailBloc extends Bloc<MealDetailEvent, MealDetailState> {
           day, totalKcalGoal, totalCarbsGoal, totalFatGoal, totalProteinGoal);
     }
 
-    _addTrackedDayUsecase.addDayCaloriesTracked(day, intakeEntity.totalKcal);
-    _addTrackedDayUsecase.addDayMacrosTracked(day,
+    await _addTrackedDayUsecase
+        .addDayCaloriesTracked(day, intakeEntity.totalKcal);
+    await _addTrackedDayUsecase.addDayMacrosTracked(day,
         carbsTracked: intakeEntity.totalCarbsGram,
         fatTracked: intakeEntity.totalFatsGram,
         proteinTracked: intakeEntity.totalProteinsGram,
-        sodiumTracked: intakeEntity.totalSodiumMg);
+        sodiumTracked: intakeEntity.totalSodiumMg,
+        caffeineTracked: intakeEntity.totalCaffeineMg);
   }
 }
 

@@ -386,7 +386,8 @@ class _PresetsScreenState extends State<PresetsScreen> {
           carbsTracked: intake.totalCarbsGram,
           fatTracked: intake.totalFatsGram,
           proteinTracked: intake.totalProteinsGram,
-          sodiumTracked: intake.totalSodiumMg);
+          sodiumTracked: intake.totalSodiumMg,
+          caffeineTracked: intake.totalCaffeineMg);
     }
 
     locator<HomeBloc>().add(const LoadItemsEvent());

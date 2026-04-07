@@ -49,6 +49,7 @@ class GeminiProvider implements AiProvider {
                 'sugars_g': {'type': 'NUMBER'},
                 'fiber_g': {'type': 'NUMBER'},
                 'sodium_mg': {'type': 'NUMBER'},
+                'caffeine_mg': {'type': 'NUMBER'},
               },
               'required': [
                 'energy_kcal',
@@ -185,6 +186,7 @@ Rules:
 - confidence is "high", "medium", or "low"
 - If multiple items, return each separately
 - Be accurate with portions — use visual cues like plate size, utensils, etc.
+- Include caffeine_mg only when the food/drink actually contains caffeine (coffee, tea, cola, chocolate, energy drinks, etc.). Omit it for caffeine-free items.
 - If you cannot identify the food or need more info, return empty items with a clarification object
 - If there are multiple items, set meal_name to a concise name for the overall meal (e.g. "Spaghetti Bolognese", "Chicken Caesar Salad")''';
   }
@@ -201,7 +203,7 @@ Rules:
 - All values must be normalized to per 100g
 - If the label shows values per serving, use the serving size to convert
 - estimated_weight_g should be the serving size from the label
-- Extract all available nutrients
+- Extract all available nutrients, including caffeine_mg if listed
 - If you cannot read the label clearly, return empty items with a clarification object''';
   }
 }

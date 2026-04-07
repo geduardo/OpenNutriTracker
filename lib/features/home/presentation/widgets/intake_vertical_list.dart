@@ -535,6 +535,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
       final fatDelta = updated.totalFatsGram - intake.totalFatsGram;
       final proteinDelta = updated.totalProteinsGram - intake.totalProteinsGram;
       final sodiumDelta = updated.totalSodiumMg - intake.totalSodiumMg;
+      final caffeineDelta = updated.totalCaffeineMg - intake.totalCaffeineMg;
 
       if (kcalDelta >= 0) {
         await addTrackedDayUsecase.addDayCaloriesTracked(widget.day, kcalDelta);
@@ -548,26 +549,30 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
       if (carbsDelta >= 0 ||
           fatDelta >= 0 ||
           proteinDelta >= 0 ||
-          sodiumDelta >= 0) {
+          sodiumDelta >= 0 ||
+          caffeineDelta >= 0) {
         await addTrackedDayUsecase.addDayMacrosTracked(
           widget.day,
           carbsTracked: carbsDelta > 0 ? carbsDelta : 0,
           fatTracked: fatDelta > 0 ? fatDelta : 0,
           proteinTracked: proteinDelta > 0 ? proteinDelta : 0,
           sodiumTracked: sodiumDelta > 0 ? sodiumDelta : 0,
+          caffeineTracked: caffeineDelta > 0 ? caffeineDelta : 0,
         );
       }
 
       if (carbsDelta < 0 ||
           fatDelta < 0 ||
           proteinDelta < 0 ||
-          sodiumDelta < 0) {
+          sodiumDelta < 0 ||
+          caffeineDelta < 0) {
         await addTrackedDayUsecase.removeDayMacrosTracked(
           widget.day,
           carbsTracked: carbsDelta < 0 ? -carbsDelta : 0,
           fatTracked: fatDelta < 0 ? -fatDelta : 0,
           proteinTracked: proteinDelta < 0 ? -proteinDelta : 0,
           sodiumTracked: sodiumDelta < 0 ? -sodiumDelta : 0,
+          caffeineTracked: caffeineDelta < 0 ? -caffeineDelta : 0,
         );
       }
     }

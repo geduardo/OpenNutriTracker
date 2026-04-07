@@ -60,14 +60,52 @@ class AddTrackedDayUsecase {
   }
 
   Future<void> addDayMacrosTracked(DateTime day,
-      {double? carbsTracked, double? fatTracked, double? proteinTracked, double? sodiumTracked}) async {
+      {double? carbsTracked,
+      double? fatTracked,
+      double? proteinTracked,
+      double? sodiumTracked,
+      double? caffeineTracked}) async {
     await _trackedDayRepository.addDayMacrosTracked(day,
-        carbsTracked: carbsTracked, fatTracked: fatTracked, proteinTracked: proteinTracked, sodiumTracked: sodiumTracked);
+        carbsTracked: carbsTracked,
+        fatTracked: fatTracked,
+        proteinTracked: proteinTracked,
+        sodiumTracked: sodiumTracked,
+        caffeineTracked: caffeineTracked);
   }
 
   Future<void> removeDayMacrosTracked(DateTime day,
-      {double? carbsTracked, double? fatTracked, double? proteinTracked, double? sodiumTracked}) async {
+      {double? carbsTracked,
+      double? fatTracked,
+      double? proteinTracked,
+      double? sodiumTracked,
+      double? caffeineTracked}) async {
     await _trackedDayRepository.removeDayMacrosTracked(day,
-        carbsTracked: carbsTracked, fatTracked: fatTracked, proteinTracked: proteinTracked, sodiumTracked: sodiumTracked);
+        carbsTracked: carbsTracked,
+        fatTracked: fatTracked,
+        proteinTracked: proteinTracked,
+        sodiumTracked: sodiumTracked,
+        caffeineTracked: caffeineTracked);
+  }
+
+  /// Overwrite the cached aggregate fields for [day] with authoritative
+  /// totals. Used by the diary self-healing pass to fix cache drift.
+  Future<void> setDayAggregates(
+    DateTime day, {
+    required double caloriesTracked,
+    required double carbsTracked,
+    required double fatTracked,
+    required double proteinTracked,
+    required double sodiumTracked,
+    required double caffeineTracked,
+  }) async {
+    await _trackedDayRepository.setDayAggregates(
+      day,
+      caloriesTracked: caloriesTracked,
+      carbsTracked: carbsTracked,
+      fatTracked: fatTracked,
+      proteinTracked: proteinTracked,
+      sodiumTracked: sodiumTracked,
+      caffeineTracked: caffeineTracked,
+    );
   }
 }

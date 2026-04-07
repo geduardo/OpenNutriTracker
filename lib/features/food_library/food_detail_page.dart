@@ -40,6 +40,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   late TextEditingController _fatController;
   late TextEditingController _fiberController;
   late TextEditingController _sodiumController;
+  late TextEditingController _caffeineController;
   late TextEditingController _servingLabelController;
   late TextEditingController _servingQuantityController;
   late String _selectedBaseUnit;
@@ -60,6 +61,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     _fatController = TextEditingController(text: _fmt(n.fat100));
     _fiberController = TextEditingController(text: _fmt(n.fiber100));
     _sodiumController = TextEditingController(text: _fmt(n.sodiumMg100));
+    _caffeineController = TextEditingController(text: _fmt(n.caffeineMg100));
     _servingLabelController = TextEditingController(
       text: MealPortionHelper.servingName(widget.food) ?? '',
     );
@@ -181,7 +183,9 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                   child:
                       _buildField('Sodium', _sodiumController, suffix: 'mg')),
               const SizedBox(width: 12),
-              const Expanded(child: SizedBox()),
+              Expanded(
+                  child: _buildField('Caffeine', _caffeineController,
+                      suffix: 'mg')),
             ],
           ),
 
@@ -331,6 +335,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       saturatedFat100: widget.food.nutriments.saturatedFat100,
       fiber100: double.tryParse(_fiberController.text),
       sodiumMg100: double.tryParse(_sodiumController.text),
+      caffeineMg100: double.tryParse(_caffeineController.text),
     );
     final servingQuantity = double.tryParse(_servingQuantityController.text);
     final servingSize = MealPortionHelper.buildServingDisplayLabel(

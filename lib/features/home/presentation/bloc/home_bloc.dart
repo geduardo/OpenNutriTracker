@@ -11,6 +11,7 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
+import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
@@ -51,45 +52,23 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       final breakfastIntakeList =
           await _getIntakeUsecase.getTodayBreakfastIntake();
-      final totalBreakfastKcal = getTotalKcal(breakfastIntakeList);
-      final totalBreakfastCarbs = getTotalCarbs(breakfastIntakeList);
-      final totalBreakfastFats = getTotalFats(breakfastIntakeList);
-      final totalBreakfastProteins = getTotalProteins(breakfastIntakeList);
-
       final lunchIntakeList = await _getIntakeUsecase.getTodayLunchIntake();
-      final totalLunchKcal = getTotalKcal(lunchIntakeList);
-      final totalLunchCarbs = getTotalCarbs(lunchIntakeList);
-      final totalLunchFats = getTotalFats(lunchIntakeList);
-      final totalLunchProteins = getTotalProteins(lunchIntakeList);
-
       final dinnerIntakeList = await _getIntakeUsecase.getTodayDinnerIntake();
-      final totalDinnerKcal = getTotalKcal(dinnerIntakeList);
-      final totalDinnerCarbs = getTotalCarbs(dinnerIntakeList);
-      final totalDinnerFats = getTotalFats(dinnerIntakeList);
-      final totalDinnerProteins = getTotalProteins(dinnerIntakeList);
-
       final snackIntakeList = await _getIntakeUsecase.getTodaySnackIntake();
-      final totalSnackKcal = getTotalKcal(snackIntakeList);
-      final totalSnackCarbs = getTotalCarbs(snackIntakeList);
-      final totalSnackFats = getTotalFats(snackIntakeList);
-      final totalSnackProteins = getTotalProteins(snackIntakeList);
 
-      final totalKcalIntake = totalBreakfastKcal +
-          totalLunchKcal +
-          totalDinnerKcal +
-          totalSnackKcal;
-      final totalCarbsIntake = totalBreakfastCarbs +
-          totalLunchCarbs +
-          totalDinnerCarbs +
-          totalSnackCarbs;
-      final totalFatsIntake = totalBreakfastFats +
-          totalLunchFats +
-          totalDinnerFats +
-          totalSnackFats;
-      final totalProteinsIntake = totalBreakfastProteins +
-          totalLunchProteins +
-          totalDinnerProteins +
-          totalSnackProteins;
+      final allIntakes = [
+        ...breakfastIntakeList,
+        ...lunchIntakeList,
+        ...dinnerIntakeList,
+        ...snackIntakeList,
+      ];
+
+      final totalKcalIntake = getTotalKcal(allIntakes);
+      final totalCarbsIntake = getTotalCarbs(allIntakes);
+      final totalFatsIntake = getTotalFats(allIntakes);
+      final totalProteinsIntake = getTotalProteins(allIntakes);
+      final totalSugarsIntake = getTotalSugars(allIntakes);
+      final totalSodiumIntake = getTotalSodium(allIntakes);
 
       final totalKcalGoal = await _getKcalGoalUsecase.getKcalGoal();
       final totalCarbsGoal =
@@ -98,6 +77,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           await _getMacroGoalUsecase.getFatsGoal(totalKcalGoal);
       final totalProteinsGoal =
           await _getMacroGoalUsecase.getProteinsGoal(totalKcalGoal);
+      final totalSodiumGoal = MacroCalc.defaultSodiumGoalMg;
 
       final totalKcalLeft =
           CalorieGoalCalc.getDailyKcalLeft(totalKcalGoal, totalKcalIntake);
@@ -109,10 +89,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           totalKcalSupplied: totalKcalIntake,
           totalCarbsIntake: totalCarbsIntake,
           totalFatsIntake: totalFatsIntake,
+          totalProteinsIntake: totalProteinsIntake,
+          totalSugarsIntake: totalSugarsIntake,
+          totalSodiumIntake: totalSodiumIntake,
           totalCarbsGoal: totalCarbsGoal,
           totalFatsGoal: totalFatsGoal,
           totalProteinsGoal: totalProteinsGoal,
-          totalProteinsIntake: totalProteinsIntake,
+          totalSodiumGoal: totalSodiumGoal,
           breakfastIntakeList: breakfastIntakeList,
           lunchIntakeList: lunchIntakeList,
           dinnerIntakeList: dinnerIntakeList,
@@ -132,6 +115,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   double getTotalProteins(List<IntakeEntity> intakeList) =>
       intakeList.map((intake) => intake.totalProteinsGram).toList().sum;
+
+  double getTotalSugars(List<IntakeEntity> intakeList) =>
+      intakeList.map((intake) => intake.totalSugarsGram).toList().sum;
+
+  double getTotalSodium(List<IntakeEntity> intakeList) =>
+      intakeList.map((intake) => intake.totalSodiumMg).toList().sum;
 
   void saveConfigData(bool acceptedDisclaimer) async {
     _addConfigUsecase.setConfigDisclaimer(acceptedDisclaimer);
@@ -158,7 +147,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           proteinTracked: oldIntakeObject.totalProteinsGram -
               newIntakeObject.totalProteinsGram,
           sodiumTracked:
-              oldIntakeObject.totalSodiumMg - newIntakeObject.totalSodiumMg);
+              oldIntakeObject.totalSodiumMg - newIntakeObject.totalSodiumMg,
+          caffeineTracked: oldIntakeObject.totalCaffeineMg -
+              newIntakeObject.totalCaffeineMg);
     } else if (newIntakeObject.amount > oldIntakeObject.amount) {
       // Amounts gained
       await _addTrackedDayUseCase.addDayCaloriesTracked(
@@ -171,7 +162,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           proteinTracked: newIntakeObject.totalProteinsGram -
               oldIntakeObject.totalProteinsGram,
           sodiumTracked:
-              newIntakeObject.totalSodiumMg - oldIntakeObject.totalSodiumMg);
+              newIntakeObject.totalSodiumMg - oldIntakeObject.totalSodiumMg,
+          caffeineTracked: newIntakeObject.totalCaffeineMg -
+              oldIntakeObject.totalCaffeineMg);
     }
     _updateDiaryPage(dateTime);
   }
@@ -185,7 +178,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         carbsTracked: intakeEntity.totalCarbsGram,
         fatTracked: intakeEntity.totalFatsGram,
         proteinTracked: intakeEntity.totalProteinsGram,
-        sodiumTracked: intakeEntity.totalSodiumMg);
+        sodiumTracked: intakeEntity.totalSodiumMg,
+        caffeineTracked: intakeEntity.totalCaffeineMg);
 
     _updateDiaryPage(dateTime);
   }

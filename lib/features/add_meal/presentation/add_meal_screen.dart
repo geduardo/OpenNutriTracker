@@ -481,6 +481,7 @@ class _AddMealScreenState extends State<AddMealScreen>
         fatTracked: intake.totalFatsGram,
         proteinTracked: intake.totalProteinsGram,
         sodiumTracked: intake.totalSodiumMg,
+        caffeineTracked: intake.totalCaffeineMg,
       );
     }
 

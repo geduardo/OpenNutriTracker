@@ -72,7 +72,15 @@ class MealDetailNutrimentsTable extends StatelessWidget {
             _getNutrimentsTableRow(
                 S.of(context).proteinLabel,
                 "${_adjustValueForServing(product.nutriments.proteins100 ?? 0).roundToPrecision(2)}g",
-                textStyleNormal)
+                textStyleNormal),
+            _getNutrimentsTableRow(
+                'Sodium',
+                "${_adjustValueForServing(product.nutriments.sodiumMg100 ?? 0).roundToPrecision(1)}mg",
+                textStyleNormal),
+            _getNutrimentsTableRow(
+                'Caffeine',
+                "${_adjustValueForServing(product.nutriments.caffeineMg100 ?? 0).roundToPrecision(1)}mg",
+                textStyleNormal),
           ],
         )
       ],

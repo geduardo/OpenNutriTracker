@@ -53,10 +53,12 @@ class OpenAiProvider implements AiProvider {
                   'sugars_g': {'type': 'number'},
                   'fiber_g': {'type': 'number'},
                   'sodium_mg': {'type': 'number'},
+                  'caffeine_mg': {'type': 'number'},
                 },
                 'required': [
                   'energy_kcal', 'protein_g', 'carbohydrates_g', 'fat_g',
-                  'saturated_fat_g', 'sugars_g', 'fiber_g', 'sodium_mg'
+                  'saturated_fat_g', 'sugars_g', 'fiber_g', 'sodium_mg',
+                  'caffeine_mg'
                 ],
                 'additionalProperties': false,
               },
@@ -204,11 +206,13 @@ class OpenAiProvider implements AiProvider {
         ? '''- All values must be normalized to per 100g
 - If the label shows values per serving, use the serving size to convert
 - estimated_weight_g should be the serving size from the label
+- Set caffeine_mg to the value on the label, or 0 if not listed
 - If you cannot read the label, set clarification with your question'''
         : '''- All nutrition values must be per 100g
 - estimated_weight_g is your best estimate of the portion size
 - confidence is "high", "medium", or "low"
 - If multiple items, return each separately
+- Set caffeine_mg only for items that actually contain caffeine (coffee, tea, cola, chocolate, energy drinks). Use 0 for caffeine-free foods.
 - If you cannot identify the food, set clarification with your question''';
 
     return '''$task
