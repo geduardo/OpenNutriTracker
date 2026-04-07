@@ -108,15 +108,13 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                 .textTheme
                                 .headlineMedium
                                 ?.copyWith(
-                                    color: centerColor,
-                                    letterSpacing: -1)),
+                                    color: centerColor, letterSpacing: -1)),
                         Text(
                           centerLabel,
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
-                              ?.copyWith(
-                                  color: centerColor),
+                              ?.copyWith(color: centerColor),
                         )
                       ],
                     ),

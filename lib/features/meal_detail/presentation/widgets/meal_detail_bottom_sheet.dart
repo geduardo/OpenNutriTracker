@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
+import 'package:opennutritracker/core/utils/custom_text_input_formatter.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
@@ -63,22 +63,16 @@ class MealDetailBottomSheet extends StatelessWidget {
                           Expanded(
                             child: TextFormField(
                               enabled: !productMissingRequiredInfo,
-                              controller: quantityTextController
-                                ..addListener(() {
-                                  onQuantityOrUnitChanged(
-                                      quantityTextController.text,
-                                      selectedUnit);
-                                }),
-                              keyboardType: TextInputType.numberWithOptions(
+                              controller: quantityTextController,
+                              keyboardType: const TextInputType.numberWithOptions(
                                   decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'^\d+([.,]\d{0,2})?$'))
-                              ],
+                              inputFormatters: CustomTextInputFormatter.doubleOnly(),
                               decoration: InputDecoration(
                                 border: const OutlineInputBorder(),
                                 labelText: S.of(context).quantityLabel,
                               ),
+                              onChanged: (value) =>
+                                  onQuantityOrUnitChanged(value, selectedUnit),
                             ),
                           ),
                           const SizedBox(width: 16.0),

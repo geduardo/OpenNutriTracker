@@ -105,4 +105,21 @@ class ConfigDataSource {
     config?.schemaVersion = version;
     config?.save();
   }
+
+  Future<void> setAiTaskConfig({
+    String? foodEstimationProvider,
+    String? foodEstimationModel,
+    String? labelExtractionProvider,
+    String? labelExtractionModel,
+  }) async {
+    final config = _configBox.get(_configKey);
+    if (config == null) {
+      return;
+    }
+    config.aiFoodEstimationProvider = foodEstimationProvider;
+    config.aiFoodEstimationModel = foodEstimationModel;
+    config.aiLabelExtractionProvider = labelExtractionProvider;
+    config.aiLabelExtractionModel = labelExtractionModel;
+    await config.save();
+  }
 }

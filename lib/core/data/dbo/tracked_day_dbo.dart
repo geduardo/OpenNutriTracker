@@ -1,13 +1,10 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:json_annotation/json_annotation.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/day_log_quality_dbo.dart';
 
-part 'tracked_day_dbo.g.dart';
 part 'tracked_day_dbo_adapter.dart';
 
 @HiveType(typeId: 9)
-@JsonSerializable()
 class TrackedDayDBO extends HiveObject {
   @HiveField(0)
   DateTime day;

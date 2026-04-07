@@ -51,7 +51,8 @@ class _ProfilePageState extends State<ProfilePage> {
               state.userEntity,
               state.usesImperialUnits,
               state.desiredWeeklyRatePct,
-              state.desiredWeeklyRateKg);
+              state.desiredWeeklyRateKg,
+              state.trueWeightKg);
         } else {
           return _getLoadingContent();
         }
@@ -71,15 +72,32 @@ class _ProfilePageState extends State<ProfilePage> {
       UserEntity user,
       bool usesImperialUnits,
       double desiredWeeklyRatePct,
-      double desiredWeeklyRateKg) {
+      double desiredWeeklyRateKg,
+      double trueWeightKg) {
     return ListView(
       children: [
         const SizedBox(height: 32.0),
         BMIOverview(
           bmiValue: userBMIEntity.bmiValue,
           nutritionalStatus: userBMIEntity.nutritionalStatus,
+          helperText:
+              'Based on your true weight: ${_formatWeight(trueWeightKg, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
         ),
         const SizedBox(height: 32.0),
+        ListTile(
+          title: Text(
+            'True Weight',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          subtitle: Text(
+            '${_formatWeight(trueWeightKg, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          leading: const SizedBox(
+            height: double.infinity,
+            child: Icon(Icons.insights_outlined),
+          ),
+        ),
         ListTile(
           title: Text(
             S.of(context).activityLabel,
@@ -330,5 +348,13 @@ class _ProfilePageState extends State<ProfilePage> {
     final unit = imperial ? 'lbs/week' : 'kg/week';
 
     return '$sign${magnitude.toStringAsFixed(2)} $unit (${desiredWeeklyRatePct.toStringAsFixed(2)}%/week)';
+  }
+
+  String _formatWeight(double weightKg, bool usesImperialUnits) {
+    if (usesImperialUnits) {
+      return UnitCalc.kgToLbs(weightKg).toStringAsFixed(1);
+    }
+
+    return weightKg.toStringAsFixed(1);
   }
 }

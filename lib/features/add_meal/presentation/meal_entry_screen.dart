@@ -75,8 +75,8 @@ class MealEntryScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _EntryOption(
               icon: Icons.playlist_play,
-              label: 'Presets',
-              subtitle: 'Saved meals',
+              label: 'Saved meals',
+              subtitle: 'Reusable meals',
               color: Theme.of(context).colorScheme.inversePrimary,
               onTap: () => Navigator.of(context).pushNamed(
                 NavigationOptions.presetsRoute,

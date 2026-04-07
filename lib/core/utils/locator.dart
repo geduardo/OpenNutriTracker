@@ -30,10 +30,6 @@ import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart
 import 'package:opennutritracker/core/domain/usecase/get_tracked_day_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_user_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
-import 'package:opennutritracker/core/utils/env.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/gemini_provider.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/openai_provider.dart';
 import 'package:opennutritracker/core/utils/hive_db_provider.dart';
 import 'package:opennutritracker/core/utils/migration_runner.dart';
 import 'package:opennutritracker/core/utils/ont_image_cache_manager.dart';
@@ -56,11 +52,11 @@ import 'package:opennutritracker/features/onboarding/presentation/bloc/onboardin
 import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:opennutritracker/features/scanner/domain/usecase/search_product_by_barcode_usecase.dart';
 import 'package:opennutritracker/features/scanner/presentation/scanner_bloc.dart';
+import 'package:opennutritracker/features/settings/domain/service/ai_settings_service.dart';
 import 'package:opennutritracker/features/settings/domain/usecase/export_data_usecase.dart';
 import 'package:opennutritracker/features/settings/domain/usecase/import_data_usecase.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/export_import_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 final locator = GetIt.instance;
 
@@ -71,14 +67,11 @@ Future<void> initLocator() async {
   await hiveDBProvider
       .initHiveDB(await secureAppStorageProvider.getHiveEncryptionKey());
 
-  // Backend
-  await Supabase.initialize(
-      url: Env.supabaseProjectUrl, anonKey: Env.supabaseProjectAnonKey);
-  locator.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
-
   // Cache manager
   locator
       .registerLazySingleton<CacheManager>(() => OntImageCacheManager.instance);
+  locator.registerLazySingleton<SecureAppStorageProvider>(
+      () => secureAppStorageProvider);
 
   // BLoCs
   locator.registerLazySingleton<OnboardingBloc>(
@@ -110,7 +103,8 @@ Future<void> initLocator() async {
   locator
       .registerFactory<ProductsBloc>(() => ProductsBloc(locator(), locator()));
   locator.registerFactory<FoodBloc>(() => FoodBloc(locator(), locator()));
-  locator.registerFactory(() => RecentMealBloc(locator(), locator()));
+  locator.registerFactory(
+      () => RecentMealBloc(locator(), locator(), locator(), locator()));
 
   // UseCases
   locator.registerLazySingleton<GetConfigUsecase>(
@@ -161,6 +155,10 @@ Future<void> initLocator() async {
         locator(),
         locator(),
         locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
       ));
   locator.registerLazySingleton(() => ImportDataUsecase(
         locator(),
@@ -169,7 +167,12 @@ Future<void> initLocator() async {
         locator(),
         locator(),
         locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
       ));
+  locator.registerLazySingleton(() => AiSettingsService(locator(), locator()));
 
   // Repositories
   locator.registerLazySingleton(() => ConfigRepository(locator()));
@@ -190,13 +193,6 @@ Future<void> initLocator() async {
   locator.registerLazySingleton<IntakeDataSource>(
       () => IntakeDataSource(hiveDBProvider.intakeBox));
   // AI Provider — uses Gemini by default, falls back to OpenAI if no Gemini key
-  locator.registerLazySingleton<AiProvider>(() {
-    if (Env.geminiApiKey.isNotEmpty) {
-      return GeminiProvider(Env.geminiApiKey);
-    } else {
-      return OpenAiProvider(Env.openaiApiKey);
-    }
-  });
   locator.registerLazySingleton<OFFDataSource>(() => OFFDataSource());
   locator.registerLazySingleton<FDCDataSource>(() => FDCDataSource());
   locator.registerLazySingleton<SpFdcDataSource>(() => SpFdcDataSource());

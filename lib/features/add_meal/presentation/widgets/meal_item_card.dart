@@ -22,13 +22,17 @@ class MealItemCard extends StatelessWidget {
   final AddMealType addMealType;
   final MealEntity mealEntity;
   final bool usesImperialUnits;
+  final bool selectionMode;
+  final ValueChanged<MealEntity>? onSelected;
 
   const MealItemCard(
       {super.key,
       required this.day,
       required this.mealEntity,
       required this.addMealType,
-      required this.usesImperialUnits});
+      required this.usesImperialUnits,
+      this.selectionMode = false,
+      this.onSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +43,10 @@ class MealItemCard extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(12)),
       ),
       child: InkWell(
-        onTap: () => _showQuickAddSheet(context),
-        onLongPress: () => _goToDetailScreen(context),
+        onTap: selectionMode
+            ? () => onSelected?.call(mealEntity)
+            : () => _showQuickAddSheet(context),
+        onLongPress: selectionMode ? null : () => _goToDetailScreen(context),
         child: SizedBox(
           height: 100,
           child: Center(
@@ -89,8 +95,11 @@ class MealItemCard extends StatelessWidget {
               style: IconButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
               ),
-              icon: const Icon(Icons.info_outline),
-              onPressed: () => _goToDetailScreen(context),
+              icon:
+                  Icon(selectionMode ? Icons.chevron_right : Icons.info_outline),
+              onPressed: selectionMode
+                  ? () => onSelected?.call(mealEntity)
+                  : () => _goToDetailScreen(context),
             ),
           )),
         ),

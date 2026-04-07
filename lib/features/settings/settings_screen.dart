@@ -12,6 +12,7 @@ import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dar
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/settings_bloc.dart';
+import 'package:opennutritracker/features/settings/presentation/pages/ai_settings_page.dart';
 import 'package:opennutritracker/features/settings/presentation/widgets/export_import_dialog.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -73,6 +74,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => _showCalculationsDialog(context),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.smart_toy_outlined),
+                  title: const Text('AI settings'),
+                  subtitle: const Text('API keys and model routing'),
+                  onTap: () => _openAiSettings(context),
+                ),
+                ListTile(
                   leading: const Icon(Icons.brightness_medium_outlined),
                   title: Text(S.of(context).settingsThemeLabel),
                   onTap: () => _showThemeDialog(context, state.appTheme),
@@ -127,7 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Column(
                   children: [
                     DropdownButtonFormField(
-                      value: selectedUnit,
+                      initialValue: selectedUnit,
                       decoration: InputDecoration(
                         enabled: true,
                         filled: false,
@@ -188,6 +195,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _openAiSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AiSettingsPage()),
+    );
+  }
+
   void _showThemeDialog(BuildContext context, AppThemeEntity currentAppTheme) {
     AppThemeEntity selectedTheme = currentAppTheme;
     showDialog(
@@ -202,36 +215,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    RadioListTile(
-                      title:
-                          Text(S.of(context).settingsThemeSystemDefaultLabel),
-                      value: AppThemeEntity.system,
-                      groupValue: selectedTheme,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedTheme = value as AppThemeEntity;
-                        });
-                      },
-                    ),
-                    RadioListTile(
-                      title: Text(S.of(context).settingsThemeLightLabel),
-                      value: AppThemeEntity.light,
-                      groupValue: selectedTheme,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedTheme = value as AppThemeEntity;
-                        });
-                      },
-                    ),
-                    RadioListTile(
-                      title: Text(S.of(context).settingsThemeDarkLabel),
-                      value: AppThemeEntity.dark,
-                      groupValue: selectedTheme,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedTheme = value as AppThemeEntity;
-                        });
-                      },
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: DropdownButtonFormField<AppThemeEntity>(
+                        initialValue: selectedTheme,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Theme',
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: AppThemeEntity.system,
+                            child: Text(
+                              S.of(context).settingsThemeSystemDefaultLabel,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: AppThemeEntity.light,
+                            child:
+                                Text(S.of(context).settingsThemeLightLabel),
+                          ),
+                          DropdownMenuItem(
+                            value: AppThemeEntity.dark,
+                            child:
+                                Text(S.of(context).settingsThemeDarkLabel),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          setState(() {
+                            selectedTheme = value;
+                          });
+                        },
+                      ),
                     ),
                   ],
                 );

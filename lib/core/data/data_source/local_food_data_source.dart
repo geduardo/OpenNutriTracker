@@ -123,6 +123,18 @@ class LocalFoodDataSource {
     return records.map((record) => record.meal).toList(growable: false);
   }
 
+  Future<void> replaceAllRecords(List<LocalFoodRecordDBO> records) async {
+    await _localFoodBox.clear();
+    await _aliasBox.clear();
+
+    for (final record in records) {
+      await _localFoodBox.put(record.id, record);
+      for (final alias in record.aliases) {
+        await _aliasBox.put(alias, record.id);
+      }
+    }
+  }
+
   Future<String?> _findExistingFoodId(List<String> aliases) async {
     for (final alias in aliases) {
       final foodId = _aliasBox.get(alias);

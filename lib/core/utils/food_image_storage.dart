@@ -37,6 +37,17 @@ class FoodImageStorage {
     return dest.path;
   }
 
+  static Future<String> saveNamedImageBytes(
+    List<int> bytes, {
+    required String fileName,
+  }) async {
+    final dir = await _ensureDir();
+    final safeName = p.basename(fileName);
+    final file = File('${dir.path}/$safeName');
+    await file.writeAsBytes(bytes);
+    return file.path;
+  }
+
   static bool isLocalPath(String? path) {
     if (path == null || path.isEmpty) return false;
     return !path.startsWith('http');

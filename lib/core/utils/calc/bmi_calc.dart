@@ -9,7 +9,11 @@ class BMICalc {
   /// BMI = m / l²
   /// m = mass in kg, l = height in m
   static double getBMI(UserEntity user) {
-    return user.weightKG / pow(user.heightCM / 100, 2);
+    return getBMIForWeightKg(user.heightCM, user.weightKG);
+  }
+
+  static double getBMIForWeightKg(double heightCM, double weightKG) {
+    return weightKG / pow(heightCM / 100, 2);
   }
 
   /// Returns Nutritional Status from given BMI value

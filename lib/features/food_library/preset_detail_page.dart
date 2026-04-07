@@ -1,19 +1,23 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
+import 'package:opennutritracker/core/presentation/widgets/image_edit_action_sheet.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/local_food_record_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
+import 'package:opennutritracker/core/utils/food_image_storage.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/features/food_library/food_detail_page.dart';
+import 'package:opennutritracker/features/settings/domain/entity/ai_settings_entity.dart';
+import 'package:opennutritracker/features/settings/domain/service/ai_settings_service.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class PresetDetailPage extends StatefulWidget {
@@ -28,12 +32,14 @@ class PresetDetailPage extends StatefulWidget {
 class _PresetDetailPageState extends State<PresetDetailPage> {
   late MealPresetDBO _preset;
   late TextEditingController _nameController;
+  late final ImagePicker _imagePicker;
 
   @override
   void initState() {
     super.initState();
     _preset = widget.preset;
     _nameController = TextEditingController(text: _preset.name);
+    _imagePicker = ImagePicker();
   }
 
   double get _totalKcal => _preset.items.fold<double>(0, (sum, item) {
@@ -45,7 +51,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Preset'),
+        title: const Text('Edit saved meal'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -56,32 +62,21 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Preset image
-          if (_preset.imagePath != null && _preset.imagePath!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: FoodImage(
-                  imageUrl: _preset.imagePath,
-                  width: double.infinity,
-                  height: 180,
-                ),
-              ),
-            ),
+          _buildImageEditor(),
+          const SizedBox(height: 16),
 
           // Name field
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(
-              labelText: 'Preset name',
+              labelText: 'Meal name',
               border: OutlineInputBorder(),
             ),
             onSubmitted: (_) => _saveName(),
           ),
           const SizedBox(height: 8),
           Text(
-              '${_preset.items.length} items · ${_totalKcal.toInt()} ${S.of(context).kcalLabel}',
+              '${_foodCountLabel(_preset.items.length)} · ${_totalKcal.toInt()} ${S.of(context).kcalLabel}',
               style: Theme.of(context).textTheme.bodyMedium),
           const Divider(height: 24),
 
@@ -103,7 +98,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                     // Edit quantity
                     IconButton(
                       icon: const Icon(Icons.scale, size: 20),
-                      tooltip: 'Edit quantity',
+                      tooltip: 'Edit portion',
                       onPressed: () => _editItemQuantity(index, item),
                     ),
                     // Go to food detail
@@ -124,7 +119,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                     // Remove from preset
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline, size: 20),
-                      tooltip: 'Remove',
+                      tooltip: 'Remove food',
                       onPressed: () => _removeItem(index),
                     ),
                   ],
@@ -139,7 +134,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           OutlinedButton.icon(
             onPressed: _addItemToPreset,
             icon: const Icon(Icons.add),
-            label: const Text('Add item'),
+            label: const Text('Add food'),
           ),
 
           const SizedBox(height: 12),
@@ -148,7 +143,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           OutlinedButton.icon(
             onPressed: _aiEditPreset,
             icon: const Icon(Icons.auto_awesome),
-            label: const Text('AI edit'),
+            label: const Text('AI edit meal'),
           ),
         ],
       ),
@@ -167,6 +162,66 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     );
     await locator<MealPresetDataSource>().updatePreset(updated);
     setState(() => _preset = updated);
+  }
+
+  Widget _buildImageEditor() {
+    final hasImage = _preset.imagePath != null && _preset.imagePath!.isNotEmpty;
+    return GestureDetector(
+      onTap: _editMealImage,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 180,
+              child: hasImage
+                  ? FoodImage(
+                      imageUrl: _preset.imagePath,
+                      width: double.infinity,
+                      height: 180,
+                    )
+                  : Container(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo_outlined,
+                              size: 36,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Add meal image',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.outline,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: FilledButton.icon(
+                onPressed: _editMealImage,
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(hasImage ? 'Change' : 'Add'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _editItemQuantity(int index, MealPresetItemDBO item) async {
@@ -255,7 +310,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete preset?'),
+        title: const Text('Delete saved meal?'),
         content: Text('Delete "${_preset.name}"?'),
         actions: [
           TextButton(
@@ -288,7 +343,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
             ),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Create manually'),
+              title: const Text('Create food manually'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
           ],
@@ -367,7 +422,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add item manually'),
+        title: const Text('Add food manually'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -532,11 +587,13 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
     // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('AI is editing your preset...')),
+      const SnackBar(content: Text('AI is editing your saved meal...')),
     );
 
     try {
-      final aiProvider = locator<AiProvider>();
+      final aiProvider = await locator<AiSettingsService>().buildProviderForTask(
+        AiTaskType.foodEstimation,
+      );
 
       // Build context about current preset
       final currentItems = _preset.items.map((item) {
@@ -545,7 +602,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       }).join('\n');
 
       final prompt =
-          'Current preset "${_preset.name}" contains:\n$currentItems\n\nUser wants: $instruction';
+          'Current saved meal "${_preset.name}" contains:\n$currentItems\n\nUser wants: $instruction';
 
       // Use text-only estimation
       final response = await aiProvider.estimateFromPhoto(
@@ -616,7 +673,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preset updated by AI!')),
+          const SnackBar(content: Text('Saved meal updated by AI!')),
         );
       }
     } catch (e) {
@@ -646,6 +703,70 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
       return 'name:${meal.name!.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ')}';
     }
     return '';
+  }
+
+  String _foodCountLabel(int count) {
+    if (count == 1) {
+      return '1 food';
+    }
+    return '$count foods';
+  }
+
+  Future<void> _editMealImage() async {
+    final action = await showImageEditActionSheet(
+      context,
+      hasImage: _preset.imagePath != null && _preset.imagePath!.isNotEmpty,
+    );
+    if (action == null || !mounted) {
+      return;
+    }
+
+    if (action == ImageEditAction.remove) {
+      await _updatePresetImage(null);
+      return;
+    }
+
+    final source = action == ImageEditAction.camera
+        ? ImageSource.camera
+        : ImageSource.gallery;
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 90,
+    );
+
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    final savedPath = await FoodImageStorage.saveImageFromPath(picked.path);
+    if (!mounted) {
+      return;
+    }
+
+    await _updatePresetImage(savedPath);
+  }
+
+  Future<void> _updatePresetImage(String? imagePath) async {
+    final updated = MealPresetDBO(
+      id: _preset.id,
+      name: _preset.name,
+      items: _preset.items,
+      imagePath: imagePath,
+    );
+    await locator<MealPresetDataSource>().updatePreset(updated);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _preset = updated);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          imagePath == null ? 'Meal image removed' : 'Meal image updated',
+        ),
+      ),
+    );
   }
 }
 

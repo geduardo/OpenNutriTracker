@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
+import 'package:opennutritracker/core/presentation/widgets/image_edit_action_sheet.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/utils/food_image_storage.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
@@ -33,12 +36,15 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   late TextEditingController _kcalController;
   late TextEditingController _proteinController;
   late TextEditingController _carbsController;
+  late TextEditingController _sugarController;
   late TextEditingController _fatController;
   late TextEditingController _fiberController;
   late TextEditingController _sodiumController;
   late TextEditingController _servingLabelController;
   late TextEditingController _servingQuantityController;
   late String _selectedBaseUnit;
+  late final ImagePicker _imagePicker;
+  String? _imagePath;
   bool _hasChanges = false;
 
   @override
@@ -50,6 +56,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     _kcalController = TextEditingController(text: _fmt(n.energyKcal100));
     _proteinController = TextEditingController(text: _fmt(n.proteins100));
     _carbsController = TextEditingController(text: _fmt(n.carbohydrates100));
+    _sugarController = TextEditingController(text: _fmt(n.sugars100));
     _fatController = TextEditingController(text: _fmt(n.fat100));
     _fiberController = TextEditingController(text: _fmt(n.fiber100));
     _sodiumController = TextEditingController(text: _fmt(n.sodiumMg100));
@@ -59,8 +66,15 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     _servingQuantityController = TextEditingController(
       text: _fmt(widget.food.servingQuantity),
     );
-    _selectedBaseUnit =
-        widget.food.mealUnit == 'ml' ? 'ml' : widget.food.mealUnit == 'g' ? 'g' : 'g';
+    _imagePicker = ImagePicker();
+    _imagePath = widget.food.mainImageUrl?.isNotEmpty == true
+        ? widget.food.mainImageUrl
+        : widget.food.thumbnailImageUrl;
+    _selectedBaseUnit = widget.food.mealUnit == 'ml'
+        ? 'ml'
+        : widget.food.mealUnit == 'g'
+            ? 'g'
+            : 'g';
   }
 
   String _fmt(double? v) => v != null ? v.toStringAsFixed(1) : '';
@@ -84,20 +98,8 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Food image
-          if (widget.food.mainImageUrl != null &&
-              widget.food.mainImageUrl!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: FoodImage(
-                  imageUrl: widget.food.mainImageUrl,
-                  width: double.infinity,
-                  height: 180,
-                ),
-              ),
-            ),
+          _buildImageEditor(),
+          const SizedBox(height: 16),
 
           // Source badge
           Row(
@@ -166,20 +168,28 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
           Row(
             children: [
               Expanded(
-                  child: _buildField('Fiber', _fiberController, suffix: 'g')),
+                  child: _buildField('Of which sugars', _sugarController,
+                      suffix: 'g')),
               const SizedBox(width: 12),
+              Expanded(
+                  child: _buildField('Fiber', _fiberController, suffix: 'g')),
+            ],
+          ),
+          Row(
+            children: [
               Expanded(
                   child:
                       _buildField('Sodium', _sodiumController, suffix: 'mg')),
+              const SizedBox(width: 12),
+              const Expanded(child: SizedBox()),
             ],
           ),
 
           const SizedBox(height: 20),
-          Text('Quantity / portion',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Portion', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
-          _buildField('Quantity label', _servingLabelController),
-          _buildField('One quantity equals', _servingQuantityController,
+          _buildField('Portion label', _servingLabelController),
+          _buildField('One portion equals', _servingQuantityController,
               suffix: _selectedBaseUnit),
           Text(
             'Examples: cookie, slice, egg, piece, scoop, tbsp, tsp',
@@ -220,6 +230,73 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     );
   }
 
+  Widget _buildImageEditor() {
+    final hasImage = _imagePath != null && _imagePath!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: _editImage,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 180,
+                  child: hasImage
+                      ? FoodImage(
+                          imageUrl: _imagePath,
+                          width: double.infinity,
+                          height: 180,
+                        )
+                      : Container(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo_outlined,
+                                  size: 36,
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Add food image',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: FilledButton.icon(
+                    onPressed: _editImage,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(hasImage ? 'Change' : 'Add'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   IconData get _sourceIcon => switch (widget.food.source) {
         MealSourceEntity.ai => Icons.auto_awesome,
         MealSourceEntity.off => Icons.qr_code,
@@ -250,7 +327,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       proteins100: double.tryParse(_proteinController.text),
       carbohydrates100: double.tryParse(_carbsController.text),
       fat100: double.tryParse(_fatController.text),
-      sugars100: widget.food.nutriments.sugars100,
+      sugars100: double.tryParse(_sugarController.text),
       saturatedFat100: widget.food.nutriments.saturatedFat100,
       fiber100: double.tryParse(_fiberController.text),
       sodiumMg100: double.tryParse(_sodiumController.text),
@@ -270,8 +347,8 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
           ? null
           : _brandsController.text.trim(),
       url: widget.food.url,
-      thumbnailImageUrl: widget.food.thumbnailImageUrl,
-      mainImageUrl: widget.food.mainImageUrl,
+      thumbnailImageUrl: _imagePath,
+      mainImageUrl: _imagePath,
       mealQuantity: widget.food.mealQuantity,
       mealUnit: _selectedBaseUnit,
       servingQuantity: servingSize == null ? null : servingQuantity,
@@ -304,8 +381,53 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       }
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Food saved')));
-      setState(() => _hasChanges = false);
+      setState(() {
+        _imagePath = foodRecord.meal.mainImageUrl;
+        _hasChanges = false;
+      });
     }
+  }
+
+  Future<void> _editImage() async {
+    final action = await showImageEditActionSheet(
+      context,
+      hasImage: _imagePath != null && _imagePath!.isNotEmpty,
+    );
+    if (action == null || !mounted) {
+      return;
+    }
+
+    if (action == ImageEditAction.remove) {
+      setState(() {
+        _imagePath = null;
+        _hasChanges = true;
+      });
+      return;
+    }
+
+    final source = action == ImageEditAction.camera
+        ? ImageSource.camera
+        : ImageSource.gallery;
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 90,
+    );
+
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    final savedPath = await FoodImageStorage.saveImageFromPath(picked.path);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _imagePath = savedPath;
+      _hasChanges = true;
+    });
   }
 
   Future<void> _delete() async {

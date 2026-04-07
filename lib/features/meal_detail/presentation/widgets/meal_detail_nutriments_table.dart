@@ -62,7 +62,7 @@ class MealDetailNutrimentsTable extends StatelessWidget {
                 "${_adjustValueForServing(product.nutriments.carbohydrates100 ?? 0).roundToPrecision(2)}g",
                 textStyleNormal),
             _getNutrimentsTableRow(
-                '    ${S.of(context).sugarLabel}',
+                '    Of which sugars',
                 "${_adjustValueForServing(product.nutriments.sugars100 ?? 0).roundToPrecision(2)}g",
                 textStyleNormal),
             _getNutrimentsTableRow(

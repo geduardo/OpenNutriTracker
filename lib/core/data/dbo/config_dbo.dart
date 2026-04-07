@@ -31,11 +31,27 @@ class ConfigDBO extends HiveObject {
   @HiveField(9)
   int? schemaVersion;
 
+  @HiveField(10)
+  String? aiFoodEstimationProvider;
+
+  @HiveField(11)
+  String? aiFoodEstimationModel;
+
+  @HiveField(12)
+  String? aiLabelExtractionProvider;
+
+  @HiveField(13)
+  String? aiLabelExtractionModel;
+
   ConfigDBO(this.hasAcceptedDisclaimer, this.hasAcceptedPolicy,
       this.hasAcceptedSendAnonymousData, this.selectedAppTheme,
       {this.usesImperialUnits = false,
       this.userKcalAdjustment,
-      this.schemaVersion = 1});
+      this.schemaVersion = 1,
+      this.aiFoodEstimationProvider,
+      this.aiFoodEstimationModel,
+      this.aiLabelExtractionProvider,
+      this.aiLabelExtractionModel});
 
   factory ConfigDBO.empty() =>
       ConfigDBO(false, false, false, AppThemeDBO.system);
@@ -45,7 +61,15 @@ class ConfigDBO extends HiveObject {
       entity.hasAcceptedPolicy,
       entity.hasAcceptedSendAnonymousData,
       AppThemeDBO.fromAppThemeEntity(entity.appTheme),
-      usesImperialUnits: entity.usesImperialUnits);
+      usesImperialUnits: entity.usesImperialUnits,
+      userKcalAdjustment: entity.userKcalAdjustment,
+      aiFoodEstimationProvider: entity.aiFoodEstimationProvider,
+      aiFoodEstimationModel: entity.aiFoodEstimationModel,
+      aiLabelExtractionProvider: entity.aiLabelExtractionProvider,
+      aiLabelExtractionModel: entity.aiLabelExtractionModel)
+    ..userCarbGoalPct = entity.userCarbGoalPct
+    ..userProteinGoalPct = entity.userProteinGoalPct
+    ..userFatGoalPct = entity.userFatGoalPct;
 
   factory ConfigDBO.fromJson(Map<String, dynamic> json) =>
       _$ConfigDBOFromJson(json);

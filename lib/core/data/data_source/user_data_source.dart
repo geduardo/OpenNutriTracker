@@ -17,6 +17,10 @@ class UserDataSource {
     _userBox.put(_userKey, userDBO);
   }
 
+  Future<void> clear() async {
+    await _userBox.delete(_userKey);
+  }
+
   Future<bool> hasUserData() async => _userBox.containsKey(_userKey);
 
   // TODO remove dummy data

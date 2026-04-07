@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
@@ -31,6 +30,7 @@ class AiResultScreen extends StatefulWidget {
 }
 
 class _AiResultScreenState extends State<AiResultScreen> {
+  bool _initialized = false;
   late AiNutritionResponseDTO _response;
   late AddMealType _mealType;
   late DateTime _day;
@@ -44,6 +44,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
   @override
   void didChangeDependencies() {
+    if (_initialized) {
+      super.didChangeDependencies();
+      return;
+    }
+
     final args =
         ModalRoute.of(context)?.settings.arguments as AiResultScreenArguments;
     _response = args.response;
@@ -60,10 +65,22 @@ class _AiResultScreenState extends State<AiResultScreen> {
               weightG: item.estimatedWeightG,
               confidence: item.confidence,
               per100g: item.per100g,
+              controller: TextEditingController(
+                text: _formatWeight(item.estimatedWeightG),
+              ),
             ))
         .toList();
+    _initialized = true;
 
     super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    for (final item in _items) {
+      item.controller.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -74,7 +91,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text(_mode == MagicMode.singleItem ? 'Review item' : 'Review meal'),
+            Text(_mode == MagicMode.singleItem ? 'Review food' : 'Review meal'),
       ),
       body: Column(
         children: [
@@ -142,11 +159,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
                     ? 'Saving...'
                     : _selectionMode
                         ? _mode == MagicMode.singleItem
-                            ? 'Use item'
-                            : 'Use items (${_items.length})'
+                            ? 'Use food'
+                            : 'Use foods (${_items.length})'
                         : _mode == MagicMode.singleItem
-                        ? 'Add item'
-                        : 'Add all (${_items.length} items)'),
+                        ? 'Add food'
+                        : 'Add all (${_items.length} foods)'),
               ),
             ),
           ),
@@ -160,7 +177,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _isSaving ? null : _saveAsPreset,
                   icon: const Icon(Icons.playlist_add),
-                  label: const Text('Save as preset'),
+                  label: const Text('Save as meal'),
                 ),
               ),
             ),
@@ -198,16 +215,19 @@ class _AiResultScreenState extends State<AiResultScreen> {
                 SizedBox(
                   width: 80,
                   child: TextField(
-                    controller: TextEditingController(
-                        text: item.weightG.toInt().toString()),
-                    keyboardType: TextInputType.number,
+                    controller: item.controller,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                    ],
                     decoration: const InputDecoration(
                       suffixText: 'g',
                       isDense: true,
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (value) {
-                      final parsed = double.tryParse(value);
+                      final parsed = double.tryParse(value.replaceAll(',', '.'));
                       if (parsed != null) {
                         setState(() => _items[index].weightG = parsed);
                       }
@@ -280,11 +300,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Save & add as preset'),
+        title: const Text('Save & add as meal'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
-            labelText: 'Preset name',
+            labelText: 'Meal name',
             border: OutlineInputBorder(),
           ),
           autofocus: true,
@@ -496,12 +516,27 @@ class _AiResultScreenState extends State<AiResultScreen> {
     );
   }
 
+  String _formatWeight(double weightG) {
+    if (weightG == weightG.roundToDouble()) {
+      return weightG.toInt().toString();
+    }
+
+    return weightG.toStringAsFixed(1);
+  }
+
   Future<void> _returnItemsForBuilder() async {
     setState(() => _isSaving = true);
     try {
       final items = <MealPresetItemDBO>[];
+      final imagePath = _items.length == 1 ? await _savePhoto() : null;
       for (final item in _items) {
-        final foodRecord = await _upsertLocalFood(_buildAiMeal(item));
+        final foodRecord = await _upsertLocalFood(
+          _buildAiMeal(
+            item,
+            thumbnailImageUrl: imagePath,
+            mainImageUrl: imagePath,
+          ),
+        );
         items.add(
           MealPresetItemDBO(
             meal: foodRecord.meal,
@@ -528,12 +563,14 @@ class _EditableItem {
   double weightG;
   String confidence;
   AiNutrimentsPer100gDTO per100g;
+  TextEditingController controller;
 
   _EditableItem({
     required this.name,
     required this.weightG,
     required this.confidence,
     required this.per100g,
+    required this.controller,
   });
 }
 

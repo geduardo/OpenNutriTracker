@@ -48,6 +48,10 @@ class WeightEntryDataSource {
 
   Future<int> getEntryCount() async => _box.length;
 
+  Future<void> clear() async {
+    await _box.clear();
+  }
+
   /// Key format: yyyy-MM-dd
   String _dayKey(DateTime day) =>
       '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';

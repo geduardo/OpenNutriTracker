@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/add_meal/presentation/meal_entry_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
-class AddItemBottomSheet extends StatelessWidget {
+class AddItemBottomSheet extends StatefulWidget {
   final DateTime day;
 
   const AddItemBottomSheet({super.key, required this.day});
+
+  @override
+  State<AddItemBottomSheet> createState() => _AddItemBottomSheetState();
+}
+
+class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
+  late DateTime _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = DateUtils.dateOnly(widget.day);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +38,15 @@ class AddItemBottomSheet extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: const Text('Log for day'),
+            subtitle: Text(DateFormat.yMMMMEEEEd().format(_selectedDay)),
+            trailing: TextButton(
+              onPressed: _pickDay,
+              child: const Text('Change'),
             ),
           ),
           ListTile(
@@ -124,8 +147,24 @@ class AddItemBottomSheet extends StatelessWidget {
     Navigator.of(context).pushNamed(NavigationOptions.mealEntryRoute,
         arguments: MealEntryScreenArguments(
           itemType,
-          day,
+          _selectedDay,
         ));
   }
 
+  Future<void> _pickDay() async {
+    final pickedDay = await showDatePicker(
+      context: context,
+      initialDate: _selectedDay,
+      firstDate: DateTime(2020),
+      lastDate: DateUtils.dateOnly(DateTime.now()),
+    );
+
+    if (pickedDay == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedDay = DateUtils.dateOnly(pickedDay);
+    });
+  }
 }

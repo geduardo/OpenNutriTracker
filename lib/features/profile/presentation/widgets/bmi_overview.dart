@@ -7,9 +7,13 @@ import 'package:opennutritracker/generated/l10n.dart';
 class BMIOverview extends StatelessWidget {
   final double bmiValue;
   final UserNutritionalStatus nutritionalStatus;
+  final String? helperText;
 
   const BMIOverview(
-      {super.key, required this.bmiValue, required this.nutritionalStatus});
+      {super.key,
+      required this.bmiValue,
+      required this.nutritionalStatus,
+      this.helperText});
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +65,21 @@ class BMIOverview extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Theme.of(context)
                   .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.7)),
-        )
+                   .onSurface
+                   .withValues(alpha: 0.7)),
+        ),
+        if (helperText != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            helperText!,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.7)),
+            textAlign: TextAlign.center,
+          ),
+        ]
       ],
     );
   }

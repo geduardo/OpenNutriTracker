@@ -157,8 +157,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
               oldIntakeObject.totalFatsGram - newIntakeObject.totalFatsGram,
           proteinTracked: oldIntakeObject.totalProteinsGram -
               newIntakeObject.totalProteinsGram,
-          sodiumTracked: oldIntakeObject.totalSodiumMg -
-              newIntakeObject.totalSodiumMg);
+          sodiumTracked:
+              oldIntakeObject.totalSodiumMg - newIntakeObject.totalSodiumMg);
     } else if (newIntakeObject.amount > oldIntakeObject.amount) {
       // Amounts gained
       await _addTrackedDayUseCase.addDayCaloriesTracked(
@@ -170,8 +170,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
               newIntakeObject.totalFatsGram - oldIntakeObject.totalFatsGram,
           proteinTracked: newIntakeObject.totalProteinsGram -
               oldIntakeObject.totalProteinsGram,
-          sodiumTracked: newIntakeObject.totalSodiumMg -
-              oldIntakeObject.totalSodiumMg);
+          sodiumTracked:
+              newIntakeObject.totalSodiumMg - oldIntakeObject.totalSodiumMg);
     }
     _updateDiaryPage(dateTime);
   }

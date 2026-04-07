@@ -80,7 +80,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addItem,
         icon: const Icon(Icons.add),
-        label: const Text('Add item'),
+        label: const Text('Add food'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -95,7 +95,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            '${_items.length} items · ${_totalKcal.toInt()} kcal',
+            '${_foodCountLabel(_items.length)} · ${_totalKcal.toInt()} kcal',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           if (_hasDraft) ...[
@@ -116,7 +116,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Add foods from your library, a barcode, Magic, or a manual item.',
+                      'Add foods from your library, a barcode, Magic, or by creating one manually.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -180,8 +180,8 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
                 Expanded(
                   child: Text(
                     _draftEditIndex == null
-                        ? 'Add ${meal.name ?? "item"}'
-                        : 'Edit ${meal.name ?? "item"}',
+                        ? 'Add ${meal.name ?? "food"}'
+                        : 'Edit ${meal.name ?? "food"}',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -269,7 +269,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
             ),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Create manual item'),
+              title: const Text('Create manual food'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
           ],
@@ -601,6 +601,13 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
       return 'name:${meal.name!.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ')}';
     }
     return '';
+  }
+
+  String _foodCountLabel(int count) {
+    if (count == 1) {
+      return '1 food';
+    }
+    return '$count foods';
   }
 }
 

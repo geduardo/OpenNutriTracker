@@ -49,6 +49,8 @@ class IntakeEntity extends Equatable {
   double get totalProteinsGram =>
       amount * (meal.nutriments.proteinsPerUnit ?? 0);
 
+  double get totalSugarsGram => amount * (meal.nutriments.sugarsPerUnit ?? 0);
+
   double get totalSodiumMg =>
       amount * (meal.nutriments.sodiumMgPerUnit ?? 0);
 

@@ -22,6 +22,7 @@ import 'package:opennutritracker/features/strategy/data/dbo/goal_strategy_dbo.da
 import 'package:opennutritracker/features/strategy/data/repository/weight_entry_repository.dart';
 import 'package:opennutritracker/features/strategy/domain/entity/weight_entry_entity.dart';
 import 'package:opennutritracker/features/strategy/domain/service/strategy_rate_policy.dart';
+import 'package:opennutritracker/features/strategy/domain/service/trend_weight_service.dart';
 
 part 'profile_event.dart';
 
@@ -53,7 +54,12 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileLoadingState());
 
       final user = await _getUserUsecase.getUserData();
-      final userBMIValue = BMICalc.getBMI(user);
+      final weightEntries = await _weightEntryRepository.getAllEntries();
+      final trueWeightKg =
+          TrendWeightService.getLatestTrendWeight(weightEntries) ??
+              user.weightKG;
+      final userBMIValue =
+          BMICalc.getBMIForWeightKg(user.heightCM, trueWeightKg);
       final userBMIEntity = UserBMIEntity(
           bmiValue: userBMIValue,
           nutritionalStatus: BMICalc.getNutritionalStatus(userBMIValue));
@@ -62,15 +68,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       final desiredRateKg = StrategyRatePolicy.signedKgPerWeek(
         mode: _goalModeToStrategy(user),
         pctPerWeek: desiredRatePct,
-        bodyWeightKg: user.weightKG,
+        bodyWeightKg: trueWeightKg,
       );
 
       emit(ProfileLoadedState(
-          userBMI: userBMIEntity,
-          userEntity: user,
-          usesImperialUnits: userConfig.usesImperialUnits,
-          desiredWeeklyRatePct: desiredRatePct,
-          desiredWeeklyRateKg: desiredRateKg));
+           userBMI: userBMIEntity,
+           userEntity: user,
+           usesImperialUnits: userConfig.usesImperialUnits,
+           desiredWeeklyRatePct: desiredRatePct,
+           desiredWeeklyRateKg: desiredRateKg,
+           trueWeightKg: trueWeightKg));
     });
   }
 

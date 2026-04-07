@@ -40,6 +40,7 @@ class IntakeDataSource {
       return null;
     }
     intakeObject.$2.amount = fields['amount'] ?? intakeObject.$2.amount;
+    intakeObject.$2.groupName = fields['groupName'] ?? intakeObject.$2.groupName;
     _intakeBox.putAt(intakeObject.$1, intakeObject.$2);
     return _intakeBox.getAt(intakeObject.$1);
   }
@@ -52,6 +53,10 @@ class IntakeDataSource {
 
   Future<List<IntakeDBO>> getAllIntakes() async {
     return _intakeBox.values.toList();
+  }
+
+  Future<void> clear() async {
+    await _intakeBox.clear();
   }
 
   Future<List<IntakeDBO>> getAllIntakesByDate(
@@ -80,13 +85,13 @@ class IntakeDataSource {
       }
     }
 
-    // Sort by frequency (most-logged first), then by recency as tiebreaker
+    // Sort by recency first so "Recently" really reflects the latest logs,
+    // then use frequency as a tiebreaker for equally recent items.
     final sortedEntries = latestIntakeMap.entries.toList()
       ..sort((a, b) {
-        final freqCompare =
-            frequencyMap[b.key]!.compareTo(frequencyMap[a.key]!);
-        if (freqCompare != 0) return freqCompare;
-        return b.value.dateTime.compareTo(a.value.dateTime);
+        final recencyCompare = b.value.dateTime.compareTo(a.value.dateTime);
+        if (recencyCompare != 0) return recencyCompare;
+        return frequencyMap[b.key]!.compareTo(frequencyMap[a.key]!);
       });
 
     return sortedEntries.take(number).map((e) => e.value).toList();

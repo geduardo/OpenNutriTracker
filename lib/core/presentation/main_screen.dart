@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
     ];
     _appbarPages = [
       const HomeAppbar(),
-      MainAppbar(title: 'My Foods', iconData: Icons.restaurant_menu),
+      MainAppbar(title: 'Library', iconData: Icons.restaurant_menu),
       MainAppbar(title: 'Strategy', iconData: Icons.insights),
       MainAppbar(title: S.of(context).diaryLabel, iconData: Icons.book),
       MainAppbar(
@@ -67,7 +67,7 @@ class _MainScreenState extends State<MainScreen> {
               icon: _selectedPageIndex == 1
                   ? const Icon(Icons.restaurant_menu)
                   : const Icon(Icons.restaurant_menu_outlined),
-              label: 'My Foods'),
+              label: 'Library'),
           NavigationDestination(
               icon: _selectedPageIndex == 2
                   ? const Icon(Icons.insights)

@@ -3,35 +3,16 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:opennutritracker/core/utils/env.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/gemini_provider.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/openai_provider.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/add_meal/presentation/ai_result_screen.dart';
+import 'package:opennutritracker/features/settings/domain/entity/ai_settings_entity.dart';
+import 'package:opennutritracker/features/settings/domain/service/ai_settings_service.dart';
 
 enum MagicMode { singleItem, mealBreakdown }
-
-enum AiProviderType { gemini, openai }
-
-extension AiProviderTypeLabel on AiProviderType {
-  String get label => switch (this) {
-        AiProviderType.gemini => 'Gemini',
-        AiProviderType.openai => 'OpenAI',
-      };
-
-  List<String> get models => switch (this) {
-        AiProviderType.gemini => GeminiProvider.availableModels,
-        AiProviderType.openai => OpenAiProvider.availableModels,
-      };
-
-  String get defaultModel => switch (this) {
-        AiProviderType.gemini => GeminiProvider.defaultModel,
-        AiProviderType.openai => OpenAiProvider.defaultModel,
-      };
-}
 
 class MagicScreen extends StatefulWidget {
   const MagicScreen({super.key});
@@ -54,10 +35,10 @@ class _MagicScreenState extends State<MagicScreen> {
   late AddMealType _mealType;
   late DateTime _day;
   late bool _selectionMode;
-
-  late final List<AiProviderType> _availableProviders;
-  late AiProviderType _selectedProvider;
-  late String _selectedModel;
+  final AiSettingsService _aiSettingsService = locator<AiSettingsService>();
+  AiTaskSettings _foodEstimationSettings =
+      AiTaskSettings.defaultsFor(AiTaskType.foodEstimation);
+  bool _hasAiKey = false;
 
   @override
   void didChangeDependencies() {
@@ -73,13 +54,7 @@ class _MagicScreenState extends State<MagicScreen> {
   void initState() {
     super.initState();
     _textController.addListener(() => setState(() {}));
-
-    _availableProviders = [
-      if (Env.geminiApiKey.isNotEmpty) AiProviderType.gemini,
-      if (Env.openaiApiKey.isNotEmpty) AiProviderType.openai,
-    ];
-    _selectedProvider = _availableProviders.first;
-    _selectedModel = _selectedProvider.defaultModel;
+    _loadAiSettings();
   }
 
   @override
@@ -158,83 +133,7 @@ class _MagicScreenState extends State<MagicScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Provider & model selection
-            if (_availableProviders.length > 1)
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<AiProviderType>(
-                      initialValue: _selectedProvider,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Provider',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      items: _availableProviders
-                          .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
-                          .toList(),
-                      onChanged: _isLoading
-                          ? null
-                          : (p) {
-                              if (p != null) {
-                                setState(() {
-                                  _selectedProvider = p;
-                                  _selectedModel = p.defaultModel;
-                                });
-                              }
-                            },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 3,
-                    child: DropdownButtonFormField<String>(
-                      key: ValueKey(_selectedProvider),
-                      initialValue: _selectedModel,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Model',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      items: _selectedProvider.models
-                          .map((m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(m, overflow: TextOverflow.ellipsis),
-                              ))
-                          .toList(),
-                      onChanged: _isLoading
-                          ? null
-                          : (m) {
-                              if (m != null) setState(() => _selectedModel = m);
-                            },
-                    ),
-                  ),
-                ],
-              )
-            else
-              DropdownButtonFormField<String>(
-                initialValue: _selectedModel,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: '${_selectedProvider.label} Model',
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                items: _selectedProvider.models
-                    .map((m) => DropdownMenuItem(
-                          value: m,
-                          child: Text(m, overflow: TextOverflow.ellipsis),
-                        ))
-                    .toList(),
-                onChanged: _isLoading
-                    ? null
-                    : (m) {
-                        if (m != null) setState(() => _selectedModel = m);
-                      },
-              ),
+            _buildAiSettingsCard(context),
             const SizedBox(height: 24),
 
             // Error message
@@ -250,7 +149,7 @@ class _MagicScreenState extends State<MagicScreen> {
 
             // Submit button
             FilledButton.icon(
-              onPressed: _canSubmit && !_isLoading ? _submit : null,
+              onPressed: _canSubmit && !_isLoading && _hasAiKey ? _submit : null,
               icon: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -298,22 +197,33 @@ class _MagicScreenState extends State<MagicScreen> {
       );
     }
 
-    return Container(
-      height: 150,
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_a_photo,
-                size: 40, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 8),
-            Text('Add a photo',
-                style: TextStyle(color: Theme.of(context).colorScheme.outline)),
-          ],
+    return InkWell(
+      onTap: _isLoading ? null : () => _pickImage(ImageSource.camera),
+      borderRadius: BorderRadius.circular(12),
+      child: Ink(
+        height: 150,
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_a_photo,
+                  size: 40, color: Theme.of(context).colorScheme.outline),
+              const SizedBox(height: 8),
+              Text('Add a photo',
+                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+              const SizedBox(height: 4),
+              Text('Tap to open camera',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7))),
+            ],
+          ),
         ),
       ),
     );
@@ -321,6 +231,58 @@ class _MagicScreenState extends State<MagicScreen> {
 
   bool get _canSubmit =>
       _imageBytes != null || _textController.text.trim().isNotEmpty;
+
+  Future<void> _loadAiSettings() async {
+    final snapshot = await _aiSettingsService.loadSettings();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _foodEstimationSettings = snapshot.foodEstimation;
+      _hasAiKey = snapshot.hasAnyApiKey;
+    });
+  }
+
+  Widget _buildAiSettingsCard(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              _hasAiKey ? Icons.tune : Icons.key_off,
+              color: _hasAiKey
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.error,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _hasAiKey
+                        ? 'Using ${_foodEstimationSettings.provider.label} / ${_foodEstimationSettings.model}'
+                        : 'AI is not configured',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  Text(
+                    _hasAiKey
+                        ? 'Change API keys and models in Settings > AI settings.'
+                        : 'Add an OpenAI or Gemini API key in Settings > AI settings.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -351,12 +313,10 @@ class _MagicScreenState extends State<MagicScreen> {
     });
 
     try {
-      final AiProvider aiProvider = switch (_selectedProvider) {
-        AiProviderType.gemini =>
-          GeminiProvider(Env.geminiApiKey, model: _selectedModel),
-        AiProviderType.openai =>
-          OpenAiProvider(Env.openaiApiKey, model: _selectedModel),
-      };
+      final AiProvider aiProvider =
+          await _aiSettingsService.buildProviderForTask(
+        AiTaskType.foodEstimation,
+      );
       final userText = _textController.text.trim();
 
       // Build context string with mode instruction + user text

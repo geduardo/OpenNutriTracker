@@ -133,7 +133,7 @@ class _WeightTrendChartState extends State<WeightTrendChart> {
                     reservedSize: 45,
                     interval: _yInterval(maxY - minY),
                     getTitlesWidget: (value, meta) => Text(
-                      '${value.toStringAsFixed(1)}',
+                      value.toStringAsFixed(1),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),

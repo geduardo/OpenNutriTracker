@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
@@ -23,6 +22,8 @@ import 'package:opennutritracker/features/meal_detail/presentation/widgets/meal_
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/meal_placeholder.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/meal_title_expanded.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/widgets/off_disclaimer.dart';
+import 'package:opennutritracker/features/settings/domain/entity/ai_settings_entity.dart';
+import 'package:opennutritracker/features/settings/domain/service/ai_settings_service.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class MealDetailScreen extends StatefulWidget {
@@ -362,7 +363,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     try {
       final imageBytes = await picked.readAsBytes();
       final mimeType = picked.mimeType ?? 'image/jpeg';
-      final aiProvider = locator<AiProvider>();
+      final aiProvider = await locator<AiSettingsService>().buildProviderForTask(
+        AiTaskType.labelExtraction,
+      );
 
       final response = await aiProvider.extractFromLabel(imageBytes, mimeType);
 

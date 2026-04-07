@@ -20,13 +20,15 @@ class ProfileLoadedState extends ProfileState {
   final bool usesImperialUnits;
   final double desiredWeeklyRatePct;
   final double desiredWeeklyRateKg;
+  final double trueWeightKg;
 
   const ProfileLoadedState(
       {required this.userBMI,
       required this.userEntity,
       required this.usesImperialUnits,
       required this.desiredWeeklyRatePct,
-      required this.desiredWeeklyRateKg});
+      required this.desiredWeeklyRateKg,
+      required this.trueWeightKg});
 
   @override
   List<Object?> get props => [
@@ -35,5 +37,6 @@ class ProfileLoadedState extends ProfileState {
         usesImperialUnits,
         desiredWeeklyRatePct,
         desiredWeeklyRateKg,
+        trueWeightKg,
       ];
-}
+  }

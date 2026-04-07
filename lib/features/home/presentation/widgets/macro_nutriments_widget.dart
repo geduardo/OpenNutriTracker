@@ -26,8 +26,10 @@ class MacroNutrientsView extends StatefulWidget {
 class _MacroNutrientsViewState extends State<MacroNutrientsView> {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return Wrap(
+      alignment: WrapAlignment.spaceAround,
+      spacing: 12,
+      runSpacing: 8,
       children: [
         _macroIndicator(
           context,
@@ -54,18 +56,20 @@ class _MacroNutrientsViewState extends State<MacroNutrientsView> {
   Widget _macroIndicator(
     BuildContext context, {
     required double intake,
-    required double goal,
+    double? goal,
     required String label,
   }) {
-    final isOver = goal > 0 && intake > goal;
+    final hasGoal = goal != null && goal > 0;
+    final isOver = hasGoal && intake > goal;
     final color = isOver
         ? Theme.of(context).colorScheme.error
         : Theme.of(context).colorScheme.primary;
 
-    final diff = goal - intake;
-    final diffText = isOver
-        ? '+${(-diff).toInt()}'
-        : '${intake.toInt()}/${goal.toInt()}';
+    final diffText = hasGoal
+        ? isOver
+            ? '+${(intake - goal).toInt()}'
+            : '${intake.toInt()}/${goal.toInt()}'
+        : '${intake.toInt()}';
 
     return Row(
       children: [
@@ -91,8 +95,10 @@ class _MacroNutrientsViewState extends State<MacroNutrientsView> {
               ),
               Text(
                 label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
             ],
           ),
@@ -101,8 +107,11 @@ class _MacroNutrientsViewState extends State<MacroNutrientsView> {
     );
   }
 
-  double _goalPercentage(double goal, double supplied) {
-    if (supplied <= 0 || goal <= 0) {
+  double _goalPercentage(double? goal, double supplied) {
+    if (goal == null || goal <= 0) {
+      return supplied > 0 ? 1 : 0;
+    }
+    if (supplied <= 0) {
       return 0;
     } else if (supplied > goal) {
       return 1;

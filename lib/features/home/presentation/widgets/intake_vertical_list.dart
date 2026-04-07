@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
+import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
+import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
+import 'package:opennutritracker/core/domain/usecase/update_intake_usecase.dart';
 import 'package:opennutritracker/core/presentation/widgets/copy_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_all_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/intake_card.dart';
+import 'package:opennutritracker/core/presentation/widgets/meal_multiplier_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/placeholder_card.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
@@ -14,6 +18,7 @@ import 'package:opennutritracker/features/add_meal/presentation/meal_entry_scree
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
+import 'package:opennutritracker/features/food_library/preset_detail_page.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/meal_detail/presentation/bloc/meal_detail_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
@@ -58,6 +63,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
   late MealDetailBloc _mealDetailBloc;
   late HomeBloc _homeBloc;
   Map<String, String?> _presetImages = {};
+  Map<String, MealPresetDBO> _presetByBaseName = {};
 
   @override
   void initState() {
@@ -74,6 +80,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
         _presetImages = {
           for (final p in presets)
             if (p.imagePath != null) p.name: p.imagePath,
+        };
+        _presetByBaseName = {
+          for (final p in presets) p.name.toLowerCase(): p,
         };
       });
     }
@@ -99,11 +108,13 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 
     return [
       ...groups.entries.map((e) {
-        final name = e.value.first.groupName ?? e.value.map((i) => i.meal.name ?? '?').join(' + ');
+        final name = e.value.first.groupName ??
+            e.value.map((i) => i.meal.name ?? '?').join(' + ');
+        final parsedGroupName = parseMealGroupName(name);
         return _IntakeGroup(
           name: name,
           intakes: e.value,
-          imageUrl: _presetImages[name],
+          imageUrl: _presetImages[parsedGroupName.baseName],
         );
       }),
       ...ungrouped.map((i) => _IntakeGroup(name: null, intakes: [i])),
@@ -207,8 +218,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 
                   if (group.isGrouped) {
                     // Grouped meal — show as single card with group name
-                    return _buildGroupedCard(
-                        group, firstListElement);
+                    return _buildGroupedCard(group, firstListElement);
                   }
 
                   // Single item
@@ -296,7 +306,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                       color: Theme.of(context).colorScheme.primaryContainer,
                       child: Center(
                         child: Icon(Icons.restaurant_menu,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer),
                       ),
                     ),
                   ),
@@ -350,6 +362,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 
   void _showGroupDetail(_IntakeGroup group) {
     final imageUrl = group.imageUrl;
+    final parsedGroupName = parseMealGroupName(group.name);
+    final linkedPreset =
+        _presetByBaseName[parsedGroupName.baseName.toLowerCase()];
 
     showModalBottomSheet(
       context: context,
@@ -381,11 +396,33 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                       children: [
                         Text(group.name ?? 'Meal',
                             style: Theme.of(ctx).textTheme.titleLarge),
-                        Text('${group.totalKcal.toInt()} ${S.of(ctx).kcalLabel}',
+                        Text(
+                            '${group.totalKcal.toInt()} ${S.of(ctx).kcalLabel}',
                             style: Theme.of(ctx).textTheme.bodyMedium),
                       ],
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.scale_outlined),
+                    tooltip: 'Edit meal portion',
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          _editGroupedMealPortion(group);
+                        }
+                      });
+                    },
+                  ),
+                  if (linkedPreset != null)
+                    IconButton(
+                      icon: const Icon(Icons.open_in_new),
+                      tooltip: 'View meal details',
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await _openPresetDetail(linkedPreset);
+                      },
+                    ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
@@ -409,8 +446,12 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                         '${intake.amount.toInt()}g · ${intake.totalKcal.toInt()} kcal'),
                     onTap: () {
                       Navigator.pop(ctx);
-                      widget.onItemTappedCallback
-                          ?.call(context, intake, widget.usesImperialUnits);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          widget.onItemTappedCallback
+                              ?.call(context, intake, widget.usesImperialUnits);
+                        }
+                      });
                     },
                   )),
             ],
@@ -418,6 +459,118 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
         ),
       ),
     );
+  }
+
+  Future<void> _openPresetDetail(MealPresetDBO preset) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PresetDetailPage(preset: preset),
+      ),
+    );
+    await _loadPresetImages();
+  }
+
+  Future<void> _editGroupedMealPortion(_IntakeGroup group) async {
+    final parsedGroupName = parseMealGroupName(group.name);
+    final currentMultiplier =
+        parsedGroupName.multiplier > 0 ? parsedGroupName.multiplier : 1.0;
+    final baseTotalKcal = group.totalKcal / currentMultiplier;
+    final newMultiplier = await showMealMultiplierDialog(
+      context,
+      mealName: parsedGroupName.baseName,
+      totalKcal: baseTotalKcal,
+      initialMultiplier: currentMultiplier,
+      confirmLabel: 'Update meal',
+    );
+
+    if (newMultiplier == null || newMultiplier <= 0 || !mounted) {
+      return;
+    }
+
+    final scaleFactor = newMultiplier / currentMultiplier;
+    final newGroupName =
+        buildMealGroupName(parsedGroupName.baseName, newMultiplier);
+
+    await _updateGroupedMeal(group, scaleFactor, newGroupName);
+
+    if (!mounted) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      locator<HomeBloc>().add(const LoadItemsEvent());
+      locator<DiaryBloc>().add(const LoadDiaryYearEvent());
+      locator<CalendarDayBloc>().add(RefreshCalendarDayEvent());
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('$newGroupName updated.')),
+      );
+    });
+  }
+
+  Future<void> _updateGroupedMeal(
+    _IntakeGroup group,
+    double scaleFactor,
+    String newGroupName,
+  ) async {
+    final updateIntakeUsecase = locator<UpdateIntakeUsecase>();
+    final addTrackedDayUsecase = locator<AddTrackedDayUsecase>();
+
+    for (final intake in group.intakes) {
+      final updated = await updateIntakeUsecase.updateIntake(
+        intake.id,
+        {
+          'amount': intake.amount * scaleFactor,
+          'groupName': newGroupName,
+        },
+      );
+      if (updated == null) {
+        continue;
+      }
+
+      final kcalDelta = updated.totalKcal - intake.totalKcal;
+      final carbsDelta = updated.totalCarbsGram - intake.totalCarbsGram;
+      final fatDelta = updated.totalFatsGram - intake.totalFatsGram;
+      final proteinDelta = updated.totalProteinsGram - intake.totalProteinsGram;
+      final sodiumDelta = updated.totalSodiumMg - intake.totalSodiumMg;
+
+      if (kcalDelta >= 0) {
+        await addTrackedDayUsecase.addDayCaloriesTracked(widget.day, kcalDelta);
+      } else {
+        await addTrackedDayUsecase.removeDayCaloriesTracked(
+          widget.day,
+          -kcalDelta,
+        );
+      }
+
+      if (carbsDelta >= 0 ||
+          fatDelta >= 0 ||
+          proteinDelta >= 0 ||
+          sodiumDelta >= 0) {
+        await addTrackedDayUsecase.addDayMacrosTracked(
+          widget.day,
+          carbsTracked: carbsDelta > 0 ? carbsDelta : 0,
+          fatTracked: fatDelta > 0 ? fatDelta : 0,
+          proteinTracked: proteinDelta > 0 ? proteinDelta : 0,
+          sodiumTracked: sodiumDelta > 0 ? sodiumDelta : 0,
+        );
+      }
+
+      if (carbsDelta < 0 ||
+          fatDelta < 0 ||
+          proteinDelta < 0 ||
+          sodiumDelta < 0) {
+        await addTrackedDayUsecase.removeDayMacrosTracked(
+          widget.day,
+          carbsTracked: carbsDelta < 0 ? -carbsDelta : 0,
+          fatTracked: fatDelta < 0 ? -fatDelta : 0,
+          proteinTracked: proteinDelta < 0 ? -proteinDelta : 0,
+          sodiumTracked: sodiumDelta < 0 ? -sodiumDelta : 0,
+        );
+      }
+    }
   }
 
   void _onPlaceholderCardTapped(BuildContext context) {
@@ -446,10 +599,9 @@ class _IntakeGroup {
 
   _IntakeGroup({required this.name, required this.intakes, this.imageUrl});
 
-  bool get isGrouped => intakes.length > 1 && name != null;
+  bool get isGrouped => name != null;
 
-  double get totalKcal =>
-      intakes.fold(0, (sum, i) => sum + i.totalKcal);
+  double get totalKcal => intakes.fold(0, (sum, i) => sum + i.totalKcal);
 
   /// Returns the first intake (used for display when collapsed)
   IntakeEntity get primary => intakes.first;

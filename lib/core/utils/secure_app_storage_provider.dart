@@ -33,4 +33,16 @@ class SecureAppStorageProvider {
     }
     return encryptionKey;
   }
+
+  Future<String?> readString(String key) async {
+    return _secureStorage.read(key: key);
+  }
+
+  Future<void> writeString(String key, String value) async {
+    await _secureStorage.write(key: key, value: value);
+  }
+
+  Future<void> delete(String key) async {
+    await _secureStorage.delete(key: key);
+  }
 }

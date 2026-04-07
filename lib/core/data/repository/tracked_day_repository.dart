@@ -12,6 +12,10 @@ class TrackedDayRepository {
     return await _trackedDayDataSource.getAllTrackedDays();
   }
 
+  Future<void> clearAll() async {
+    await _trackedDayDataSource.clear();
+  }
+
   Future<TrackedDayEntity?> getTrackedDay(DateTime day) async {
     final trackedDay = await _trackedDayDataSource.getTrackedDay(day);
     if (trackedDay != null) {

@@ -11,10 +11,11 @@ import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/presentation/widgets/error_dialog.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
-import 'package:opennutritracker/features/add_meal/data/data_sources/ai/ai_provider.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
 import 'package:opennutritracker/features/meal_detail/meal_detail_screen.dart';
+import 'package:opennutritracker/features/settings/domain/entity/ai_settings_entity.dart';
+import 'package:opennutritracker/features/settings/domain/service/ai_settings_service.dart';
 import 'package:opennutritracker/features/scanner/presentation/scanner_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -228,7 +229,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
     try {
       final imageBytes = await picked.readAsBytes();
       final mimeType = picked.mimeType ?? 'image/jpeg';
-      final aiProvider = locator<AiProvider>();
+      final aiProvider = await locator<AiSettingsService>().buildProviderForTask(
+        AiTaskType.labelExtraction,
+      );
 
       final response = await aiProvider.extractFromLabel(imageBytes, mimeType);
 

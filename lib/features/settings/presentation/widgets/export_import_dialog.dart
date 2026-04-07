@@ -4,6 +4,7 @@ import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
+import 'package:opennutritracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:opennutritracker/features/settings/presentation/bloc/export_import_bloc.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
@@ -13,6 +14,7 @@ class ExportImportDialog extends StatelessWidget {
   final _homeBloc = locator<HomeBloc>();
   final _diaryBloc = locator<DiaryBloc>();
   final _calendarDayBloc = locator<CalendarDayBloc>();
+  final _profileBloc = locator<ProfileBloc>();
 
   ExportImportDialog({super.key});
 
@@ -28,10 +30,18 @@ class ExportImportDialog extends StatelessWidget {
                 bloc: exportImportBloc,
                 builder: (context, state) {
                   if (state is ExportImportInitial) {
-                    return Text(
-                      S.of(context).exportImportDescription,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 15,
+                    return const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Backup export includes your diary, foods, saved meals, profile, strategy data, and local images.',
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Import restores a backup and replaces the current local data on this device.',
+                        ),
+                      ],
                     );
                   } else if (state is ExportImportLoadingState) {
                     return const LinearProgressIndicator();
@@ -69,13 +79,34 @@ class ExportImportDialog extends StatelessWidget {
           onPressed: () {
             exportImportBloc.add(ExportDataEvent());
           },
-          child: Text(S.of(context).exportAction),
+          child: const Text('Create backup'),
         ),
         TextButton(
-          onPressed: () {
-            exportImportBloc.add(ImportDataEvent());
+          onPressed: () async {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Restore backup?'),
+                content: const Text(
+                  'This will replace the current local data on this device.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(S.of(ctx).dialogCancelLabel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Restore'),
+                  ),
+                ],
+              ),
+            );
+            if (confirmed == true) {
+              exportImportBloc.add(ImportDataEvent());
+            }
           },
-          child: Text(S.of(context).importAction),
+          child: const Text('Restore backup'),
         ),
       ],
     );
@@ -85,5 +116,6 @@ class ExportImportDialog extends StatelessWidget {
     _homeBloc.add(const LoadItemsEvent());
     _diaryBloc.add(const LoadDiaryYearEvent());
     _calendarDayBloc.add(RefreshCalendarDayEvent());
+    _profileBloc.add(LoadProfileEvent());
   }
 }

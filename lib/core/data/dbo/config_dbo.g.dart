@@ -14,6 +14,10 @@ ConfigDBO _$ConfigDBOFromJson(Map<String, dynamic> json) => ConfigDBO(
       usesImperialUnits: json['usesImperialUnits'] as bool? ?? false,
       userKcalAdjustment: (json['userKcalAdjustment'] as num?)?.toDouble(),
       schemaVersion: (json['schemaVersion'] as num?)?.toInt() ?? 1,
+      aiFoodEstimationProvider: json['aiFoodEstimationProvider'] as String?,
+      aiFoodEstimationModel: json['aiFoodEstimationModel'] as String?,
+      aiLabelExtractionProvider: json['aiLabelExtractionProvider'] as String?,
+      aiLabelExtractionModel: json['aiLabelExtractionModel'] as String?,
     )
       ..userCarbGoalPct = (json['userCarbGoalPct'] as num?)?.toDouble()
       ..userProteinGoalPct = (json['userProteinGoalPct'] as num?)?.toDouble()
@@ -30,6 +34,10 @@ Map<String, dynamic> _$ConfigDBOToJson(ConfigDBO instance) => <String, dynamic>{
       'userProteinGoalPct': instance.userProteinGoalPct,
       'userFatGoalPct': instance.userFatGoalPct,
       'schemaVersion': instance.schemaVersion,
+      'aiFoodEstimationProvider': instance.aiFoodEstimationProvider,
+      'aiFoodEstimationModel': instance.aiFoodEstimationModel,
+      'aiLabelExtractionProvider': instance.aiLabelExtractionProvider,
+      'aiLabelExtractionModel': instance.aiLabelExtractionModel,
     };
 
 const _$AppThemeDBOEnumMap = {

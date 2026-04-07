@@ -7,8 +7,6 @@ import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dar
 import 'package:opennutritracker/core/domain/usecase/delete_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_tracked_day_usecase.dart';
-import 'package:opennutritracker/core/utils/locator.dart';
-import 'package:opennutritracker/features/diary/presentation/bloc/diary_bloc.dart';
 
 part 'calendar_day_event.dart';
 
@@ -71,10 +69,5 @@ class CalendarDayBloc extends Bloc<CalendarDayEvent, CalendarDayState> {
         fatTracked: intakeEntity.totalFatsGram,
         proteinTracked: intakeEntity.totalProteinsGram,
         sodiumTracked: intakeEntity.totalSodiumMg);
-  }
-
-  Future<void> _updateDiaryPage(DateTime day) async {
-    locator<DiaryBloc>().add(const LoadDiaryYearEvent());
-    locator<CalendarDayBloc>().add(LoadCalendarDayEvent(day));
   }
 }

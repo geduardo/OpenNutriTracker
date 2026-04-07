@@ -32,6 +32,13 @@ class MealPresetDataSource {
     return _presetBox.get(presetId);
   }
 
+  Future<void> replaceAllPresets(List<MealPresetDBO> presets) async {
+    await _presetBox.clear();
+    for (final preset in presets) {
+      await _presetBox.put(preset.id, preset);
+    }
+  }
+
   Future<void> syncFoodSnapshot(String foodId, MealDBO updatedMeal) async {
     final presets = _presetBox.values.toList();
     for (final preset in presets) {

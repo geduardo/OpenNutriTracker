@@ -12,6 +12,10 @@ class ConfigEntity extends Equatable {
   final double? userCarbGoalPct;
   final double? userProteinGoalPct;
   final double? userFatGoalPct;
+  final String? aiFoodEstimationProvider;
+  final String? aiFoodEstimationModel;
+  final String? aiLabelExtractionProvider;
+  final String? aiLabelExtractionModel;
 
   const ConfigEntity(this.hasAcceptedDisclaimer, this.hasAcceptedPolicy,
       this.hasAcceptedSendAnonymousData, this.appTheme,
@@ -19,7 +23,11 @@ class ConfigEntity extends Equatable {
       this.userKcalAdjustment,
       this.userCarbGoalPct,
       this.userProteinGoalPct,
-      this.userFatGoalPct});
+      this.userFatGoalPct,
+      this.aiFoodEstimationProvider,
+      this.aiFoodEstimationModel,
+      this.aiLabelExtractionProvider,
+      this.aiLabelExtractionModel});
 
   factory ConfigEntity.fromConfigDBO(ConfigDBO dbo) => ConfigEntity(
         dbo.hasAcceptedDisclaimer,
@@ -31,6 +39,10 @@ class ConfigEntity extends Equatable {
         userCarbGoalPct: dbo.userCarbGoalPct,
         userProteinGoalPct: dbo.userProteinGoalPct,
         userFatGoalPct: dbo.userFatGoalPct,
+        aiFoodEstimationProvider: dbo.aiFoodEstimationProvider,
+        aiFoodEstimationModel: dbo.aiFoodEstimationModel,
+        aiLabelExtractionProvider: dbo.aiLabelExtractionProvider,
+        aiLabelExtractionModel: dbo.aiLabelExtractionModel,
       );
 
   @override
@@ -43,5 +55,9 @@ class ConfigEntity extends Equatable {
         userCarbGoalPct,
         userProteinGoalPct,
         userFatGoalPct,
+        aiFoodEstimationProvider,
+        aiFoodEstimationModel,
+        aiLabelExtractionProvider,
+        aiLabelExtractionModel,
       ];
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
@@ -7,6 +8,7 @@ import 'package:opennutritracker/core/domain/usecase/add_intake_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
+import 'package:opennutritracker/core/presentation/widgets/meal_multiplier_dialog.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
@@ -26,6 +28,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
   late AddMealType _mealType;
   late DateTime _day;
   List<MealPresetDBO> _presets = [];
+  String _searchQuery = '';
   bool _isLoading = true;
 
   @override
@@ -40,51 +43,128 @@ class _PresetsScreenState extends State<PresetsScreen> {
 
   Future<void> _loadPresets() async {
     final dataSource = locator<MealPresetDataSource>();
+    final intakeDataSource = locator<IntakeDataSource>();
     final presets = await dataSource.getAllPresets();
+    final intakes = await intakeDataSource.getAllIntakes();
+    final latestUseByPresetName = <String, DateTime>{};
+
+    for (final intake in intakes) {
+      final groupName = intake.groupName?.trim();
+      if (groupName == null || groupName.isEmpty) {
+        continue;
+      }
+
+      final baseName = parseMealGroupName(groupName).baseName.toLowerCase();
+      final previousUse = latestUseByPresetName[baseName];
+      if (previousUse == null || intake.dateTime.isAfter(previousUse)) {
+        latestUseByPresetName[baseName] = intake.dateTime;
+      }
+    }
+
+    final sortedPresets = List<MealPresetDBO>.from(presets)
+      ..sort((a, b) {
+        final aUsed = latestUseByPresetName[a.name.toLowerCase()];
+        final bUsed = latestUseByPresetName[b.name.toLowerCase()];
+        if (aUsed != null && bUsed != null) {
+          return bUsed.compareTo(aUsed);
+        }
+        if (aUsed != null) {
+          return -1;
+        }
+        if (bUsed != null) {
+          return 1;
+        }
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
     if (mounted) {
       setState(() {
-        _presets = presets;
+        _presets = sortedPresets;
         _isLoading = false;
       });
     }
   }
 
+  List<MealPresetDBO> get _filteredPresets {
+    if (_searchQuery.trim().isEmpty) {
+      return _presets;
+    }
+
+    final query = _searchQuery.trim().toLowerCase();
+    return _presets.where((preset) {
+      if (preset.name.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      return preset.items.any((item) =>
+          (item.meal.name?.toLowerCase().contains(query) ?? false));
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filteredPresets = _filteredPresets;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meal Presets'),
+        title: const Text('Saved meals'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _presets.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.playlist_add,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.outline),
-                        const SizedBox(height: 16),
-                        Text('No presets yet',
-                            style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 8),
-                        Text(
-                            'Use Magic with "Meal breakdown" to create a meal, then save it as a preset.',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: TextField(
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value),
+                    decoration: InputDecoration(
+                      hintText: S.of(context).searchLabel,
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      filled: true,
+                      isDense: true,
                     ),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: _presets.length,
-                  itemBuilder: (context, index) =>
-                      _buildPresetCard(_presets[index]),
                 ),
+                Expanded(
+                  child: _presets.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.playlist_add,
+                                    size: 64,
+                                    color:
+                                        Theme.of(context).colorScheme.outline),
+                                const SizedBox(height: 16),
+                                Text('No saved meals yet',
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium),
+                                const SizedBox(height: 8),
+                                Text(
+                                    'Use Magic with "Meal breakdown" or build a meal in your library, then save it for reuse.',
+                                    textAlign: TextAlign.center,
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium),
+                              ],
+                            ),
+                          ),
+                        )
+                      : filteredPresets.isEmpty
+                          ? const Center(child: Text('No saved meals match that search'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: filteredPresets.length,
+                              itemBuilder: (context, index) =>
+                                  _buildPresetCard(filteredPresets[index]),
+                            ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -126,7 +206,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Text(
-                      '${preset.items.length} items · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
+                      '${_foodCountLabel(preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 2),
@@ -145,7 +225,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
-                tooltip: 'Quick log',
+                tooltip: 'Log saved meal',
                 onPressed: () => _logPreset(preset),
               ),
             ],
@@ -216,7 +296,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rename preset'),
+        title: const Text('Rename saved meal'),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -251,6 +331,20 @@ class _PresetsScreenState extends State<PresetsScreen> {
   }
 
   Future<void> _logPreset(MealPresetDBO preset) async {
+    final baseKcal = preset.items.fold<double>(0, (sum, item) {
+      final meal = MealEntity.fromMealDBO(item.meal);
+      return sum + (item.amount * (meal.nutriments.energyPerUnit ?? 0));
+    });
+    final multiplier = await showMealMultiplierDialog(
+      context,
+      mealName: preset.name,
+      totalKcal: baseKcal,
+      confirmLabel: 'Log meal',
+    );
+    if (multiplier == null || !mounted) {
+      return;
+    }
+
     final addIntakeUsecase = locator<AddIntakeUsecase>();
     final addTrackedDayUsecase = locator<AddTrackedDayUsecase>();
     final getKcalGoalUsecase = locator<GetKcalGoalUsecase>();
@@ -258,6 +352,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
 
     final intakeType = _mealType.getIntakeType();
     final groupId = IdGenerator.getUniqueID();
+    final groupName = buildMealGroupName(preset.name, multiplier);
 
     // Ensure tracked day exists
     final hasTrackedDay = await addTrackedDayUsecase.hasTrackedDay(_day);
@@ -277,12 +372,12 @@ class _PresetsScreenState extends State<PresetsScreen> {
       final intake = IntakeEntity(
         id: IdGenerator.getUniqueID(),
         unit: item.unit,
-        amount: item.amount,
+        amount: item.amount * multiplier,
         type: intakeType,
         meal: meal,
         dateTime: _day,
         groupId: groupId,
-        groupName: preset.name,
+        groupName: groupName,
       );
 
       await addIntakeUsecase.addIntake(intake);
@@ -298,7 +393,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${preset.name} logged!')),
+        SnackBar(content: Text('$groupName logged!')),
       );
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
@@ -308,7 +403,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete preset?'),
+        title: const Text('Delete saved meal?'),
         content: Text('Delete "${preset.name}"?'),
         actions: [
           TextButton(
@@ -327,9 +422,17 @@ class _PresetsScreenState extends State<PresetsScreen> {
       _loadPresets();
     }
   }
+
+  String _foodCountLabel(int count) {
+    if (count == 1) {
+      return '1 food';
+    }
+    return '$count foods';
+  }
 }
 
-/// Static helper to save a preset from anywhere (e.g. after Magic meal breakdown)
+/// Static helper to save a reusable meal from anywhere (e.g. after Magic meal
+/// breakdown).
 Future<void> saveAsPreset(
     BuildContext context, String name, List<MealPresetItemDBO> items,
     {String? imagePath}) async {
@@ -344,7 +447,7 @@ Future<void> saveAsPreset(
 
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Preset "$name" saved!')),
+      SnackBar(content: Text('Saved meal "$name" saved!')),
     );
   }
 }
@@ -416,7 +519,7 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
                       Text(widget.preset.name,
                           style: Theme.of(context).textTheme.titleLarge),
                       Text(
-                          '${widget.preset.items.length} items · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
+                          '${_foodCountLabel(widget.preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
                           style: Theme.of(context).textTheme.bodyMedium),
                     ],
                   ),
@@ -528,5 +631,12 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
         ],
       ),
     );
+  }
+
+  String _foodCountLabel(int count) {
+    if (count == 1) {
+      return '1 food';
+    }
+    return '$count foods';
   }
 }

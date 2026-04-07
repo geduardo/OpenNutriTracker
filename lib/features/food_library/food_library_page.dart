@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
+import 'package:opennutritracker/core/presentation/widgets/meal_multiplier_dialog.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
@@ -11,13 +12,17 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_nutriments_entity.dart';
+import 'package:opennutritracker/features/add_meal/presentation/add_meal_screen.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
+import 'package:opennutritracker/features/add_meal/presentation/magic_screen.dart';
 import 'package:opennutritracker/features/food_library/food_detail_page.dart';
 import 'package:opennutritracker/features/food_library/meal_builder_page.dart';
 import 'package:opennutritracker/features/food_library/preset_detail_page.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
+import 'package:opennutritracker/features/scanner/scanner_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class FoodLibraryPage extends StatefulWidget {
@@ -29,6 +34,7 @@ class FoodLibraryPage extends StatefulWidget {
 
 class _FoodLibraryPageState extends State<FoodLibraryPage>
     with SingleTickerProviderStateMixin {
+  static const _creationMealType = AddMealType.breakfastType;
   late TabController _tabController;
   List<MealEntity> _foods = [];
   List<MealPresetDBO> _presets = [];
@@ -55,6 +61,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     final intakeDataSource = locator<IntakeDataSource>();
     final recentIntakes =
         await intakeDataSource.getRecentlyAddedIntake(number: 500);
+    final allIntakes = await intakeDataSource.getAllIntakes();
     final foods =
         recentIntakes.map((dbo) => MealEntity.fromMealDBO(dbo.meal)).toList();
 
@@ -78,11 +85,41 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     // Load presets
     final presetDataSource = locator<MealPresetDataSource>();
     final presets = await presetDataSource.getAllPresets();
+    final latestUseByPresetName = <String, DateTime>{};
+
+    for (final intake in allIntakes) {
+      final groupName = intake.groupName?.trim();
+      if (groupName == null || groupName.isEmpty) {
+        continue;
+      }
+
+      final baseName = parseMealGroupName(groupName).baseName.toLowerCase();
+      final previousUse = latestUseByPresetName[baseName];
+      if (previousUse == null || intake.dateTime.isAfter(previousUse)) {
+        latestUseByPresetName[baseName] = intake.dateTime;
+      }
+    }
+
+    final sortedPresets = List<MealPresetDBO>.from(presets)
+      ..sort((a, b) {
+        final aUsed = latestUseByPresetName[a.name.toLowerCase()];
+        final bUsed = latestUseByPresetName[b.name.toLowerCase()];
+        if (aUsed != null && bUsed != null) {
+          return bUsed.compareTo(aUsed);
+        }
+        if (aUsed != null) {
+          return -1;
+        }
+        if (bUsed != null) {
+          return 1;
+        }
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
 
     if (mounted) {
       setState(() {
         _foods = allFoods;
-        _presets = presets;
+        _presets = sortedPresets;
         _isLoading = false;
       });
     }
@@ -150,7 +187,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
           controller: _tabController,
           tabs: [
             Tab(text: 'Foods (${_filteredFoods.length})'),
-            Tab(text: 'Presets (${_filteredPresets.length})'),
+            Tab(text: 'Saved meals (${_filteredPresets.length})'),
           ],
         ),
         Expanded(
@@ -236,7 +273,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     final presets = _filteredPresets;
     if (presets.isEmpty) {
       return Center(
-        child: Text('No presets yet',
+        child: Text('No saved meals yet',
             style: Theme.of(context).textTheme.bodyLarge),
       );
     }
@@ -266,13 +303,13 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
           ),
           title: Text(preset.name),
           subtitle: Text(
-              '${preset.items.length} items · ${totalKcal.toInt()} ${S.of(context).kcalLabel}'),
+              '${_foodCountLabel(preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}'),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
-                tooltip: 'Log this preset',
+                tooltip: 'Log this saved meal',
                 onPressed: () => _quickLogPreset(preset),
               ),
               const Icon(Icons.chevron_right),
@@ -384,10 +421,25 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     final mealType = await _pickMealCategory();
     if (mealType == null || !mounted) return;
 
+    final baseKcal = preset.items.fold<double>(0, (sum, item) {
+      final meal = MealEntity.fromMealDBO(item.meal);
+      return sum + (item.amount * (meal.nutriments.energyPerUnit ?? 0));
+    });
+    final multiplier = await showMealMultiplierDialog(
+      context,
+      mealName: preset.name,
+      totalKcal: baseKcal,
+      confirmLabel: 'Log meal',
+    );
+    if (multiplier == null || !mounted) {
+      return;
+    }
+
     final day = DateTime.now();
     final addIntakeUsecase = locator<AddIntakeUsecase>();
     final addTrackedDayUsecase = locator<AddTrackedDayUsecase>();
     final groupId = IdGenerator.getUniqueID();
+    final groupName = buildMealGroupName(preset.name, multiplier);
 
     await _ensureTrackedDay(day);
 
@@ -396,12 +448,12 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
       final intake = IntakeEntity(
         id: IdGenerator.getUniqueID(),
         unit: item.unit,
-        amount: item.amount,
+        amount: item.amount * multiplier,
         type: mealType.getIntakeType(),
         meal: meal,
         dateTime: day,
         groupId: groupId,
-        groupName: preset.name,
+        groupName: groupName,
       );
 
       await addIntakeUsecase.addIntake(intake);
@@ -419,7 +471,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
-                '${preset.name} added to ${mealType.getTypeName(context)}')),
+                '$groupName added to ${mealType.getTypeName(context)}')),
       );
     }
   }
@@ -435,41 +487,17 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
   }
 
   Future<void> _createFood() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FoodDetailPage(
-          food: const MealEntity(
-            code: null,
-            name: null,
-            localFoodId: null,
-            brands: null,
-            thumbnailImageUrl: null,
-            mainImageUrl: null,
-            url: null,
-            mealQuantity: null,
-            mealUnit: 'g',
-            servingQuantity: null,
-            servingUnit: null,
-            servingSize: null,
-            nutriments: MealNutrimentsEntity(
-              energyKcal100: null,
-              carbohydrates100: null,
-              fat100: null,
-              proteins100: null,
-              sugars100: null,
-              saturatedFat100: null,
-              fiber100: null,
-              sodiumMg100: null,
-            ),
-            source: MealSourceEntity.custom,
-          ),
-          title: 'Create food',
-          popOnSave: true,
-        ),
-      ),
-    );
-    _loadData();
+    final source = await _pickFoodCreationSource();
+    if (source == null || !mounted) {
+      return;
+    }
+
+    final meal = await _createFoodFromSource(source);
+    if (!mounted || meal == null) {
+      return;
+    }
+
+    await _openFoodEditor(meal);
   }
 
   Future<void> _createMeal() async {
@@ -479,4 +507,158 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     );
     _loadData();
   }
+
+  String _foodCountLabel(int count) {
+    if (count == 1) {
+      return '1 food';
+    }
+    return '$count foods';
+  }
+
+  Future<_FoodCreationSource?> _pickFoodCreationSource() {
+    return showModalBottomSheet<_FoodCreationSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('Search database'),
+              subtitle: const Text('USDA, products, and recent foods'),
+              onTap: () => Navigator.pop(ctx, _FoodCreationSource.search),
+            ),
+            ListTile(
+              leading: const Icon(Icons.qr_code_scanner),
+              title: const Text('Scan barcode'),
+              subtitle: const Text('Create from a product scan'),
+              onTap: () => Navigator.pop(ctx, _FoodCreationSource.barcode),
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_awesome),
+              title: const Text('Magic'),
+              subtitle: const Text('Photo or text estimate'),
+              onTap: () => Navigator.pop(ctx, _FoodCreationSource.magic),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Create manually'),
+              subtitle: const Text('Start from an empty food'),
+              onTap: () => Navigator.pop(ctx, _FoodCreationSource.manual),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<MealEntity?> _createFoodFromSource(_FoodCreationSource source) async {
+    switch (source) {
+      case _FoodCreationSource.manual:
+        return _buildEmptyFood();
+      case _FoodCreationSource.search:
+        return await _pickFoodFromSearch();
+      case _FoodCreationSource.barcode:
+        return await _pickFoodFromBarcode();
+      case _FoodCreationSource.magic:
+        return await _pickFoodFromMagic();
+    }
+  }
+
+  Future<void> _openFoodEditor(MealEntity meal) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FoodDetailPage(
+          food: meal,
+          title: 'Create food',
+          popOnSave: true,
+        ),
+      ),
+    );
+    _loadData();
+  }
+
+  MealEntity _buildEmptyFood() {
+    return const MealEntity(
+      code: null,
+      name: null,
+      localFoodId: null,
+      brands: null,
+      thumbnailImageUrl: null,
+      mainImageUrl: null,
+      url: null,
+      mealQuantity: null,
+      mealUnit: 'g',
+      servingQuantity: null,
+      servingUnit: null,
+      servingSize: null,
+      nutriments: MealNutrimentsEntity(
+        energyKcal100: null,
+        carbohydrates100: null,
+        fat100: null,
+        proteins100: null,
+        sugars100: null,
+        saturatedFat100: null,
+        fiber100: null,
+        sodiumMg100: null,
+      ),
+      source: MealSourceEntity.custom,
+    );
+  }
+
+  Future<MealEntity?> _pickFoodFromSearch() async {
+    final result = await Navigator.of(context).pushNamed(
+      NavigationOptions.addMealRoute,
+      arguments: AddMealScreenArguments(
+        _creationMealType,
+        DateTime.now(),
+        selectionMode: true,
+      ),
+    );
+    return result is MealEntity ? result : null;
+  }
+
+  Future<MealEntity?> _pickFoodFromBarcode() async {
+    final result = await Navigator.of(context).pushNamed(
+      NavigationOptions.scannerRoute,
+      arguments: ScannerScreenArguments(
+        DateTime.now(),
+        _creationMealType.getIntakeType(),
+        selectionMode: true,
+      ),
+    );
+    return result is MealEntity ? result : null;
+  }
+
+  Future<MealEntity?> _pickFoodFromMagic() async {
+    final result = await Navigator.of(context).pushNamed(
+      NavigationOptions.magicRoute,
+      arguments: MagicScreenArguments(
+        DateTime.now(),
+        _creationMealType,
+        selectionMode: true,
+      ),
+    );
+
+    if (result is! List<MealPresetItemDBO>) {
+      return null;
+    }
+    if (result.isEmpty) {
+      return null;
+    }
+    if (result.length > 1) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('New food accepts one AI food. Use New meal for multi-item results.'),
+          ),
+        );
+      }
+      return null;
+    }
+    return MealEntity.fromMealDBO(result.first.meal);
+  }
 }
+
+enum _FoodCreationSource { search, barcode, magic, manual }

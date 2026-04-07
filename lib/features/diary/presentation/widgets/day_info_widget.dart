@@ -59,7 +59,8 @@ class DayInfoWidget extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context)
                                 .colorScheme
-                                .onSurface.withValues(alpha: 0.7))),
+                                .onSurface
+                                .withValues(alpha: 0.7))),
                   )
                 : const SizedBox(),
             trackedDay != null
@@ -98,7 +99,8 @@ class DayInfoWidget extends StatelessWidget {
                                 ?.copyWith(
                                     color: Theme.of(context)
                                         .colorScheme
-                                        .onSurface.withValues(alpha: 0.7))),
+                                        .onSurface
+                                        .withValues(alpha: 0.7))),
                       ],
                     ),
                   )
@@ -185,12 +187,27 @@ class DayInfoWidget extends StatelessWidget {
     final carbsTracked = trackedDay.carbsTracked?.floor().toString() ?? '?';
     final fatTracked = trackedDay.fatTracked?.floor().toString() ?? '?';
     final proteinTracked = trackedDay.proteinTracked?.floor().toString() ?? '?';
+    final sugarTracked = _getSugarTracked().floor();
 
     final carbsGoal = trackedDay.carbsGoal?.floor().toString() ?? '?';
     final fatGoal = trackedDay.fatGoal?.floor().toString() ?? '?';
     final proteinGoal = trackedDay.proteinGoal?.floor().toString() ?? '?';
 
-    return 'Carbs: $carbsTracked/${carbsGoal}g, Fat: $fatTracked/${fatGoal}g, Protein: $proteinTracked/${proteinGoal}g';
+    return 'Carbs: $carbsTracked/${carbsGoal}g (of which sugars: ${sugarTracked}g), Fat: $fatTracked/${fatGoal}g, Protein: $proteinTracked/${proteinGoal}g';
+  }
+
+  double _getSugarTracked() {
+    final allIntakes = [
+      ...breakfastIntake,
+      ...lunchIntake,
+      ...dinnerIntake,
+      ...snackIntake,
+    ];
+
+    return allIntakes.fold<double>(
+      0,
+      (sum, intake) => sum + intake.totalSugarsGram,
+    );
   }
 
   void showCopyOrDeleteIntakeDialog(
@@ -232,5 +249,4 @@ class DayInfoWidget extends StatelessWidget {
       showCopyOrDeleteIntakeDialog(context, intakeEntity);
     }
   }
-
 }

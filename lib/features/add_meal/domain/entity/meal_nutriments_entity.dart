@@ -26,6 +26,8 @@ class MealNutrimentsEntity extends Equatable {
 
   double? get proteinsPerUnit => _getValuePerUnit(proteins100);
 
+  double? get sugarsPerUnit => _getValuePerUnit(sugars100);
+
   const MealNutrimentsEntity(
       {required this.energyKcal100,
       required this.carbohydrates100,
