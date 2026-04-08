@@ -26,7 +26,7 @@ void main() {
     await Hive.deleteBoxFromDisk('tracked_day_test');
   });
 
-  test('new tracked days default to complete quality for adaptive estimator',
+  test('new tracked days start as unlogged until intake is written',
       () async {
     final box = await Hive.openBox<TrackedDayDBO>('tracked_day_test');
     final repo = TrackedDayRepository(TrackedDayDataSource(box));
@@ -35,7 +35,7 @@ void main() {
     await repo.addNewTrackedDay(day, 2200, 250, 70, 140);
 
     final trackedDay = await repo.getAllTrackedDaysDBO();
-    expect(trackedDay.single.logQuality, DayLogQualityDBO.complete);
+    expect(trackedDay.single.logQuality, DayLogQualityDBO.unlogged);
     expect(trackedDay.single.manuallyMarked, isFalse);
   });
 
@@ -66,5 +66,43 @@ void main() {
     final trackedDay = await dataSource.getTrackedDay(day);
     expect(trackedDay?.logQuality, DayLogQualityDBO.complete);
     expect(trackedDay?.manuallyMarked, isFalse);
+  });
+
+  test('manual fasted quality survives aggregate reconciliation', () async {
+    final box = await Hive.openBox<TrackedDayDBO>('tracked_day_test');
+    final dataSource = TrackedDayDataSource(box);
+    final repo = TrackedDayRepository(dataSource);
+    final day = DateTime.utc(2026, 4, 7);
+
+    await box.put(
+      day.toParsedDay(),
+      TrackedDayDBO(
+        day: day,
+        calorieGoal: 2200,
+        caloriesTracked: 0,
+        carbsGoal: 250,
+        carbsTracked: 0,
+        fatGoal: 70,
+        fatTracked: 0,
+        proteinGoal: 140,
+        proteinTracked: 0,
+        logQuality: DayLogQualityDBO.fasted,
+        manuallyMarked: true,
+      ),
+    );
+
+    await repo.setDayAggregates(
+      day,
+      caloriesTracked: 0,
+      carbsTracked: 0,
+      fatTracked: 0,
+      proteinTracked: 0,
+      sodiumTracked: 0,
+      caffeineTracked: 0,
+    );
+
+    final trackedDay = await dataSource.getTrackedDay(day);
+    expect(trackedDay?.logQuality, DayLogQualityDBO.fasted);
+    expect(trackedDay?.manuallyMarked, isTrue);
   });
 }

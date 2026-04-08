@@ -442,8 +442,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
         );
 
         await addIntakeUsecase.addIntake(intake);
-        addTrackedDayUsecase.addDayCaloriesTracked(_day, intake.totalKcal);
-        addTrackedDayUsecase.addDayMacrosTracked(_day,
+        await addTrackedDayUsecase.addDayCaloriesTracked(_day, intake.totalKcal);
+        await addTrackedDayUsecase.addDayMacrosTracked(_day,
             carbsTracked: intake.totalCarbsGram,
             fatTracked: intake.totalFatsGram,
             proteinTracked: intake.totalProteinsGram,

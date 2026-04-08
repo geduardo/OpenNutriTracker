@@ -12,20 +12,22 @@ class TrackedDayDataSource {
 
   Future<void> saveTrackedDay(TrackedDayDBO trackedDayDBO) async {
     log.fine('Updating tracked day in db');
-    trackedDayDBO.logQuality ??= DayLogQualityDBO.complete;
-    trackedDayDBO.manuallyMarked ??= false;
-    _trackedDayBox.put(trackedDayDBO.day.toParsedDay(), trackedDayDBO);
+    _applyAutomaticLogQuality(trackedDayDBO);
+    await _trackedDayBox.put(trackedDayDBO.day.toParsedDay(), trackedDayDBO);
   }
 
   Future<void> saveAllTrackedDays(List<TrackedDayDBO> trackedDayDBOList) async {
     log.fine('Updating tracked days in db');
     for (final trackedDayDBO in trackedDayDBOList) {
-      trackedDayDBO.logQuality ??= trackedDayDBO.caloriesTracked > 0
-          ? DayLogQualityDBO.complete
-          : DayLogQualityDBO.unlogged;
       trackedDayDBO.manuallyMarked ??= false;
+      if (trackedDayDBO.manuallyMarked != true &&
+          trackedDayDBO.logQuality == null) {
+        trackedDayDBO.logQuality = trackedDayDBO.caloriesTracked > 0
+            ? DayLogQualityDBO.complete
+            : DayLogQualityDBO.unlogged;
+      }
     }
-    _trackedDayBox.putAll({
+    await _trackedDayBox.putAll({
       for (var trackedDayDBO in trackedDayDBOList)
         trackedDayDBO.day.toParsedDay(): trackedDayDBO
     });
@@ -61,7 +63,7 @@ class TrackedDayDataSource {
 
     if (updateDay != null) {
       updateDay.calorieGoal = calorieGoal;
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -71,7 +73,7 @@ class TrackedDayDataSource {
 
     if (updateDay != null) {
       updateDay.calorieGoal += amount;
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -81,7 +83,7 @@ class TrackedDayDataSource {
 
     if (updateDay != null) {
       updateDay.calorieGoal -= amount;
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -92,7 +94,7 @@ class TrackedDayDataSource {
     if (updateDay != null) {
       updateDay.caloriesTracked += addCalories;
       _applyAutomaticLogQuality(updateDay);
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -129,7 +131,7 @@ class TrackedDayDataSource {
     if (updateDay != null) {
       updateDay.caloriesTracked -= addCalories;
       _applyAutomaticLogQuality(updateDay);
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -152,7 +154,7 @@ class TrackedDayDataSource {
       if (sodiumGoal != null) {
         updateDay.sodiumGoal = sodiumGoal;
       }
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -174,7 +176,7 @@ class TrackedDayDataSource {
       if (sodiumAmount != null) {
         updateDay.sodiumGoal = (updateDay.sodiumGoal ?? 0) + sodiumAmount;
       }
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -196,7 +198,7 @@ class TrackedDayDataSource {
       if (sodiumAmount != null) {
         updateDay.sodiumGoal = (updateDay.sodiumGoal ?? 0) - sodiumAmount;
       }
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -229,7 +231,7 @@ class TrackedDayDataSource {
             (updateDay.caffeineTracked ?? 0) + caffeineAmount;
       }
       _applyAutomaticLogQuality(updateDay);
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
@@ -262,16 +264,18 @@ class TrackedDayDataSource {
             (updateDay.caffeineTracked ?? 0) - caffeineAmount;
       }
       _applyAutomaticLogQuality(updateDay);
-      updateDay.save();
+      await updateDay.save();
     }
   }
 
   void _applyAutomaticLogQuality(TrackedDayDBO trackedDay) {
+    trackedDay.manuallyMarked ??= false;
     if (trackedDay.manuallyMarked == true) {
       return;
     }
 
-    trackedDay.logQuality ??= DayLogQualityDBO.complete;
-    trackedDay.manuallyMarked ??= false;
+    trackedDay.logQuality = trackedDay.caloriesTracked > 0
+        ? DayLogQualityDBO.complete
+        : DayLogQualityDBO.unlogged;
   }
 }

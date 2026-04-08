@@ -18,6 +18,7 @@ import 'package:opennutritracker/features/strategy/domain/service/trend_weight_s
 import 'package:opennutritracker/features/strategy/domain/service/weekly_calorie_controller.dart';
 import 'package:opennutritracker/features/strategy/data/data_source/weight_entry_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/tracked_day_data_source.dart';
+import 'package:opennutritracker/core/domain/usecase/reconcile_tracked_days_usecase.dart';
 
 class AdaptiveStrategySnapshot {
   final GoalStrategyDBO strategy;
@@ -59,6 +60,7 @@ class GetAdaptiveStrategySnapshotUsecase {
   final ExpenditureStateDataSource _expenditureStateDataSource;
   final GoalStrategyDataSource _goalStrategyDataSource;
   final CheckInRecordDataSource _checkInRecordDataSource;
+  final ReconcileTrackedDaysUsecase _reconcileTrackedDaysUsecase;
 
   GetAdaptiveStrategySnapshotUsecase(
     this._userRepository,
@@ -68,6 +70,7 @@ class GetAdaptiveStrategySnapshotUsecase {
     this._expenditureStateDataSource,
     this._goalStrategyDataSource,
     this._checkInRecordDataSource,
+    this._reconcileTrackedDaysUsecase,
   );
 
   Future<AdaptiveStrategySnapshot> getSnapshot({
@@ -93,6 +96,13 @@ class GetAdaptiveStrategySnapshotUsecase {
         TrendWeightService.getLatestTrendWeight(weightEntries) ?? user.weightKG;
 
     final previousState = await _getPreviousDayEstimate(currentDay);
+    final windowStart = DateUtils.dateOnly(
+        DateTime(currentDay.year, currentDay.month,
+            currentDay.day - ExpenditureEstimatorService.windowDays));
+    await _reconcileTrackedDaysUsecase.reconcileTrackedDaysByRange(
+      windowStart,
+      currentDay,
+    );
     final trackedDays = await _trackedDayDataSource.getAllTrackedDays();
     final expenditureState = ExpenditureEstimatorService.estimate(
       trackedDays: trackedDays,

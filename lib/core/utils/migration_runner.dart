@@ -63,7 +63,7 @@ class MigrationRunner {
           day.logQuality = DayLogQualityDBO.unlogged;
         }
         day.manuallyMarked = false;
-        day.save();
+        await day.save();
       }
     }
     _log.info('Migrated ${allDays.length} tracked days with log quality');

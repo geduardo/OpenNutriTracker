@@ -399,8 +399,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     );
 
     await addIntakeUsecase.addIntake(intake);
-    addTrackedDayUsecase.addDayCaloriesTracked(day, intake.totalKcal);
-    addTrackedDayUsecase.addDayMacrosTracked(day,
+    await addTrackedDayUsecase.addDayCaloriesTracked(day, intake.totalKcal);
+    await addTrackedDayUsecase.addDayMacrosTracked(day,
         carbsTracked: intake.totalCarbsGram,
         fatTracked: intake.totalFatsGram,
         proteinTracked: intake.totalProteinsGram,
@@ -458,8 +458,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
       );
 
       await addIntakeUsecase.addIntake(intake);
-      addTrackedDayUsecase.addDayCaloriesTracked(day, intake.totalKcal);
-      addTrackedDayUsecase.addDayMacrosTracked(day,
+      await addTrackedDayUsecase.addDayCaloriesTracked(day, intake.totalKcal);
+      await addTrackedDayUsecase.addDayMacrosTracked(day,
           carbsTracked: intake.totalCarbsGram,
           fatTracked: intake.totalFatsGram,
           proteinTracked: intake.totalProteinsGram,
