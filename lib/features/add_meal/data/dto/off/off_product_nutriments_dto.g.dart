@@ -17,6 +17,7 @@ OFFProductNutrimentsDTO _$OFFProductNutrimentsDTOFromJson(
       saturated_fat_100g: json['saturated-fat_100g'],
       fiber_100g: json['fiber_100g'],
       sodium_100g: json['sodium_100g'],
+      salt_100g: json['salt_100g'],
       caffeine_100g: json['caffeine_100g'],
     );
 
@@ -31,5 +32,6 @@ Map<String, dynamic> _$OFFProductNutrimentsDTOToJson(
       'saturated-fat_100g': instance.saturated_fat_100g,
       'fiber_100g': instance.fiber_100g,
       'sodium_100g': instance.sodium_100g,
+      'salt_100g': instance.salt_100g,
       'caffeine_100g': instance.caffeine_100g,
     };

@@ -5,6 +5,7 @@ import 'package:opennutritracker/core/presentation/widgets/image_edit_action_she
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/utils/calc/sodium_calc.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/food_image_storage.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
@@ -41,6 +42,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   late TextEditingController _fatController;
   late TextEditingController _fiberController;
   late TextEditingController _sodiumController;
+  late TextEditingController _saltController;
   late TextEditingController _caffeineController;
   late TextEditingController _servingLabelController;
   late TextEditingController _servingQuantityController;
@@ -65,6 +67,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     _fatController = TextEditingController(text: _fmt(n.fat100));
     _fiberController = TextEditingController(text: _fmt(n.fiber100));
     _sodiumController = TextEditingController(text: _fmt(n.sodiumMg100));
+    _saltController = TextEditingController(text: _fmtSalt(n.sodiumMg100));
     _caffeineController = TextEditingController(text: _fmt(n.caffeineMg100));
     _servingLabelController = TextEditingController(
       text: MealPortionHelper.servingName(widget.food) ?? '',
@@ -184,14 +187,17 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
           Row(
             children: [
               Expanded(
-                  child:
-                      _buildField('Sodium', _sodiumController, suffix: 'mg')),
+                  child: _buildField(
+                      _capitalize(S.of(context).sodiumLabel), _sodiumController,
+                      suffix: 'mg', onChanged: _onSodiumChanged)),
               const SizedBox(width: 12),
               Expanded(
-                  child: _buildField('Caffeine', _caffeineController,
-                      suffix: 'mg')),
+                  child: _buildField(
+                      _capitalize(S.of(context).saltLabel), _saltController,
+                      suffix: 'g', onChanged: _onSaltChanged)),
             ],
           ),
+          _buildField('Caffeine', _caffeineController, suffix: 'mg'),
 
           const SizedBox(height: 20),
           Text('Portion', style: Theme.of(context).textTheme.titleMedium),
@@ -219,13 +225,34 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     );
   }
 
+  String _capitalize(String value) =>
+      value.isEmpty ? value : value[0].toUpperCase() + value.substring(1);
+
+  String _fmtSalt(double? sodiumMg) => sodiumMg != null
+      ? SodiumCalc.sodiumMgToSaltG(sodiumMg).toStringAsFixed(2)
+      : '';
+
+  void _onSodiumChanged(String value) {
+    final sodium = value.toDoubleOrNull();
+    _saltController.text = _fmtSalt(sodium);
+  }
+
+  void _onSaltChanged(String value) {
+    final salt = value.toDoubleOrNull();
+    _sodiumController.text =
+        salt != null ? _fmt(SodiumCalc.saltGToSodiumMg(salt)) : '';
+  }
+
   Widget _buildField(String label, TextEditingController controller,
-      {String? suffix}) {
+      {String? suffix, ValueChanged<String>? onChanged}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
-        onChanged: (_) => setState(() => _hasChanges = true),
+        onChanged: (value) {
+          onChanged?.call(value);
+          setState(() => _hasChanges = true);
+        },
         keyboardType: suffix != null
             ? const TextInputType.numberWithOptions(decimal: true)
             : TextInputType.text,

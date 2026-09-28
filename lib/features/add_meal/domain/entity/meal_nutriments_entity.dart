@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:opennutritracker/core/data/dbo/meal_nutriments_dbo.dart';
+import 'package:opennutritracker/core/utils/calc/sodium_calc.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_const.dart';
 import 'package:opennutritracker/features/add_meal/data/dto/fdc/fdc_food_nutriment_dto.dart';
@@ -82,10 +83,20 @@ class MealNutrimentsEntity extends Equatable {
         saturatedFat100:
             (offNutriments.saturated_fat_100g as Object?).asDoubleOrNull(),
         fiber100: (offNutriments.fiber_100g as Object?).asDoubleOrNull(),
-        sodiumMg100: _offGramsToMg(
-            (offNutriments.sodium_100g as Object?).asDoubleOrNull()),
+        sodiumMg100: offSodiumMg(
+          saltG: (offNutriments.salt_100g as Object?).asDoubleOrNull(),
+          sodiumG: (offNutriments.sodium_100g as Object?).asDoubleOrNull(),
+        ),
         caffeineMg100: _offGramsToMg(
             (offNutriments.caffeine_100g as Object?).asDoubleOrNull()));
+  }
+
+  /// Sodium in mg per 100 g from OFF values in grams. Salt is the value
+  /// printed on EU labels (OFF derives sodium from it), so it wins when both
+  /// are present; some entries carry a broken sodium field.
+  static double? offSodiumMg({double? saltG, double? sodiumG}) {
+    if (saltG != null) return SodiumCalc.saltGToSodiumMg(saltG);
+    return _offGramsToMg(sodiumG);
   }
 
   /// OFF normalises every `*_100g` nutrient to grams.

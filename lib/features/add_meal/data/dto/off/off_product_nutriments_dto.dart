@@ -62,6 +62,8 @@ class OFFProductNutrimentsDTO {
 
   final dynamic sodium_100g; // can be String, int, double or null (in grams)
 
+  final dynamic salt_100g; // can be String, int, double or null (in grams)
+
   final dynamic caffeine_100g; // can be String, int, double or null (in grams)
 
   OFFProductNutrimentsDTO({
@@ -101,6 +103,7 @@ class OFFProductNutrimentsDTO {
     // required this.fiber_value,
     // required this.fiber_unit,
     this.sodium_100g,
+    this.salt_100g,
     this.caffeine_100g,
   });
 

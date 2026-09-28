@@ -800,6 +800,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restoreLabel": MessageLookupByLibrary.simpleMessage("Geri yükle"),
     "retryLabel": MessageLookupByLibrary.simpleMessage("Tekrar Dene"),
+    "saltLabel": MessageLookupByLibrary.simpleMessage("tuz"),
     "saturatedFatLabel": MessageLookupByLibrary.simpleMessage("doymuş yağ"),
     "savedMealsEntrySubtitle": MessageLookupByLibrary.simpleMessage(
       "Tekrar kullanılabilir öğünler",

@@ -445,5 +445,6 @@
   "removeLastPresetItemTitle": "Letzten Eintrag entfernen?",
   "removeLastPresetItemContent": "„{name}“ hat keine weiteren Einträge, daher wird die gespeicherte Mahlzeit gelöscht.",
   "editPortionLabel": "Portion bearbeiten",
-  "foodDetailsLabel": "Lebensmitteldetails anzeigen"
+  "foodDetailsLabel": "Lebensmitteldetails anzeigen",
+  "saltLabel": "Salz"
 }

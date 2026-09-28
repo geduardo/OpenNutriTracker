@@ -490,7 +490,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
       sugars100: item.per100g.sugarsG,
       saturatedFat100: item.per100g.saturatedFatG,
       fiber100: item.per100g.fiberG,
-      sodiumMg100: item.per100g.sodiumMg,
+      sodiumMg100: item.per100g.resolvedSodiumMg,
       caffeineMg100: item.per100g.caffeineMg,
     );
 

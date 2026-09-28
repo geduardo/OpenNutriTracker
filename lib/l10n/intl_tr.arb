@@ -452,5 +452,6 @@
   "removeLastPresetItemTitle": "Son öğe kaldırılsın mı?",
   "removeLastPresetItemContent": "\"{name}\" başka öğe içermediği için kayıtlı öğün silinir.",
   "editPortionLabel": "Porsiyonu düzenle",
-  "foodDetailsLabel": "Gıda ayrıntılarını göster"
+  "foodDetailsLabel": "Gıda ayrıntılarını göster",
+  "saltLabel": "tuz"
 }

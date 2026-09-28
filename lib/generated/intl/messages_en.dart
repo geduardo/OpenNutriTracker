@@ -796,6 +796,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restoreLabel": MessageLookupByLibrary.simpleMessage("Restore"),
     "retryLabel": MessageLookupByLibrary.simpleMessage("Retry"),
+    "saltLabel": MessageLookupByLibrary.simpleMessage("salt"),
     "saturatedFatLabel": MessageLookupByLibrary.simpleMessage("saturated fat"),
     "savedMealsEntrySubtitle": MessageLookupByLibrary.simpleMessage(
       "Reusable meals",

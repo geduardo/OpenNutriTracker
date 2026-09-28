@@ -1,3 +1,5 @@
+import 'package:opennutritracker/core/utils/calc/sodium_calc.dart';
+
 /// Structured response from an AI provider for food nutrition estimation or label extraction.
 class AiNutritionResponseDTO {
   final List<AiNutritionItemDTO> items;
@@ -67,7 +69,12 @@ class AiNutrimentsPer100gDTO {
   final double? sugarsG;
   final double? fiberG;
   final double? sodiumMg;
+  final double? saltG;
   final double? caffeineMg;
+
+  /// Sodium in mg per 100 g; labels that only list salt are converted here.
+  double? get resolvedSodiumMg =>
+      sodiumMg ?? (saltG != null ? SodiumCalc.saltGToSodiumMg(saltG!) : null);
 
   const AiNutrimentsPer100gDTO({
     required this.energyKcal,
@@ -78,6 +85,7 @@ class AiNutrimentsPer100gDTO {
     this.sugarsG,
     this.fiberG,
     this.sodiumMg,
+    this.saltG,
     this.caffeineMg,
   });
 
@@ -91,6 +99,7 @@ class AiNutrimentsPer100gDTO {
       sugarsG: (json['sugars_g'] as num?)?.toDouble(),
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
       sodiumMg: (json['sodium_mg'] as num?)?.toDouble(),
+      saltG: (json['salt_g'] as num?)?.toDouble(),
       caffeineMg: (json['caffeine_mg'] as num?)?.toDouble(),
     );
   }

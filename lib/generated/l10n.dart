@@ -4033,6 +4033,11 @@ class S {
       args: [],
     );
   }
+
+  /// `salt`
+  String get saltLabel {
+    return Intl.message('salt', name: 'saltLabel', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

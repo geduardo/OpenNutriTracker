@@ -455,5 +455,6 @@
   "removeLastPresetItemTitle": "Remove the last item?",
   "removeLastPresetItemContent": "\"{name}\" has no other items, so the saved meal is deleted.",
   "editPortionLabel": "Edit portion",
-  "foodDetailsLabel": "View food details"
+  "foodDetailsLabel": "View food details",
+  "saltLabel": "salt"
 }

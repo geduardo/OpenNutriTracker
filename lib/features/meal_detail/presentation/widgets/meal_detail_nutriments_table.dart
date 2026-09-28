@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/utils/calc/sodium_calc.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/generated/l10n.dart';
@@ -74,7 +75,11 @@ class MealDetailNutrimentsTable extends StatelessWidget {
                 "${_adjustValueForServing(product.nutriments.proteins100 ?? 0).roundToPrecision(2)}g",
                 textStyleNormal),
             _getNutrimentsTableRow(
-                'Sodium',
+                _capitalize(S.of(context).saltLabel),
+                "${SodiumCalc.sodiumMgToSaltG(_adjustValueForServing(product.nutriments.sodiumMg100 ?? 0)).roundToPrecision(2)}g",
+                textStyleNormal),
+            _getNutrimentsTableRow(
+                '   ${_capitalize(S.of(context).sodiumLabel)}',
                 "${_adjustValueForServing(product.nutriments.sodiumMg100 ?? 0).roundToPrecision(1)}mg",
                 textStyleNormal),
             _getNutrimentsTableRow(
@@ -86,6 +91,9 @@ class MealDetailNutrimentsTable extends StatelessWidget {
       ],
     );
   }
+
+  String _capitalize(String value) =>
+      value.isEmpty ? value : value[0].toUpperCase() + value.substring(1);
 
   double _adjustValueForServing(double value) {
     if (!usesImperialUnits || servingQuantity == null) {

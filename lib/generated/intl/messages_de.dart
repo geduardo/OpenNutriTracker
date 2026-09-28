@@ -830,6 +830,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "restoreLabel": MessageLookupByLibrary.simpleMessage("Wiederherstellen"),
     "retryLabel": MessageLookupByLibrary.simpleMessage("Erneut versuchen"),
+    "saltLabel": MessageLookupByLibrary.simpleMessage("Salz"),
     "saturatedFatLabel": MessageLookupByLibrary.simpleMessage(
       "gesättigtes Fett",
     ),
