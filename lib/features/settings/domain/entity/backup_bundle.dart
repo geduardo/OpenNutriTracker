@@ -13,4 +13,9 @@ class BackupBundle {
   static const mealPresetFileName = 'saved_meals.json';
   static const manifestFileName = 'backup_manifest.json';
   static const mediaDirectory = 'media';
+
+  /// File names written by upstream OpenNutriTracker and by this fork before
+  /// backup bundle v2.
+  static const legacyIntakeFileName = 'user_intake.json';
+  static const legacyTrackedDayFileName = 'user_tracked_day.json';
 }

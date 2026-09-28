@@ -14,11 +14,11 @@ class ConfigDataSource {
   Future<bool> configInitialized() async => _configBox.containsKey(_configKey);
 
   Future<void> initializeConfig() async =>
-      _configBox.put(_configKey, ConfigDBO.empty());
+      await _configBox.put(_configKey, ConfigDBO.empty());
 
   Future<void> addConfig(ConfigDBO configDBO) async {
     _log.fine('Adding new config item to db');
-    _configBox.put(_configKey, configDBO);
+    await _configBox.put(_configKey, configDBO);
   }
 
   Future<void> setConfigDisclaimer(bool hasAcceptedDisclaimer) async {
@@ -26,7 +26,7 @@ class ConfigDataSource {
         'Updating config hasAcceptedDisclaimer to $hasAcceptedDisclaimer');
     final config = _configBox.get(_configKey);
     config?.hasAcceptedDisclaimer = hasAcceptedDisclaimer;
-    config?.save();
+    await config?.save();
   }
 
   Future<void> setConfigAcceptedAnonymousData(
@@ -35,7 +35,7 @@ class ConfigDataSource {
         'Updating config hasAcceptedAnonymousData to $hasAcceptedAnonymousData');
     final config = _configBox.get(_configKey);
     config?.hasAcceptedSendAnonymousData = hasAcceptedAnonymousData;
-    config?.save();
+    await config?.save();
   }
 
   Future<AppThemeDBO> getAppTheme() async {
@@ -47,14 +47,14 @@ class ConfigDataSource {
     _log.fine('Updating config appTheme to $appTheme');
     final config = _configBox.get(_configKey);
     config?.selectedAppTheme = appTheme;
-    config?.save();
+    await config?.save();
   }
 
   Future<void> setConfigUsesImperialUnits(bool usesImperialUnits) async {
     _log.fine('Updating config usesImperialUnits to $usesImperialUnits');
     final config = _configBox.get(_configKey);
     config?.usesImperialUnits = usesImperialUnits;
-    config?.save();
+    await config?.save();
   }
 
   Future<double> getKcalAdjustment() async {
@@ -66,28 +66,28 @@ class ConfigDataSource {
     _log.fine('Updating config kcalAdjustment to $kcalAdjustment');
     final config = _configBox.get(_configKey);
     config?.userKcalAdjustment = kcalAdjustment;
-    config?.save();
+    await config?.save();
   }
 
   Future<void> setConfigCarbGoalPct(double carbGoalPct) async {
     _log.fine('Updating config carbGoalPct to $carbGoalPct');
     final config = _configBox.get(_configKey);
     config?.userCarbGoalPct = carbGoalPct;
-    config?.save();
+    await config?.save();
   }
 
   Future<void> setConfigProteinGoalPct(double proteinGoalPct) async {
     _log.fine('Updating config proteinGoalPct to $proteinGoalPct');
     final config = _configBox.get(_configKey);
     config?.userProteinGoalPct = proteinGoalPct;
-    config?.save();
+    await config?.save();
   }
 
   Future<void> setConfigFatGoalPct(double fatGoalPct) async {
     _log.fine('Updating config fatGoalPct to $fatGoalPct');
     final config = _configBox.get(_configKey);
     config?.userFatGoalPct = fatGoalPct;
-    config?.save();
+    await config?.save();
   }
 
   Future<ConfigDBO> getConfig() async {
@@ -103,7 +103,7 @@ class ConfigDataSource {
     _log.fine('Updating schema version to $version');
     final config = _configBox.get(_configKey);
     config?.schemaVersion = version;
-    config?.save();
+    await config?.save();
   }
 
   Future<void> setAiTaskConfig({

@@ -39,7 +39,7 @@ class ExportImportDialog extends StatelessWidget {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          'Import restores a backup and replaces the current local data on this device.',
+                          'Restoring replaces the data contained in the backup. A safety copy of the current data is saved on the device first.',
                         ),
                       ],
                     );
@@ -62,9 +62,13 @@ class ExportImportDialog extends StatelessWidget {
                       children: [
                         Icon(Icons.error,
                             color: Theme.of(context).colorScheme.error),
-                        SizedBox(width: 8),
-                        Text(
-                          S.of(context).exportImportErrorLabel,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            state.invalidBackup
+                                ? 'This file is not a valid backup. Nothing was changed.'
+                                : S.of(context).exportImportErrorLabel,
+                          ),
                         ),
                       ],
                     );
@@ -88,7 +92,7 @@ class ExportImportDialog extends StatelessWidget {
               builder: (ctx) => AlertDialog(
                 title: const Text('Restore backup?'),
                 content: const Text(
-                  'This will replace the current local data on this device.',
+                  'The data contained in the backup replaces the matching data on this device. A safety copy is saved first.',
                 ),
                 actions: [
                   TextButton(

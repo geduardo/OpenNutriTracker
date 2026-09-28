@@ -175,6 +175,8 @@ Future<void> initLocator() async {
         locator(),
         locator(),
         locator(),
+        locator(),
+        locator(),
       ));
   locator.registerLazySingleton(() => AiSettingsService(locator(), locator()));
 
@@ -221,13 +223,15 @@ Future<void> initLocator() async {
   // Strategy repositories
   locator.registerLazySingleton(() => WeightEntryRepository(locator()));
 
+  locator.registerLazySingleton(
+      () => MigrationRunner(locator(), locator(), locator(), locator()));
+
   await _initializeConfig(locator());
-  await MigrationRunner(locator(), locator(), locator(), locator())
-      .runMigrations();
+  await locator<MigrationRunner>().runMigrations();
 }
 
 Future<void> _initializeConfig(ConfigDataSource configDataSource) async {
   if (!await configDataSource.configInitialized()) {
-    configDataSource.initializeConfig();
+    await configDataSource.initializeConfig();
   }
 }

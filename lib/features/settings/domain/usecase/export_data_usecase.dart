@@ -47,6 +47,18 @@ class ExportDataUsecase {
   );
 
   Future<bool> exportData(String exportZipFileName) async {
+    final zipBytes = await buildBackupZipBytes();
+    final result = await FilePicker.platform.saveFile(
+      fileName: exportZipFileName,
+      type: FileType.custom,
+      allowedExtensions: ['zip'],
+      bytes: Uint8List.fromList(zipBytes),
+    );
+
+    return result != null && result.isNotEmpty;
+  }
+
+  Future<List<int>> buildBackupZipBytes() async {
     final fullIntake = await _intakeRepository.getAllIntakesDBO();
     final fullTrackedDay = await _trackedDayRepository.getAllTrackedDaysDBO();
     final fullWeightEntries = await _weightEntryDataSource.getAllEntries();
@@ -61,7 +73,7 @@ class ExportDataUsecase {
     final localFoods = await _localFoodDataSource.getAllFoodRecords();
     final mealPresets = await _mealPresetDataSource.getAllPresets();
 
-    final payloads = <String, Object?>{
+    final rawPayloads = <String, Object?>{
       BackupBundle.intakeFileName:
           fullIntake.map((intake) => intake.toJson()).toList(),
       BackupBundle.trackedDayFileName:
@@ -81,6 +93,13 @@ class ExportDataUsecase {
           mealPresets.map(_mealPresetToJson).toList(),
     };
 
+    // Round-trip through JSON so nested DBOs (e.g. intake.meal) become plain
+    // maps and their image paths are visible to the manifest builder.
+    final payloads = rawPayloads.map(
+      (fileName, payload) =>
+          MapEntry(fileName, jsonDecode(jsonEncode(payload))),
+    );
+
     final manifest = _buildManifest(payloads);
     final archive = Archive();
     for (final entry in payloads.entries) {
@@ -89,15 +108,7 @@ class ExportDataUsecase {
     _addJsonFile(archive, BackupBundle.manifestFileName, manifest);
     await _addMediaFiles(archive, manifest);
 
-    final zipBytes = ZipEncoder().encode(archive);
-    final result = await FilePicker.platform.saveFile(
-      fileName: exportZipFileName,
-      type: FileType.custom,
-      allowedExtensions: ['zip'],
-      bytes: Uint8List.fromList(zipBytes),
-    );
-
-    return result != null && result.isNotEmpty;
+    return ZipEncoder().encode(archive);
   }
 
   Map<String, dynamic> _buildManifest(Map<String, Object?> payloads) {

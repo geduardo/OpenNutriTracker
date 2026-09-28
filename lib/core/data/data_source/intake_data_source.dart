@@ -13,22 +13,21 @@ class IntakeDataSource {
 
   Future<void> addIntake(IntakeDBO intakeDBO) async {
     log.fine('Adding new intake item to db');
-    _intakeBox.add(intakeDBO);
+    await _intakeBox.add(intakeDBO);
   }
 
   Future<void> addAllIntakes(List<IntakeDBO> intakeDBOList) async {
     log.fine('Adding new intake items to db');
-    _intakeBox.addAll(intakeDBOList);
+    await _intakeBox.addAll(intakeDBOList);
   }
 
   Future<void> deleteIntakeFromId(String intakeId) async {
     log.fine('Deleting intake item from db');
-    _intakeBox.values
-        .where((dbo) => dbo.id == intakeId)
-        .toList()
-        .forEach((element) {
-      element.delete();
-    });
+    final matches =
+        _intakeBox.values.where((dbo) => dbo.id == intakeId).toList();
+    for (final element in matches) {
+      await element.delete();
+    }
   }
 
   Future<IntakeDBO?> updateIntake(String intakeId, Map<String, dynamic> fields) async {
@@ -41,7 +40,7 @@ class IntakeDataSource {
     }
     intakeObject.$2.amount = fields['amount'] ?? intakeObject.$2.amount;
     intakeObject.$2.groupName = fields['groupName'] ?? intakeObject.$2.groupName;
-    _intakeBox.putAt(intakeObject.$1, intakeObject.$2);
+    await _intakeBox.putAt(intakeObject.$1, intakeObject.$2);
     return _intakeBox.getAt(intakeObject.$1);
   }
 

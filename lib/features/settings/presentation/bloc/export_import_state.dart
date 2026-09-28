@@ -21,7 +21,11 @@ class ExportImportSuccess extends ExportImportState {
 }
 
 class ExportImportError extends ExportImportState {
+  /// True when the picked file was rejected before any data was changed.
+  final bool invalidBackup;
+
+  const ExportImportError({this.invalidBackup = false});
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [invalidBackup];
 }
