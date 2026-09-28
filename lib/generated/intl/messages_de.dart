@@ -191,6 +191,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "editMealLabel": MessageLookupByLibrary.simpleMessage(
       "Mahlzeit bearbeiten",
     ),
+    "editPortionLabel": MessageLookupByLibrary.simpleMessage(
+      "Portion bearbeiten",
+    ),
     "energyLabel": MessageLookupByLibrary.simpleMessage("Energie"),
     "errorFetchingProductData": MessageLookupByLibrary.simpleMessage(
       "Fehler beim Abrufen von Produktinformationen",
@@ -226,6 +229,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "fatLabel": MessageLookupByLibrary.simpleMessage("Fett"),
     "fiberLabel": MessageLookupByLibrary.simpleMessage("Ballaststoffe"),
     "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
+    "foodDetailsLabel": MessageLookupByLibrary.simpleMessage(
+      "Lebensmitteldetails anzeigen",
+    ),
     "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("♀ weiblich"),
     "genderLabel": MessageLookupByLibrary.simpleMessage("Geschlecht"),
     "genderMaleLabel": MessageLookupByLibrary.simpleMessage("♂ männlich"),

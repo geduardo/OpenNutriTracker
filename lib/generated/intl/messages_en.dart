@@ -182,6 +182,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "editItemDialogTitle": MessageLookupByLibrary.simpleMessage("Edit item"),
     "editMealLabel": MessageLookupByLibrary.simpleMessage("Edit meal"),
+    "editPortionLabel": MessageLookupByLibrary.simpleMessage("Edit portion"),
     "energyLabel": MessageLookupByLibrary.simpleMessage("energy"),
     "errorFetchingProductData": MessageLookupByLibrary.simpleMessage(
       "Error while fetching product data",
@@ -217,6 +218,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "fatLabel": MessageLookupByLibrary.simpleMessage("fat"),
     "fiberLabel": MessageLookupByLibrary.simpleMessage("fiber"),
     "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
+    "foodDetailsLabel": MessageLookupByLibrary.simpleMessage(
+      "View food details",
+    ),
     "ftLabel": MessageLookupByLibrary.simpleMessage("ft"),
     "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("♀ female"),
     "genderLabel": MessageLookupByLibrary.simpleMessage("Gender"),

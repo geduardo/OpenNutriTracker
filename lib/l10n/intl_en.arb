@@ -453,5 +453,7 @@
   "deleteMealGroupTitle": "Delete this meal?",
   "deleteMealGroupContent": "All {count} items of \"{name}\" are removed from this day.",
   "removeLastPresetItemTitle": "Remove the last item?",
-  "removeLastPresetItemContent": "\"{name}\" has no other items, so the saved meal is deleted."
+  "removeLastPresetItemContent": "\"{name}\" has no other items, so the saved meal is deleted.",
+  "editPortionLabel": "Edit portion",
+  "foodDetailsLabel": "View food details"
 }

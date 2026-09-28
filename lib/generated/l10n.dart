@@ -4013,6 +4013,26 @@ class S {
       args: [name],
     );
   }
+
+  /// `Edit portion`
+  String get editPortionLabel {
+    return Intl.message(
+      'Edit portion',
+      name: 'editPortionLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `View food details`
+  String get foodDetailsLabel {
+    return Intl.message(
+      'View food details',
+      name: 'foodDetailsLabel',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

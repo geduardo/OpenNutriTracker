@@ -443,5 +443,7 @@
   "deleteMealGroupTitle": "Diese Mahlzeit löschen?",
   "deleteMealGroupContent": "Alle {count} Einträge von „{name}“ werden von diesem Tag entfernt.",
   "removeLastPresetItemTitle": "Letzten Eintrag entfernen?",
-  "removeLastPresetItemContent": "„{name}“ hat keine weiteren Einträge, daher wird die gespeicherte Mahlzeit gelöscht."
+  "removeLastPresetItemContent": "„{name}“ hat keine weiteren Einträge, daher wird die gespeicherte Mahlzeit gelöscht.",
+  "editPortionLabel": "Portion bearbeiten",
+  "foodDetailsLabel": "Lebensmitteldetails anzeigen"
 }

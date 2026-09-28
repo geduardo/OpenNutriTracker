@@ -184,6 +184,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Öğeyi Düzenle",
     ),
     "editMealLabel": MessageLookupByLibrary.simpleMessage("Yemeği Düzenle"),
+    "editPortionLabel": MessageLookupByLibrary.simpleMessage(
+      "Porsiyonu düzenle",
+    ),
     "energyLabel": MessageLookupByLibrary.simpleMessage("enerji"),
     "errorFetchingProductData": MessageLookupByLibrary.simpleMessage(
       "Ürün verileri alınırken hata oluştu",
@@ -219,6 +222,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "fatLabel": MessageLookupByLibrary.simpleMessage("yağ"),
     "fiberLabel": MessageLookupByLibrary.simpleMessage("lif"),
     "flOzUnit": MessageLookupByLibrary.simpleMessage("fl.oz"),
+    "foodDetailsLabel": MessageLookupByLibrary.simpleMessage(
+      "Gıda ayrıntılarını göster",
+    ),
     "ftLabel": MessageLookupByLibrary.simpleMessage("ft"),
     "genderFemaleLabel": MessageLookupByLibrary.simpleMessage("♀ kadın"),
     "genderLabel": MessageLookupByLibrary.simpleMessage("Cinsiyet"),

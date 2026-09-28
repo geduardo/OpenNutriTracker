@@ -450,5 +450,7 @@
   "deleteMealGroupTitle": "Bu öğün silinsin mi?",
   "deleteMealGroupContent": "\"{name}\" içindeki {count} kaydın tümü bu günden kaldırılır.",
   "removeLastPresetItemTitle": "Son öğe kaldırılsın mı?",
-  "removeLastPresetItemContent": "\"{name}\" başka öğe içermediği için kayıtlı öğün silinir."
+  "removeLastPresetItemContent": "\"{name}\" başka öğe içermediği için kayıtlı öğün silinir.",
+  "editPortionLabel": "Porsiyonu düzenle",
+  "foodDetailsLabel": "Gıda ayrıntılarını göster"
 }

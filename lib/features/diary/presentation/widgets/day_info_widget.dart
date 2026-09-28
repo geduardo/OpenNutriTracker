@@ -24,6 +24,7 @@ class DayInfoWidget extends StatelessWidget {
       onDeleteIntake;
   final Function(IntakeEntity intake, TrackedDayEntity? trackedDayEntity,
       AddMealType? type) onCopyIntake;
+  final Function(BuildContext, IntakeEntity, bool) onIntakeTapped;
 
   const DayInfoWidget({
     super.key,
@@ -36,6 +37,7 @@ class DayInfoWidget extends StatelessWidget {
     required this.usesImperialUnits,
     required this.onDeleteIntake,
     required this.onCopyIntake,
+    required this.onIntakeTapped,
   });
 
   @override
@@ -88,6 +90,7 @@ class DayInfoWidget extends StatelessWidget {
           intakeList: breakfastIntake,
           onDeleteIntakeCallback: onDeleteIntake,
           onItemLongPressedCallback: onIntakeItemLongPressed,
+          onItemTappedCallback: onIntakeTapped,
           onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
               ? null
               : onCopyIntake,
@@ -102,6 +105,7 @@ class DayInfoWidget extends StatelessWidget {
           intakeList: lunchIntake,
           onDeleteIntakeCallback: onDeleteIntake,
           onItemLongPressedCallback: onIntakeItemLongPressed,
+          onItemTappedCallback: onIntakeTapped,
           usesImperialUnits: usesImperialUnits,
           onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
               ? null
@@ -116,6 +120,7 @@ class DayInfoWidget extends StatelessWidget {
           intakeList: dinnerIntake,
           onDeleteIntakeCallback: onDeleteIntake,
           onItemLongPressedCallback: onIntakeItemLongPressed,
+          onItemTappedCallback: onIntakeTapped,
           onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
               ? null
               : onCopyIntake,
@@ -130,6 +135,7 @@ class DayInfoWidget extends StatelessWidget {
           intakeList: snackIntake,
           onDeleteIntakeCallback: onDeleteIntake,
           onItemLongPressedCallback: onIntakeItemLongPressed,
+          onItemTappedCallback: onIntakeTapped,
           usesImperialUnits: usesImperialUnits,
           onCopyIntakeCallback: DateUtils.isSameDay(selectedDay, DateTime.now())
               ? null

@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
-import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
-import 'package:opennutritracker/core/presentation/widgets/edit_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/delete_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/disclaimer_dialog.dart';
+import 'package:opennutritracker/core/presentation/widgets/intake_item_actions.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
-import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
-import 'package:opennutritracker/features/food_library/food_detail_page.dart';
 import 'package:opennutritracker/features/home/presentation/bloc/home_bloc.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/dashboard_widget.dart';
 import 'package:opennutritracker/features/home/presentation/widgets/intake_vertical_list.dart';
@@ -236,114 +233,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void onIntakeItemTapped(BuildContext context, IntakeEntity intakeEntity,
-      bool usesImperialUnits) async {
-    final action = await showModalBottomSheet<_HomeItemAction>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(intakeEntity.meal.name ?? '?'),
-              subtitle: Text(
-                  '${intakeEntity.totalKcal.toInt()} ${S.of(context).kcalLabel}'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.scale_outlined),
-              title: const Text('Edit portion'),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _HomeItemAction.editPortion),
-            ),
-            ListTile(
-              leading: const Icon(Icons.open_in_new),
-              title: const Text('View food details'),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _HomeItemAction.viewDetails),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (!context.mounted || action == null) {
-      return;
-    }
-
-    switch (action) {
-      case _HomeItemAction.editPortion:
-        await _editIntakeAmount(context, intakeEntity, usesImperialUnits);
-        break;
-      case _HomeItemAction.viewDetails:
-        await _openFoodDetails(context, intakeEntity);
-        break;
-    }
-  }
-
-  Future<void> _editIntakeAmount(
-    BuildContext context,
-    IntakeEntity intakeEntity,
-    bool usesImperialUnits,
-  ) async {
-    final changeIntakeAmount = await showDialog<double>(
-      context: context,
-      builder: (context) => EditDialog(
-        intakeEntity: intakeEntity,
-        usesImperialUnits: usesImperialUnits,
-      ),
-    );
-    if (changeIntakeAmount != null) {
-      _homeBloc
-          .updateIntakeItem(intakeEntity.id, {'amount': changeIntakeAmount});
-      _homeBloc.add(const LoadItemsEvent());
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).itemUpdatedSnackbar)),
-        );
-      }
-    }
-  }
-
-  Future<void> _openFoodDetails(
-    BuildContext context,
-    IntakeEntity intakeEntity,
-  ) async {
-    final meal = await _resolveMealForDetails(intakeEntity.meal);
-    if (!context.mounted) {
-      return;
-    }
-
-    await Navigator.push(
+      bool usesImperialUnits) {
+    IntakeItemActions.show(
       context,
-      MaterialPageRoute(
-        builder: (_) => FoodDetailPage(food: meal),
-      ),
+      intakeEntity,
+      usesImperialUnits,
+      onChanged: () => _homeBloc.add(const LoadItemsEvent()),
+      onDelete: _homeBloc.deleteIntakeItem,
     );
-  }
-
-  Future<MealEntity> _resolveMealForDetails(MealEntity meal) async {
-    if (meal.localFoodId != null && meal.localFoodId!.isNotEmpty) {
-      return meal;
-    }
-
-    final localFoodDataSource = locator<LocalFoodDataSource>();
-
-    final code = meal.code?.trim();
-    if (code != null && code.isNotEmpty) {
-      final record = await localFoodDataSource.getFoodRecordByKey(code);
-      if (record != null) {
-        return MealEntity.fromLocalFoodRecord(record);
-      }
-    }
-
-    final name = meal.name?.trim();
-    if (name != null && name.isNotEmpty) {
-      final record = await localFoodDataSource.getFoodRecordByKey(name);
-      if (record != null) {
-        return MealEntity.fromLocalFoodRecord(record);
-      }
-    }
-
-    return meal;
   }
 
   void onDeleteIntake(IntakeEntity intake, TrackedDayEntity? trackedDayEntity) {
@@ -386,4 +283,3 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 }
 
-enum _HomeItemAction { editPortion, viewDetails }

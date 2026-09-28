@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
+import 'package:opennutritracker/core/presentation/widgets/intake_item_actions.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
 import 'package:opennutritracker/features/diary/presentation/bloc/calendar_day_bloc.dart';
@@ -170,6 +171,7 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
                       snackIntake: state.snackIntakeList,
                       onDeleteIntake: _onDeleteIntakeItem,
                       onCopyIntake: _onCopyIntakeItem,
+                      onIntakeTapped: _onIntakeTapped,
                       usesImperialUnits: usesImperialUnits,
                     ),
                   ),
@@ -190,6 +192,23 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
         ),
       ],
     );
+  }
+
+  void _onIntakeTapped(
+      BuildContext context, IntakeEntity intakeEntity, bool usesImperialUnits) {
+    IntakeItemActions.show(
+      context,
+      intakeEntity,
+      usesImperialUnits,
+      onChanged: _refreshAfterChange,
+      onDelete: _calendarDayBloc.deleteIntakeItem,
+    );
+  }
+
+  void _refreshAfterChange() {
+    _diaryBloc.add(const LoadDiaryYearEvent());
+    _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
+    _diaryBloc.updateHomePage();
   }
 
   void _onDeleteIntakeItem(
