@@ -82,33 +82,30 @@ class MealNutrimentsEntity extends Equatable {
         saturatedFat100:
             (offNutriments.saturated_fat_100g as Object?).asDoubleOrNull(),
         fiber100: (offNutriments.fiber_100g as Object?).asDoubleOrNull(),
-        sodiumMg100: _offSodiumToMg(
+        sodiumMg100: _offGramsToMg(
             (offNutriments.sodium_100g as Object?).asDoubleOrNull()),
-        caffeineMg100:
-            (offNutriments.caffeine_100g as Object?).asDoubleOrNull());
+        caffeineMg100: _offGramsToMg(
+            (offNutriments.caffeine_100g as Object?).asDoubleOrNull()));
   }
 
-  /// OFF stores sodium in grams, convert to mg
-  static double? _offSodiumToMg(double? sodiumGrams) {
-    return sodiumGrams != null ? sodiumGrams * 1000 : null;
+  /// OFF normalises every `*_100g` nutrient to grams.
+  static double? _offGramsToMg(double? grams) {
+    return grams != null ? grams * 1000 : null;
   }
 
   factory MealNutrimentsEntity.fromFDCNutriments(
       List<FDCFoodNutrimentDTO> fdcNutriment) {
     // FDC Food nutriments can have different values for Energy [Energy,
     // Energy (Atwater General Factors), Energy (Atwater Specific Factors)]
-    final energyTotal = fdcNutriment
-            .firstWhereOrNull(
-                (nutriment) => nutriment.nutrientId == FDCConst.fdcTotalKcalId)
-            ?.amount ??
-        fdcNutriment
-            .firstWhereOrNull((nutriment) =>
-                nutriment.nutrientId == FDCConst.fdcKcalAtwaterGeneralId)
-            ?.amount ??
-        fdcNutriment
-            .firstWhereOrNull((nutriment) =>
-                nutriment.nutrientId == FDCConst.fdcKcalAtwaterSpecificId)
-            ?.amount;
+    double? amountFor(int nutrientId) => fdcNutriment
+        .firstWhereOrNull((nutriment) => nutriment.nutrientId == nutrientId)
+        ?.amount;
+
+    final energyTotal = amountFor(FDCConst.fdcTotalKcalId) ??
+        amountFor(FDCConst.fdcKcalAtwaterGeneralId) ??
+        amountFor(FDCConst.fdcKcalAtwaterSpecificId) ??
+        amountFor(FDCConst.fdcKcalAtwaterGeneralNumber) ??
+        amountFor(FDCConst.fdcKcalAtwaterSpecificNumber);
 
     final carbsTotal = fdcNutriment
         .firstWhereOrNull(
@@ -125,10 +122,8 @@ class MealNutrimentsEntity extends Equatable {
             (nutriment) => nutriment.nutrientId == FDCConst.fdcTotalProteinsId)
         ?.amount;
 
-    final sugarTotal = fdcNutriment
-        .firstWhereOrNull(
-            (nutriment) => nutriment.nutrientId == FDCConst.fdcTotalSugarId)
-        ?.amount;
+    final sugarTotal = amountFor(FDCConst.fdcTotalSugarId) ??
+        amountFor(FDCConst.fdcTotalSugarNleaId);
 
     final saturatedFatTotal = fdcNutriment
         .firstWhereOrNull((nutriment) =>

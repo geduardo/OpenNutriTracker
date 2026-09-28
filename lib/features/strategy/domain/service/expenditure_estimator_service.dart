@@ -36,11 +36,12 @@ class ExpenditureEstimatorService {
     final windowStart = DateUtils.dateOnly(
         DateTime(currentDay.year, currentDay.month, currentDay.day - windowDays));
 
+    // Today is still being logged, so the window covers the 21 finished days.
     final validDays = trackedDays.where((trackedDay) {
       final day = DateUtils.dateOnly(trackedDay.day);
       final quality = trackedDay.logQuality ?? DayLogQualityDBO.unlogged;
       return !day.isBefore(windowStart) &&
-          !day.isAfter(currentDay) &&
+          day.isBefore(currentDay) &&
           (quality == DayLogQualityDBO.complete ||
               quality == DayLogQualityDBO.fasted);
     }).toList();

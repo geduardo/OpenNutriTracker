@@ -42,8 +42,8 @@ void main() {
     // 387 – (7.31 × age [y]) + PA × (10.9 × weight [kg]
     // + 660.7 × height [m])
 
-    // 387 - (7.31 * 54) + 1.27 * (10.9 * 75) + 660.7 * 1.60 = 2087
-    int expectedTdee = 2087;
+    // 387 - (7.31 * 54) + 1.27 * (10.9 * 75 + 660.7 * 1.60) = 2373
+    int expectedTdee = 2373;
 
     expect(userTdee.toInt(), expectedTdee);
   });

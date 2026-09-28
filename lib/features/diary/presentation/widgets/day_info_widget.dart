@@ -120,6 +120,7 @@ class DayInfoWidget extends StatelessWidget {
               ? null
               : onCopyIntake,
           usesImperialUnits: usesImperialUnits,
+          trackedDayEntity: trackedDay,
         ),
         IntakeVerticalList(
           day: selectedDay,

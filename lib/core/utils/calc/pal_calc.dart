@@ -42,20 +42,14 @@ class PalCalc {
   /// https://doi.org/10.17226/10490.
   /// https://nap.nationalacademies.org/catalog/10490/dietary-reference-intakes-for-energy-carbohydrate-fiber-fat-fatty-acids-cholesterol-protein-and-amino-acids
   static double getPAValueFromPALValue(UserEntity userEntity, double palValue) {
-    double paValue = 1.0;
+    final isMale = userEntity.gender == UserGenderEntity.male;
     if (palValue < 1.4) {
-      paValue = 1.0;
+      return 1.0;
     } else if (palValue < 1.6) {
-      userEntity.gender == UserGenderEntity.male
-          ? paValue = 1.12
-          : paValue = 1.14;
+      return isMale ? 1.11 : 1.12;
     } else if (palValue < 1.9) {
-      paValue = 1.27;
-    } else {
-      userEntity.gender == UserGenderEntity.male
-          ? paValue = 1.54
-          : paValue = 1.45;
+      return isMale ? 1.25 : 1.27;
     }
-    return paValue;
+    return isMale ? 1.48 : 1.45;
   }
 }

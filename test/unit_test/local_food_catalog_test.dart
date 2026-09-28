@@ -95,6 +95,34 @@ void main() {
     expect(resolved?.nutriments.energyKcal100, 520);
   });
 
+  test('different barcodes with the same name stay separate foods', () async {
+    final dataSource = await _createLocalFoodDataSource();
+
+    final first = await dataSource.saveFood(
+      MealDBO.fromMealEntity(_buildMeal(
+          code: '111', name: 'Protein Bar', kcal: 350,
+          source: MealSourceEntity.ai)),
+      lookupKeys: ['111'],
+    );
+    final second = await dataSource.saveFood(
+      MealDBO.fromMealEntity(_buildMeal(
+          code: '222', name: 'Protein Bar', kcal: 410,
+          source: MealSourceEntity.ai)),
+      lookupKeys: ['222'],
+    );
+    final codeless = await dataSource.saveFood(
+      MealDBO.fromMealEntity(_buildMeal(name: 'protein bar', kcal: 200)),
+    );
+
+    expect(second.id, isNot(first.id));
+    expect(codeless.id, isNot(first.id));
+    expect((await dataSource.getFoodByKey('111'))?.nutriments.energyKcal100,
+        350);
+    expect((await dataSource.getFoodByKey('222'))?.nutriments.energyKcal100,
+        410);
+    expect(await dataSource.getAllFoodRecords(), hasLength(3));
+  });
+
   test('preset snapshot sync updates linked items and preserves others',
       () async {
     final presetBox = await Hive.openBox<MealPresetDBO>(presetBoxName);

@@ -62,7 +62,7 @@ class OFFProductNutrimentsDTO {
 
   final dynamic sodium_100g; // can be String, int, double or null (in grams)
 
-  final dynamic caffeine_100g; // can be String, int, double or null (in mg)
+  final dynamic caffeine_100g; // can be String, int, double or null (in grams)
 
   OFFProductNutrimentsDTO({
     //required this.energy_kcal,

@@ -10,6 +10,7 @@ import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
 import 'package:opennutritracker/features/add_meal/presentation/add_meal_type.dart';
@@ -163,8 +164,9 @@ class MealItemCard extends StatelessWidget {
                         controller: quantityController,
                         keyboardType: TextInputType.number,
                         autofocus: true,
-                        decoration: const InputDecoration(
-                          suffixText: 'g',
+                        decoration: InputDecoration(
+                          suffixText:
+                              MealPortionHelper.resolveBaseUnit(mealEntity),
                           border: OutlineInputBorder(),
                           isDense: true,
                         ),
@@ -205,7 +207,7 @@ class MealItemCard extends StatelessWidget {
 
     final intake = IntakeEntity(
       id: IdGenerator.getUniqueID(),
-      unit: 'g',
+      unit: MealPortionHelper.resolveBaseUnit(mealEntity),
       amount: amount,
       type: intakeType,
       meal: mealEntity,

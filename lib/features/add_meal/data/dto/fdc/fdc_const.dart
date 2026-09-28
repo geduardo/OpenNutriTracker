@@ -179,12 +179,18 @@ class FDCConst {
 
   // Nutriment codes
   static const fdcTotalKcalId = 1008;
-  static const fdcKcalAtwaterGeneralId = 957;
-  static const fdcKcalAtwaterSpecificId = 958;
+  // Foundation foods report energy only via the Atwater nutrients, whose
+  // nutrient ids are 2047/2048 (957/958 are their nutrient numbers).
+  static const fdcKcalAtwaterGeneralId = 2047;
+  static const fdcKcalAtwaterSpecificId = 2048;
+  static const fdcKcalAtwaterGeneralNumber = 957;
+  static const fdcKcalAtwaterSpecificNumber = 958;
   static const fdcTotalCarbsId = 1005;
   static const fdcTotalFatId = 1004;
   static const fdcTotalProteinsId = 1003;
   static const fdcTotalSugarId = 1063;
+  // SR Legacy foods report sugar only as "Sugars, total including NLEA".
+  static const fdcTotalSugarNleaId = 2000;
   static const fdcTotalSaturatedFatId = 1258;
   static const fdcTotalDietaryFiberId = 1079;
   static const fdcTotalSodiumId = 1093;

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
@@ -59,8 +59,8 @@ class CalendarDayBloc extends Bloc<CalendarDayEvent, CalendarDayState> {
         snackIntakeList));
   }
 
-  Future<void> deleteIntakeItem(
-      BuildContext context, IntakeEntity intakeEntity, DateTime day) async {
+  Future<void> deleteIntakeItem(IntakeEntity intakeEntity) async {
+    final day = DateUtils.dateOnly(intakeEntity.dateTime);
     await _deleteIntakeUsecase.deleteIntake(intakeEntity);
     await _addTrackedDayUsecase.removeDayCaloriesTracked(
         day, intakeEntity.totalKcal);

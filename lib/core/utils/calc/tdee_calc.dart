@@ -25,24 +25,16 @@ class TDEECalc {
   /// https://doi.org/10.17226/10490.
   /// https://nap.nationalacademies.org/catalog/10490/dietary-reference-intakes-for-energy-carbohydrate-fiber-fat-fatty-acids-cholesterol-protein-and-amino-acids
   static double getTDEEKcalIOM2005(UserEntity userEntity) {
-    double tdeeKcal;
+    final pa = PalCalc.getPAValueFromPALValue(
+        userEntity, PalCalc.getPALValueFromActivityCategory(userEntity));
+    final heightM = userEntity.heightCM / 100;
     if (userEntity.gender == UserGenderEntity.male) {
-      tdeeKcal = 864 -
+      return 864 -
           9.72 * userEntity.age +
-          PalCalc.getPAValueFromPALValue(userEntity,
-                  PalCalc.getPALValueFromActivityCategory(userEntity)) *
-              14.2 *
-              userEntity.weightKG +
-          503 * (userEntity.heightCM / 100);
-    } else {
-      tdeeKcal = 387 -
-          7.31 * userEntity.age +
-          PalCalc.getPAValueFromPALValue(userEntity,
-                  PalCalc.getPALValueFromActivityCategory(userEntity)) *
-              10.9 *
-              userEntity.weightKG +
-          660.7 * (userEntity.heightCM / 100);
+          pa * (14.2 * userEntity.weightKG + 503 * heightM);
     }
-    return tdeeKcal;
+    return 387 -
+        7.31 * userEntity.age +
+        pa * (10.9 * userEntity.weightKG + 660.7 * heightM);
   }
 }

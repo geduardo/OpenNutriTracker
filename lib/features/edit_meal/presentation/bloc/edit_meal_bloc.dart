@@ -44,18 +44,18 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
       return nutrimentValue != null ? nutrimentValue * factorTo100g : null;
     }
 
+    // Only the values typed in the form are per base quantity; the others
+    // are carried over and are already stored per 100 g/ml.
     final newMealNutriments = MealNutrimentsEntity(
         energyKcal100: multiplyIfNotNull(kcalText.toDoubleOrNull()),
         carbohydrates100: multiplyIfNotNull(carbsText.toDoubleOrNull()),
         fat100: multiplyIfNotNull(fatText.toDoubleOrNull()),
         proteins100: multiplyIfNotNull(proteinText.toDoubleOrNull()),
-        sugars100: multiplyIfNotNull(oldMealEntity.nutriments.sugars100),
-        saturatedFat100:
-            multiplyIfNotNull(oldMealEntity.nutriments.saturatedFat100),
-        fiber100: multiplyIfNotNull(oldMealEntity.nutriments.fiber100),
-        sodiumMg100: multiplyIfNotNull(oldMealEntity.nutriments.sodiumMg100),
-        caffeineMg100:
-            multiplyIfNotNull(oldMealEntity.nutriments.caffeineMg100));
+        sugars100: oldMealEntity.nutriments.sugars100,
+        saturatedFat100: oldMealEntity.nutriments.saturatedFat100,
+        fiber100: oldMealEntity.nutriments.fiber100,
+        sodiumMg100: oldMealEntity.nutriments.sodiumMg100,
+        caffeineMg100: oldMealEntity.nutriments.caffeineMg100);
 
     final servingQuantity = servingQuantityText.toDoubleOrNull();
     final baseUnit = unitText ?? oldMealEntity.mealUnit ?? 'g';

@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
+import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/features/strategy/data/repository/weight_entry_repository.dart';
@@ -22,6 +24,15 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
   double? _trendWeight;
   bool _isLoading = true;
   bool _isImporting = false;
+  bool _usesImperialUnits = false;
+
+  String get _unitLabel => _usesImperialUnits ? 'lb' : 'kg';
+
+  double _toDisplay(double kg) =>
+      _usesImperialUnits ? UnitCalc.kgToLbs(kg) : kg;
+
+  String _formatWeight(double kg) =>
+      '${_toDisplay(kg).toStringAsFixed(1)} $_unitLabel';
 
   @override
   void initState() {
@@ -37,11 +48,13 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
     final repo = locator<WeightEntryRepository>();
     final entries = await repo.getAllEntries();
     final trend = TrendWeightService.getLatestTrendWeight(entries);
+    final config = await locator<GetConfigUsecase>().getConfig();
 
     if (mounted) {
       setState(() {
         _entries = entries;
         _trendWeight = trend;
+        _usesImperialUnits = config.usesImperialUnits;
         _isLoading = false;
       });
     }
@@ -86,12 +99,12 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                         Text('Trend Weight',
                             style: Theme.of(context).textTheme.bodyMedium),
                         Text(
-                          '${_trendWeight!.toStringAsFixed(1)} kg',
+                          _formatWeight(_trendWeight!),
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         if (_entries.isNotEmpty)
                           Text(
-                            'Last weigh-in: ${_entries.last.weightKg.toStringAsFixed(1)} kg',
+                            'Last weigh-in: ${_formatWeight(_entries.last.weightKg)}',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                       ],
@@ -136,12 +149,11 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                                 _iconForSource(entry.source),
                                 color: Theme.of(context).colorScheme.primary,
                               ),
-                              title: Text(
-                                  '${entry.weightKg.toStringAsFixed(1)} kg'),
+                              title: Text(_formatWeight(entry.weightKg)),
                               subtitle: Text(_subtitleForEntry(entry)),
                               trailing: trendForDay != null
                                   ? Text(
-                                      'trend: ${trendForDay.toStringAsFixed(1)}',
+                                      'trend: ${_toDisplay(trendForDay).toStringAsFixed(1)}',
                                       style:
                                           Theme.of(context).textTheme.bodySmall)
                                   : null,
@@ -156,8 +168,9 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
   }
 
   void _addWeight() {
-    _weightController.text =
-        _entries.isNotEmpty ? _entries.last.weightKg.toStringAsFixed(1) : '';
+    _weightController.text = _entries.isNotEmpty
+        ? _toDisplay(_entries.last.weightKg).toStringAsFixed(1)
+        : '';
 
     showDialog(
       context: context,
@@ -167,9 +180,9 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
           controller: _weightController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
-          decoration: const InputDecoration(
-            suffixText: 'kg',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            suffixText: _unitLabel,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
@@ -179,9 +192,12 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
           ),
           TextButton(
             onPressed: () async {
-              final weight =
+              final entered =
                   double.tryParse(_weightController.text.replaceAll(',', '.'));
-              if (weight != null && weight > 0) {
+              if (entered != null && entered > 0) {
+                final weight = _usesImperialUnits
+                    ? UnitCalc.lbsToKg(entered)
+                    : entered;
                 Navigator.pop(ctx);
                 final repo = locator<WeightEntryRepository>();
                 await repo.addEntry(WeightEntryEntity(
@@ -206,7 +222,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Delete?'),
         content: Text(
-            'Delete ${entry.weightKg.toStringAsFixed(1)} kg on ${_formatDate(entry.day)}?'),
+            'Delete ${_formatWeight(entry.weightKg)} on ${_formatDate(entry.day)}?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),

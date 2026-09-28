@@ -21,14 +21,16 @@ class UnitCalc {
     return (feet * 30.48).roundToDouble();
   }
 
-  /// Converts feet to inches and rounds the result
+  static const _lbsPerKg = 2.20462;
+
+  /// Unrounded so a value converted back and forth stays the same; round
+  /// only for display.
   static double kgToLbs(double kg) {
-    return (kg * 2.20462).roundToDouble();
+    return kg * _lbsPerKg;
   }
 
-  /// Converts pounds to kilograms and rounds the result
   static double lbsToKg(double lbs) {
-    return (lbs / 2.20462).roundToDouble();
+    return lbs / _lbsPerKg;
   }
 
   static double gToOz(double g) {

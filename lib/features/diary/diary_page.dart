@@ -194,8 +194,7 @@ class _DiaryPageState extends State<DiaryPage> with WidgetsBindingObserver {
 
   void _onDeleteIntakeItem(
       IntakeEntity intakeEntity, TrackedDayEntity? trackedDayEntity) async {
-    await _calendarDayBloc.deleteIntakeItem(
-        context, intakeEntity, trackedDayEntity?.day ?? DateTime.now());
+    await _calendarDayBloc.deleteIntakeItem(intakeEntity);
     _diaryBloc.add(const LoadDiaryYearEvent());
     _calendarDayBloc.add(LoadCalendarDayEvent(_selectedDate));
     _diaryBloc.updateHomePage();

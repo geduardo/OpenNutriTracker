@@ -21,16 +21,25 @@ class LocalFoodDataSource {
   }) async {
     final candidateAliases =
         FoodIdentity.candidateAliases(meal, lookupKeys: lookupKeys);
+    final matchingAliases =
+        FoodIdentity.matchingAliases(meal, lookupKeys: lookupKeys);
     final matchedFoodId =
-        existingFoodId ?? await _findExistingFoodId(candidateAliases);
-    final existingRecord =
+        existingFoodId ?? await _findExistingFoodId(matchingAliases);
+    var existingRecord =
         matchedFoodId == null ? null : await getFoodRecordById(matchedFoodId);
+    final matchedByNameOnly = existingFoodId == null &&
+        matchingAliases.every((alias) => alias.startsWith('name:'));
+    if (matchedByNameOnly &&
+        existingRecord != null &&
+        existingRecord.aliases.any((alias) => !alias.startsWith('name:'))) {
+      existingRecord = null;
+    }
     final foodId = existingRecord?.id ?? IdGenerator.getUniqueID();
     final now = DateTime.now();
     final aliases = <String>{
       ...?existingRecord?.aliases,
       ...candidateAliases,
-    }.toList()
+    }.where((alias) => !_belongsToOtherFood(alias, foodId)).toList()
       ..sort();
 
     log.fine(
@@ -133,6 +142,16 @@ class LocalFoodDataSource {
         await _aliasBox.put(alias, record.id);
       }
     }
+  }
+
+  /// Name aliases are shared hints; never repoint one that already belongs to
+  /// another stored food.
+  bool _belongsToOtherFood(String alias, String foodId) {
+    if (!alias.startsWith('name:')) return false;
+    final current = _aliasBox.get(alias);
+    return current != null &&
+        current != foodId &&
+        _localFoodBox.containsKey(current);
   }
 
   Future<String?> _findExistingFoodId(List<String> aliases) async {

@@ -31,15 +31,15 @@ void main() {
     });
 
     test(
-        'Total Kcal Goal calculation for a middle aged sedentary female wanting to maintain weight',
+        'Total Kcal Goal calculation for a middle aged active female wanting to lose weight',
         () {
       final user = middleAgedActiveFemaleWantingToLoseWeight;
 
       double resultCalorieGoal = CalorieGoalCalc.getTotalKcalGoal(user, 550.0);
 
-      // TDEE: 2087, Activities: 550, Adjustment: -500
-      // 2087 + 550 - 500 = 2137
-      int expectedKcal = 2137;
+      // TDEE: 2373, Activities: 550, Adjustment: -500
+      // 2373 + 550 - 500 = 2423
+      int expectedKcal = 2423;
 
       expect(resultCalorieGoal.toInt(), expectedKcal);
     });

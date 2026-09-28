@@ -294,9 +294,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         await _mealDetailBloc.getLastUsedAmount(meal.code, meal.name);
 
     if (lastAmount != null) {
-      final quantityStr = lastAmount == lastAmount.roundToDouble()
-          ? lastAmount.toInt().toString()
-          : lastAmount.toString();
+      // Intakes store the amount in base g/ml; show it in the selected unit.
+      final quantityStr = MealPortionHelper.formatValue(
+          MealPortionHelper.fromBaseAmount(meal, lastAmount, _initialUnit));
       _initialQuantity = quantityStr;
       quantityTextController.text = quantityStr;
     } else if (meal.hasServingValues) {

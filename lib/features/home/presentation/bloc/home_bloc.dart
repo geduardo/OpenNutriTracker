@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/usecase/add_config_usecase.dart';
@@ -128,14 +129,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> updateIntakeItem(
       String intakeId, Map<String, dynamic> fields) async {
-    final dateTime = DateTime.now();
     // Get old intake values
     final oldIntakeObject = await _getIntakeUsecase.getIntakeById(intakeId);
-    assert(oldIntakeObject != null);
+    if (oldIntakeObject == null) return;
+    final dateTime = DateUtils.dateOnly(oldIntakeObject.dateTime);
     final newIntakeObject =
         await _updateIntakeUsecase.updateIntake(intakeId, fields);
-    assert(newIntakeObject != null);
-    if (oldIntakeObject!.amount > newIntakeObject!.amount) {
+    if (newIntakeObject == null) return;
+    if (oldIntakeObject.amount > newIntakeObject.amount) {
       // Amounts shrunk
       await _addTrackedDayUseCase.removeDayCaloriesTracked(
           dateTime, oldIntakeObject.totalKcal - newIntakeObject.totalKcal);
@@ -170,7 +171,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> deleteIntakeItem(IntakeEntity intakeEntity) async {
-    final dateTime = DateTime.now();
+    final dateTime = DateUtils.dateOnly(intakeEntity.dateTime);
     await _deleteIntakeUsecase.deleteIntake(intakeEntity);
     await _addTrackedDayUseCase.removeDayCaloriesTracked(
         dateTime, intakeEntity.totalKcal);
