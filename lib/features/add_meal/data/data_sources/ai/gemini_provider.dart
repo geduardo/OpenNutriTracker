@@ -8,10 +8,13 @@ import 'package:opennutritracker/features/add_meal/data/dto/ai/ai_nutrition_dto.
 
 class GeminiProvider implements AiProvider {
   static const _baseUrl = 'generativelanguage.googleapis.com';
-  static const defaultModel = 'gemini-3-flash-preview';
+  static const defaultModel = 'gemini-3.8-flash';
+  // Older entries stay listed so a saved choice is not silently replaced.
   static const availableModels = [
-    'gemini-3-flash-preview',
+    'gemini-3.8-flash',
+    'gemini-3.5-flash-lite',
     'gemini-3.1-pro-preview',
+    'gemini-3-flash-preview',
     'gemini-2.5-flash',
     'gemini-2.5-pro',
   ];
