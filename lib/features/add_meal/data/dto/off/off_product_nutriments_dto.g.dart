@@ -9,6 +9,12 @@ part of 'off_product_nutriments_dto.dart';
 OFFProductNutrimentsDTO _$OFFProductNutrimentsDTOFromJson(
         Map<String, dynamic> json) =>
     OFFProductNutrimentsDTO(
+      iron_mg: json['iron_100g'],
+      calcium_mg: json['calcium_100g'],
+      iodine_ug: json['iodine_100g'],
+      choline_mg: json['choline_100g'],
+      vitamin_d_ug: json['vitamin-d_100g'],
+      vitamin_b12_ug: json['vitamin-b12_100g'],
       energy_kcal_100g: json['energy-kcal_100g'],
       carbohydrates_100g: json['carbohydrates_100g'],
       fat_100g: json['fat_100g'],
@@ -34,4 +40,10 @@ Map<String, dynamic> _$OFFProductNutrimentsDTOToJson(
       'sodium_100g': instance.sodium_100g,
       'salt_100g': instance.salt_100g,
       'caffeine_100g': instance.caffeine_100g,
+      'iron_100g': instance.iron_mg,
+      'calcium_100g': instance.calcium_mg,
+      'iodine_100g': instance.iodine_ug,
+      'choline_100g': instance.choline_mg,
+      'vitamin-d_100g': instance.vitamin_d_ug,
+      'vitamin-b12_100g': instance.vitamin_b12_ug,
     };

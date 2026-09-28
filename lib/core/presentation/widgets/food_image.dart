@@ -28,6 +28,9 @@ class FoodImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     if (imageUrl == null || imageUrl!.isEmpty) {
       return _fallback(context);
     }
@@ -57,8 +60,7 @@ class FoodImage extends StatelessWidget {
       height: height,
       fit: fit,
       placeholder: (context, url) => placeholder ?? _fallback(context),
-      errorWidget: (context, url, error) =>
-          errorWidget ?? _fallback(context),
+      errorWidget: (context, url, error) => errorWidget ?? _fallback(context),
     );
   }
 

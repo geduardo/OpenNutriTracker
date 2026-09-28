@@ -24,13 +24,17 @@ class MealNutrimentsDBOAdapter extends TypeAdapter<MealNutrimentsDBO> {
       fiber100: fields[6] as double?,
       sodiumMg100: fields[7] as double?,
       caffeineMg100: fields[8] as double?,
+      micronutrients100: (fields[9] as Map?)
+              ?.map((k, v) => MapEntry(k as String, (v as num).toDouble())) ??
+          const {},
+      nutritionDataKind: fields[10] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealNutrimentsDBO obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.energyKcal100)
       ..writeByte(1)
@@ -48,7 +52,11 @@ class MealNutrimentsDBOAdapter extends TypeAdapter<MealNutrimentsDBO> {
       ..writeByte(7)
       ..write(obj.sodiumMg100)
       ..writeByte(8)
-      ..write(obj.caffeineMg100);
+      ..write(obj.caffeineMg100)
+      ..writeByte(9)
+      ..write(obj.micronutrients100)
+      ..writeByte(10)
+      ..write(obj.nutritionDataKind);
   }
 
   @override

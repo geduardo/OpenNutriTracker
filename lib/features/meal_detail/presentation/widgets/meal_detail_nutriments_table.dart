@@ -1,3 +1,5 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_targets.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/utils/calc/sodium_calc.dart';
 import 'package:opennutritracker/core/utils/extensions.dart';
@@ -19,6 +21,9 @@ class MealDetailNutrimentsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final textStyleNormal =
         Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
     final textStyleBold = Theme.of(context)
@@ -46,6 +51,13 @@ class MealDetailNutrimentsTable extends StatelessWidget {
                   .withValues(alpha: 0.5)),
           children: <TableRow>[
             _getNutrimentsTableRow("", headerText, textStyleBold),
+            for (final ref in pregnancyMicroReferences)
+              _getNutrimentsTableRow(
+                  ref.name,
+                  product.nutriments.micronutrients100[ref.key] == null
+                      ? 'Unknown'
+                      : '${_adjustValueForServing(product.nutriments.micronutrients100[ref.key]!).toStringAsFixed(1)} ${ref.unit}',
+                  textStyleNormal),
             _getNutrimentsTableRow(
                 S.of(context).energyLabel,
                 "${_adjustValueForServing(product.nutriments.energyKcal100?.toDouble() ?? 0).toInt()} ${S.of(context).kcalLabel}",
@@ -108,11 +120,11 @@ class MealDetailNutrimentsTable extends StatelessWidget {
     return TableRow(children: <Widget>[
       Container(
           padding: const EdgeInsets.only(left: 8.0),
-          child: Text(label, style: textStyle)),
+          child: AppText(label, style: textStyle)),
       Container(
           padding: const EdgeInsets.only(right: 8.0),
           alignment: Alignment.centerRight,
-          child: Text(quantityString, style: textStyle)),
+          child: AppText(quantityString, style: textStyle)),
     ]);
   }
 }

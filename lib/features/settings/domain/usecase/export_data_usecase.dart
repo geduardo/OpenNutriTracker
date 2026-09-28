@@ -1,3 +1,5 @@
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -74,6 +76,8 @@ class ExportDataUsecase {
     final mealPresets = await _mealPresetDataSource.getAllPresets();
 
     final rawPayloads = <String, Object?>{
+      if (locator.isRegistered<PregnancyController>())
+        'PregnancyJournal.json': locator<PregnancyController>().data.toJson(),
       BackupBundle.intakeFileName:
           fullIntake.map((intake) => intake.toJson()).toList(),
       BackupBundle.trackedDayFileName:

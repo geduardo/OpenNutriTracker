@@ -1,4 +1,7 @@
 import 'package:opennutritracker/core/data/repository/tracked_day_repository.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_targets.dart';
 
 class AddTrackedDayUsecase {
   final TrackedDayRepository _trackedDayRepository;
@@ -27,6 +30,12 @@ class AddTrackedDayUsecase {
       double totalCarbsGoal,
       double totalFatGoal,
       double totalProteinGoal) async {
+    if (locator.isRegistered<PregnancyController>()) {
+      final targets =
+          PregnancyTargets(locator<PregnancyController>().data.profile, day);
+      return _trackedDayRepository.addNewTrackedDay(day, targets.energy ?? 0,
+          targets.carbs, targets.fat ?? 0, targets.protein);
+    }
     return await _trackedDayRepository.addNewTrackedDay(
         day, totalKcalGoal, totalCarbsGoal, totalFatGoal, totalProteinGoal);
   }

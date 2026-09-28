@@ -1,3 +1,8 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_hub.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/presentation/widgets/add_item_bottom_sheet.dart';
 import 'package:opennutritracker/features/diary/diary_page.dart';
@@ -5,8 +10,6 @@ import 'package:opennutritracker/core/presentation/widgets/home_appbar.dart';
 import 'package:opennutritracker/features/food_library/food_library_page.dart';
 import 'package:opennutritracker/features/home/home_page.dart';
 import 'package:opennutritracker/core/presentation/widgets/main_appbar.dart';
-import 'package:opennutritracker/features/profile/profile_page.dart';
-import 'package:opennutritracker/features/strategy/presentation/pages/strategy_page.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 
 class MainScreen extends StatefulWidget {
@@ -16,7 +19,31 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncWeights());
+  }
+
+  void _syncWeights() {
+    if (mounted && locator.isRegistered<PregnancyController>()) {
+      locator<PregnancyController>().syncHealth();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _syncWeights();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   int _selectedPageIndex = 0;
 
   late List<Widget> _bodyPages;
@@ -27,32 +54,35 @@ class _MainScreenState extends State<MainScreen> {
     _bodyPages = [
       const HomePage(),
       const FoodLibraryPage(),
-      const StrategyPage(),
+      const PregnancyHub(embedded: true),
       const DiaryPage(),
-      const ProfilePage(),
+      const PregnancySettings(embedded: true),
     ];
     _appbarPages = [
       const HomeAppbar(),
       MainAppbar(
           title: S.of(context).libraryLabel, iconData: Icons.restaurant_menu),
-      MainAppbar(title: S.of(context).strategyLabel, iconData: Icons.insights),
+      MainAppbar(title: tr('Pregnancy'), iconData: Icons.favorite_outline),
       MainAppbar(title: S.of(context).diaryLabel, iconData: Icons.book),
-      MainAppbar(
-          title: S.of(context).profileLabel, iconData: Icons.account_circle)
+      MainAppbar(title: tr('Settings'), iconData: Icons.settings)
     ];
     super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
       appBar: _appbarPages[_selectedPageIndex],
       body: _bodyPages[_selectedPageIndex],
       floatingActionButton: _selectedPageIndex == 0
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               onPressed: () => _onFabPressed(context),
               tooltip: S.of(context).addLabel,
-              child: const Icon(Icons.add),
+              icon: const Icon(Icons.add),
+              label: const AppText('Log food'),
             )
           : null,
       bottomNavigationBar: NavigationBar(
@@ -71,9 +101,9 @@ class _MainScreenState extends State<MainScreen> {
               label: S.of(context).libraryLabel),
           NavigationDestination(
               icon: _selectedPageIndex == 2
-                  ? const Icon(Icons.insights)
-                  : const Icon(Icons.insights_outlined),
-              label: S.of(context).strategyLabel),
+                  ? const Icon(Icons.favorite_outline)
+                  : const Icon(Icons.favorite_border),
+              label: tr('Pregnancy')),
           NavigationDestination(
               icon: _selectedPageIndex == 3
                   ? const Icon(Icons.book)
@@ -81,15 +111,16 @@ class _MainScreenState extends State<MainScreen> {
               label: S.of(context).diaryLabel),
           NavigationDestination(
               icon: _selectedPageIndex == 4
-                  ? const Icon(Icons.account_circle)
-                  : const Icon(Icons.account_circle_outlined),
-              label: S.of(context).profileLabel)
+                  ? const Icon(Icons.settings)
+                  : const Icon(Icons.settings_outlined),
+              label: tr('Settings'))
         ],
       ),
     );
   }
 
   void _setPage(int selectedIndex) {
+    if (selectedIndex == 2) _syncWeights();
     setState(() {
       _selectedPageIndex = selectedIndex;
     });

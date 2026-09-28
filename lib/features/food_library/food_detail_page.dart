@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
@@ -90,14 +91,17 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title ?? widget.food.name ?? 'Food Detail'),
+        title: AppText(widget.title ?? widget.food.name ?? 'Food Detail'),
         actions: [
           if (_hasChanges)
             TextButton(
               onPressed: _save,
-              child: Text('Save',
+              child: AppText('Save',
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold)),
@@ -116,10 +120,11 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
               Icon(_sourceIcon,
                   size: 16, color: Theme.of(context).colorScheme.outline),
               const SizedBox(width: 4),
-              Text(_sourceLabel, style: Theme.of(context).textTheme.bodySmall),
+              AppText(_sourceLabel,
+                  style: Theme.of(context).textTheme.bodySmall),
               if (widget.food.code != null) ...[
                 const SizedBox(width: 8),
-                Text('Code: ${widget.food.code}',
+                AppText('Code: ${widget.food.code}',
                     style: Theme.of(context).textTheme.bodySmall),
               ],
             ],
@@ -130,12 +135,12 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
           _buildField('Brand', _brandsController),
           const Divider(height: 32),
 
-          Text('Base unit', style: Theme.of(context).textTheme.titleMedium),
+          AppText('Base unit', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           SegmentedButton<String>(
             segments: const [
-              ButtonSegment<String>(value: 'g', label: Text('g')),
-              ButtonSegment<String>(value: 'ml', label: Text('ml')),
+              ButtonSegment<String>(value: 'g', label: AppText('g')),
+              ButtonSegment<String>(value: 'ml', label: AppText('ml')),
             ],
             selected: {_selectedBaseUnit},
             onSelectionChanged: (selection) {
@@ -147,7 +152,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
           ),
           const SizedBox(height: 20),
 
-          Text('Nutrition per 100$_selectedBaseUnit',
+          AppText('Nutrition per 100$_selectedBaseUnit',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
 
@@ -200,12 +205,12 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
           _buildField('Caffeine', _caffeineController, suffix: 'mg'),
 
           const SizedBox(height: 20),
-          Text('Portion', style: Theme.of(context).textTheme.titleMedium),
+          AppText('Portion', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           _buildField('Portion label', _servingLabelController),
           _buildField('One portion equals', _servingQuantityController,
               suffix: _selectedBaseUnit),
-          Text(
+          AppText(
             'Examples: cookie, slice, egg, piece, scoop, tbsp, tsp',
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -215,7 +220,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
             OutlinedButton.icon(
               onPressed: _delete,
               icon: const Icon(Icons.delete_outline),
-              label: const Text('Delete from library'),
+              label: const AppText('Delete from library'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
@@ -257,7 +262,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
             ? const TextInputType.numberWithOptions(decimal: true)
             : TextInputType.text,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: tr(label),
           suffixText: suffix,
           border: const OutlineInputBorder(),
           isDense: true,
@@ -300,7 +305,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                                   color: Theme.of(context).colorScheme.outline,
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
+                                AppText(
                                   'Add food image',
                                   style: Theme.of(context)
                                       .textTheme
@@ -322,7 +327,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                   child: FilledButton.icon(
                     onPressed: _editImage,
                     icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: Text(hasImage ? 'Change' : 'Add'),
+                    label: AppText(hasImage ? 'Change' : 'Add'),
                   ),
                 ),
               ],
@@ -353,7 +358,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Food name is required.')),
+        const SnackBar(content: AppText('Food name is required.')),
       );
       return;
     }
@@ -417,7 +422,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
         return;
       }
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Food saved')));
+          .showSnackBar(const SnackBar(content: AppText('Food saved')));
       setState(() {
         _imagePath = foodRecord.meal.mainImageUrl;
         _hasChanges = false;
@@ -471,15 +476,15 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete food?'),
-        content: Text('Remove "${widget.food.name}" from your library?'),
+        title: const AppText('Delete food?'),
+        content: AppText('Remove "${widget.food.name}" from your library?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(S.of(ctx).dialogCancelLabel)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: const AppText('Delete')),
         ],
       ),
     );

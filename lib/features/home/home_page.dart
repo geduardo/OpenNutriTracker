@@ -1,3 +1,5 @@
+import 'package:opennutritracker/pregnancy/pregnancy_dashboard.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
@@ -118,20 +120,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
     return Stack(children: [
       ListView(children: [
-        DashboardWidget(
-          totalKcalDaily: totalKcalDaily,
-          totalKcalLeft: totalKcalLeft,
-          totalKcalSupplied: totalKcalSupplied,
-          totalCarbsIntake: totalCarbsIntake,
-          totalFatsIntake: totalFatsIntake,
-          totalProteinsIntake: totalProteinsIntake,
-          totalSugarsIntake: totalSugarsIntake,
-          totalSodiumIntake: totalSodiumIntake,
-          totalCarbsGoal: totalCarbsGoal,
-          totalFatsGoal: totalFatsGoal,
-          totalProteinsGoal: totalProteinsGoal,
-          totalSodiumGoal: totalSodiumGoal,
-        ),
+        if (locator.isRegistered<PregnancyController>())
+          PregnancyDashboard(day: DateTime.now(), intakes: [
+            ...breakfastIntakeList,
+            ...lunchIntakeList,
+            ...dinnerIntakeList,
+            ...snackIntakeList
+          ])
+        else
+          DashboardWidget(
+            totalKcalDaily: totalKcalDaily,
+            totalKcalLeft: totalKcalLeft,
+            totalKcalSupplied: totalKcalSupplied,
+            totalCarbsIntake: totalCarbsIntake,
+            totalFatsIntake: totalFatsIntake,
+            totalProteinsIntake: totalProteinsIntake,
+            totalSugarsIntake: totalSugarsIntake,
+            totalSodiumIntake: totalSodiumIntake,
+            totalCarbsGoal: totalCarbsGoal,
+            totalFatsGoal: totalFatsGoal,
+            totalProteinsGoal: totalProteinsGoal,
+            totalSodiumGoal: totalSodiumGoal,
+          ),
         IntakeVerticalList(
           day: DateTime.now(),
           title: S.of(context).breakfastLabel,
@@ -232,8 +242,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  void onIntakeItemTapped(BuildContext context, IntakeEntity intakeEntity,
-      bool usesImperialUnits) {
+  void onIntakeItemTapped(
+      BuildContext context, IntakeEntity intakeEntity, bool usesImperialUnits) {
     IntakeItemActions.show(
       context,
       intakeEntity,
@@ -282,4 +292,3 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 }
-

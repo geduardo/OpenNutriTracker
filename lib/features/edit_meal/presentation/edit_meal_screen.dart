@@ -1,3 +1,5 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_targets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logging/logging.dart';
@@ -26,6 +28,18 @@ class EditMealScreen extends StatefulWidget {
 class _EditMealScreenState extends State<EditMealScreen> {
   final log = Logger('EditMealScreen');
   late MealEntity _mealEntity;
+  bool _formInitialized = false;
+  final _microControllers = {
+    for (final ref in pregnancyMicroReferences) ref.key: TextEditingController()
+  };
+  @override
+  void dispose() {
+    for (final c in _microControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
   late DateTime _day;
   late IntakeTypeEntity _intakeTypeEntity;
   late bool _usesImperialUnits;
@@ -68,9 +82,18 @@ class _EditMealScreenState extends State<EditMealScreen> {
 
   @override
   void didChangeDependencies() {
+    if (_formInitialized) {
+      super.didChangeDependencies();
+      return;
+    }
+    _formInitialized = true;
     final args =
         ModalRoute.of(context)?.settings.arguments as EditMealScreenArguments;
     _mealEntity = args.mealEntity;
+    for (final entry in _microControllers.entries) {
+      entry.value.text =
+          _mealEntity.nutriments.micronutrients100[entry.key]?.toString() ?? '';
+    }
     _day = args.day;
     _intakeTypeEntity = args.intakeTypeEntity;
     _usesImperialUnits = args.usesImperialUnits;
@@ -102,12 +125,12 @@ class _EditMealScreenState extends State<EditMealScreen> {
     _mealUnitButtonSegment = [
       ButtonSegment(
         value: _units[0],
-        label: Text(
+        label: AppText(
             _usesImperialUnits ? S.of(context).ozUnit : S.of(context).gramUnit),
       ),
       ButtonSegment(
         value: _units[1],
-        label: Text(_usesImperialUnits
+        label: AppText(_usesImperialUnits
             ? S.of(context).flOzUnit
             : S.of(context).milliliterUnit),
       ),
@@ -122,6 +145,9 @@ class _EditMealScreenState extends State<EditMealScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -171,6 +197,23 @@ class _EditMealScreenState extends State<EditMealScreen> {
           ),
         )),
         const SizedBox(height: 32),
+        ExpansionTile(
+            title: const AppText('Pregnancy nutrients (optional)'),
+            subtitle:
+                const AppText('Per 100 g/ml • leave missing values blank'),
+            children: [
+              const AppText(
+                  'Enter amounts from a label or reliable food source. Folate must be µg DFE, not folic acid. These values always use 100 g/ml, independent of the macro base quantity below.'),
+              for (final ref in pregnancyMicroReferences)
+                Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: TextFormField(
+                        controller: _microControllers[ref.key],
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                            labelText: tr(ref.name), suffixText: ref.unit))),
+            ]),
         // Essential fields: Name + Kcal
         TextFormField(
           controller: _nameTextController,
@@ -238,9 +281,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                Icon(_showMoreDetails
-                    ? Icons.expand_less
-                    : Icons.expand_more),
+                Icon(_showMoreDetails ? Icons.expand_less : Icons.expand_more),
                 const SizedBox(width: 8),
                 Text(S.of(context).additionalInfoLabel,
                     style: Theme.of(context).textTheme.titleSmall),
@@ -261,19 +302,18 @@ class _EditMealScreenState extends State<EditMealScreen> {
           TextFormField(
             controller: _mealQuantityTextController,
             decoration: InputDecoration(
-                labelText: _usesImperialUnits
+                labelText: tr(_usesImperialUnits
                     ? S.of(context).mealSizeLabelImperial
-                    : S.of(context).mealSizeLabel,
+                    : S.of(context).mealSizeLabel),
                 border: const OutlineInputBorder()),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _servingLabelTextController,
-            decoration: const InputDecoration(
-                labelText: 'Quantity label',
-                hintText: 'cookie, slice, egg, piece...',
+            decoration: InputDecoration(
+                labelText: tr('Quantity label'),
+                hintText: trOptional('cookie, slice, egg, piece...'),
                 border: OutlineInputBorder()),
             keyboardType: TextInputType.text,
           ),
@@ -282,12 +322,11 @@ class _EditMealScreenState extends State<EditMealScreen> {
             controller: _servingQuantityTextController,
             inputFormatters: CustomTextInputFormatter.doubleOnly(),
             decoration: InputDecoration(
-                labelText: _usesImperialUnits
+                labelText: tr(_usesImperialUnits
                     ? 'One quantity equals (${S.of(context).ozUnit}/${S.of(context).flOzUnit})'
-                    : 'One quantity equals (${selectedUnit ?? _units[2]})',
+                    : 'One quantity equals (${selectedUnit ?? _units[2]})'),
                 border: const OutlineInputBorder()),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 16),
           SegmentedButton<String>(
@@ -325,7 +364,20 @@ class _EditMealScreenState extends State<EditMealScreen> {
               _servingQuantityTextController.text, selectedUnit ?? "0")
           : _servingQuantityTextController.text;
 
-      final newMealEntity = _editMealBloc.createNewMealEntity(
+      final micros = <String, double>{};
+      for (final entry in _microControllers.entries) {
+        final raw = entry.value.text.trim().replaceAll(',', '.');
+        if (raw.isEmpty) continue;
+        final value = double.tryParse(raw);
+        if (value == null || !value.isFinite || value < 0) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: AppText(
+                  'Nutrient amounts must be non-negative numbers, or left blank.')));
+          return;
+        }
+        micros[entry.key] = value;
+      }
+      var newMealEntity = _editMealBloc.createNewMealEntity(
           _mealEntity,
           _nameTextController.text,
           _brandsTextController.text,
@@ -339,6 +391,8 @@ class _EditMealScreenState extends State<EditMealScreen> {
           _fatTextController.text,
           _proteinTextController.text);
 
+      newMealEntity = newMealEntity.copyWith(
+          nutriments: newMealEntity.nutriments.withMicronutrients(micros));
       // The scanner flow replaces the add-meal route, so fall back to the
       // first route instead of clearing the whole stack.
       Navigator.of(context).pushNamedAndRemoveUntil(

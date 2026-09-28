@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'ai_output_language.dart';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -49,27 +50,73 @@ class OpenAiProvider implements AiProvider {
                   'protein_g': {'type': 'number'},
                   'carbohydrates_g': {'type': 'number'},
                   'fat_g': {'type': 'number'},
-                  'saturated_fat_g': {'type': 'number'},
-                  'sugars_g': {'type': 'number'},
-                  'fiber_g': {'type': 'number'},
+                  'saturated_fat_g': {
+                    'type': ['number', 'null']
+                  },
+                  'sugars_g': {
+                    'type': ['number', 'null']
+                  },
+                  'fiber_g': {
+                    'type': ['number', 'null']
+                  },
                   'sodium_mg': {
                     'type': ['number', 'null']
                   },
                   'salt_g': {
                     'type': ['number', 'null']
                   },
-                  'caffeine_mg': {'type': 'number'},
+                  'caffeine_mg': {
+                    'type': ['number', 'null']
+                  },
+                  'iron_mg': {
+                    'type': ['number', 'null']
+                  },
+                  'calcium_mg': {
+                    'type': ['number', 'null']
+                  },
+                  'folate_dfe_ug': {
+                    'type': ['number', 'null']
+                  },
+                  'iodine_ug': {
+                    'type': ['number', 'null']
+                  },
+                  'choline_mg': {
+                    'type': ['number', 'null']
+                  },
+                  'vitamin_d_ug': {
+                    'type': ['number', 'null']
+                  },
+                  'vitamin_b12_ug': {
+                    'type': ['number', 'null']
+                  },
                 },
                 'required': [
-                  'energy_kcal', 'protein_g', 'carbohydrates_g', 'fat_g',
-                  'saturated_fat_g', 'sugars_g', 'fiber_g', 'sodium_mg',
-                  'salt_g', 'caffeine_mg'
+                  'energy_kcal',
+                  'protein_g',
+                  'carbohydrates_g',
+                  'fat_g',
+                  'saturated_fat_g',
+                  'sugars_g',
+                  'fiber_g',
+                  'sodium_mg',
+                  'salt_g',
+                  'caffeine_mg',
+                  'iron_mg',
+                  'calcium_mg',
+                  'folate_dfe_ug',
+                  'iodine_ug',
+                  'choline_mg',
+                  'vitamin_d_ug',
+                  'vitamin_b12_ug'
                 ],
                 'additionalProperties': false,
               },
             },
             'required': [
-              'name', 'estimated_weight_g', 'confidence', 'per_100g'
+              'name',
+              'estimated_weight_g',
+              'confidence',
+              'per_100g'
             ],
             'additionalProperties': false,
           },
@@ -142,7 +189,7 @@ class OpenAiProvider implements AiProvider {
 
     // Build message content — text always, image optional
     final contentParts = <Map<String, dynamic>>[
-      {'type': 'text', 'text': prompt},
+      {'type': 'text', 'text': '$prompt\n\n${aiOutputLanguageInstruction()}'},
     ];
 
     if (imageBytes.isNotEmpty) {
@@ -172,14 +219,16 @@ class OpenAiProvider implements AiProvider {
 
     _log.fine('Sending request to OpenAI API');
 
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $_apiKey',
-      },
-      body: body,
-    ).timeout(_timeout);
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_apiKey',
+          },
+          body: body,
+        )
+        .timeout(_timeout);
 
     if (response.statusCode != 200) {
       _log.severe('OpenAI API error: ${response.statusCode} ${response.body}');
@@ -213,6 +262,7 @@ class OpenAiProvider implements AiProvider {
 - estimated_weight_g should be the serving size from the label
 - Set caffeine_mg to the value on the label, or 0 if not listed
 $aiLabelSaltRules
+$aiPregnancyLabelRules
 - If you cannot read the label, set clarification with your question'''
         : '''- All nutrition values must be per 100g
 - estimated_weight_g is your best estimate of the portion size
@@ -220,6 +270,7 @@ $aiLabelSaltRules
 - If multiple items, return each separately
 - Set caffeine_mg only for items that actually contain caffeine (coffee, tea, cola, chocolate, energy drinks). Use 0 for caffeine-free foods.
 $aiEstimationSaltRules
+$aiPregnancyEstimateRules
 - If you cannot identify the food, set clarification with your question''';
 
     return '''$task

@@ -25,6 +25,8 @@ class SpFdcFoodDTO {
 
   String? getLocaleDescription(SupportedLanguage supportedLanguage) {
     switch (supportedLanguage) {
+      // This source has no Spanish column; keep the original English name.
+      case SupportedLanguage.es:
       case SupportedLanguage.en:
         return descriptionEn;
       case SupportedLanguage.de:

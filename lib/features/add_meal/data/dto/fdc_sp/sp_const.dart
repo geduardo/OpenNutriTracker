@@ -22,11 +22,12 @@ class SPConst {
 
   static String getFdcFoodDescriptionColumnName(SupportedLanguage language) {
     switch (language) {
+      // This source has no Spanish column; keep the original English name.
+      case SupportedLanguage.es:
       case SupportedLanguage.en:
         return fdcFoodDescriptionEn;
       case SupportedLanguage.de:
         return fdcFoodDescriptionDe;
-      }
+    }
   }
-
 }

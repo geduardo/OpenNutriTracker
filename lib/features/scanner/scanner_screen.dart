@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -50,12 +51,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   void didChangeDependencies() {
-    _args = ModalRoute.of(context)?.settings.arguments as ScannerScreenArguments;
+    _args =
+        ModalRoute.of(context)?.settings.arguments as ScannerScreenArguments;
     super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return BlocBuilder<ScannerBloc, ScannerState>(
       bloc: _scannerBloc,
       builder: (context, state) {
@@ -162,7 +167,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Reading nutrition label...'),
+              AppText('Reading nutrition label...'),
             ],
           ),
         ),
@@ -184,7 +189,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   textAlign: TextAlign.center),
               const SizedBox(height: 24),
               if (_labelError != null) ...[
-                Text(_labelError!,
+                AppText(_labelError!,
                     style:
                         TextStyle(color: Theme.of(context).colorScheme.error),
                     textAlign: TextAlign.center),
@@ -195,7 +200,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 child: FilledButton.icon(
                   onPressed: () => _extractFromLabel(ImageSource.camera),
                   icon: const Icon(Icons.camera_alt),
-                  label: const Text('Photograph the label'),
+                  label: const AppText('Photograph the label'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -204,7 +209,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => _extractFromLabel(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library),
-                  label: const Text('Pick label from gallery'),
+                  label: const AppText('Pick label from gallery'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -237,7 +242,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
     try {
       final imageBytes = await picked.readAsBytes();
       final mimeType = picked.mimeType ?? 'image/jpeg';
-      final aiProvider = await locator<AiSettingsService>().buildProviderForTask(
+      final aiProvider =
+          await locator<AiSettingsService>().buildProviderForTask(
         AiTaskType.labelExtraction,
       );
 

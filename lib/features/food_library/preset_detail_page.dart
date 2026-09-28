@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -50,9 +51,12 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit saved meal'),
+        title: const AppText('Edit saved meal'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -69,14 +73,14 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           // Name field
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Meal name',
+            decoration: InputDecoration(
+              labelText: tr('Meal name'),
               border: OutlineInputBorder(),
             ),
             onSubmitted: (_) => _saveName(),
           ),
           const SizedBox(height: 8),
-          Text(
+          AppText(
               '${_foodCountLabel(_preset.items.length)} · ${_totalKcal.toInt()} ${S.of(context).kcalLabel}',
               style: Theme.of(context).textTheme.bodyMedium),
           const Divider(height: 24),
@@ -91,7 +95,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 title: Text(meal.name ?? '?'),
-                subtitle: Text(
+                subtitle: AppText(
                     '${MealPortionHelper.formatStoredAmount(meal, item.amount, item.unit)} · ${itemKcal.toInt()} kcal · P:${(item.amount * (meal.nutriments.proteinsPerUnit ?? 0)).toInt()}g C:${(item.amount * (meal.nutriments.carbohydratesPerUnit ?? 0)).toInt()}g F:${(item.amount * (meal.nutriments.fatPerUnit ?? 0)).toInt()}g'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -99,13 +103,13 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                     // Edit quantity
                     IconButton(
                       icon: const Icon(Icons.scale, size: 20),
-                      tooltip: 'Edit portion',
+                      tooltip: trOptional('Edit portion'),
                       onPressed: () => _editItemQuantity(index, item),
                     ),
                     // Go to food detail
                     IconButton(
                       icon: const Icon(Icons.open_in_new, size: 20),
-                      tooltip: 'View food',
+                      tooltip: trOptional('View food'),
                       onPressed: () {
                         final mealWithLink =
                             meal.copyWith(localFoodId: item.foodId);
@@ -120,7 +124,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                     // Remove from preset
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline, size: 20),
-                      tooltip: 'Remove food',
+                      tooltip: trOptional('Remove food'),
                       onPressed: () => _removeItem(index),
                     ),
                   ],
@@ -135,7 +139,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           OutlinedButton.icon(
             onPressed: _addItemToPreset,
             icon: const Icon(Icons.add),
-            label: const Text('Add food'),
+            label: const AppText('Add food'),
           ),
 
           const SizedBox(height: 12),
@@ -144,7 +148,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           OutlinedButton.icon(
             onPressed: _aiEditPreset,
             icon: const Icon(Icons.auto_awesome),
-            label: const Text('AI edit meal'),
+            label: const AppText('AI edit meal'),
           ),
         ],
       ),
@@ -195,7 +199,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                               color: Theme.of(context).colorScheme.outline,
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            AppText(
                               'Add meal image',
                               style: Theme.of(context)
                                   .textTheme
@@ -216,7 +220,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               child: FilledButton.icon(
                 onPressed: _editMealImage,
                 icon: const Icon(Icons.edit_outlined, size: 18),
-                label: Text(hasImage ? 'Change' : 'Add'),
+                label: AppText(hasImage ? 'Change' : 'Add'),
               ),
             ),
           ],
@@ -263,7 +267,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 MealPortionHelper.toBaseAmount(meal, v, item.unit),
               );
             },
-            child: const Text('Update'),
+            child: const AppText('Update'),
           ),
         ],
       ),
@@ -311,15 +315,15 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete saved meal?'),
-        content: Text('Delete "${_preset.name}"?'),
+        title: const AppText('Delete saved meal?'),
+        content: AppText('Delete "${_preset.name}"?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(S.of(ctx).dialogCancelLabel)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: const AppText('Delete')),
         ],
       ),
     );
@@ -339,12 +343,12 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.search),
-              title: const Text('Pick from existing foods'),
+              title: const AppText('Pick from existing foods'),
               onTap: () => Navigator.pop(ctx, 'existing'),
             ),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Create food manually'),
+              title: const AppText('Create food manually'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
           ],
@@ -423,31 +427,33 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add food manually'),
+        title: const AppText('Add food manually'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
-                    labelText: 'Name', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: tr('Name'), border: OutlineInputBorder()),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                    labelText: 'Amount (g)', border: OutlineInputBorder()),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                    labelText: tr('Amount (g)'), border: OutlineInputBorder()),
               ),
               const SizedBox(height: 8),
               Row(children: [
                 Expanded(
                     child: TextField(
                   controller: kcalController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                      labelText: 'kcal/100g',
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                      labelText: tr('kcal/100g'),
                       border: OutlineInputBorder(),
                       isDense: true),
                 )),
@@ -455,9 +461,10 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: proteinController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                      labelText: 'P g/100g',
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                      labelText: tr('P g/100g'),
                       border: OutlineInputBorder(),
                       isDense: true),
                 )),
@@ -467,9 +474,10 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: carbsController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                      labelText: 'C g/100g',
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                      labelText: tr('C g/100g'),
                       border: OutlineInputBorder(),
                       isDense: true),
                 )),
@@ -477,9 +485,10 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: fatController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                      labelText: 'F g/100g',
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                      labelText: tr('F g/100g'),
                       border: OutlineInputBorder(),
                       isDense: true),
                 )),
@@ -554,20 +563,20 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final instruction = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('AI Edit'),
+        title: const AppText('AI Edit'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Describe what changes you want:',
+            AppText('Describe what changes you want:',
                 style: Theme.of(ctx).textTheme.bodyMedium),
             const SizedBox(height: 8),
             TextField(
               controller: controller,
               maxLines: 3,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText:
-                    'e.g. "double the rice", "remove butter", "add 50g cheese"',
+              decoration: InputDecoration(
+                hintText: trOptional(
+                    'e.g. "double the rice", "remove butter", "add 50g cheese"'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -580,7 +589,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Apply'),
+            child: const AppText('Apply'),
           ),
         ],
       ),
@@ -590,11 +599,12 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
     // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('AI is editing your saved meal...')),
+      const SnackBar(content: AppText('AI is editing your saved meal...')),
     );
 
     try {
-      final aiProvider = await locator<AiSettingsService>().buildProviderForTask(
+      final aiProvider =
+          await locator<AiSettingsService>().buildProviderForTask(
         AiTaskType.foodEstimation,
       );
 
@@ -619,7 +629,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
       if (response.items.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI could not process the edit.')),
+          const SnackBar(content: AppText('AI could not process the edit.')),
         );
         return;
       }
@@ -677,13 +687,13 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved meal updated by AI!')),
+          const SnackBar(content: AppText('Saved meal updated by AI!')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI error: $e')),
+          SnackBar(content: AppText('AI error: $e')),
         );
       }
     }
@@ -711,9 +721,9 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
 
   String _foodCountLabel(int count) {
     if (count == 1) {
-      return '1 food';
+      return tr('1 food');
     }
-    return '$count foods';
+    return tr('$count foods');
   }
 
   Future<void> _editMealImage() async {
@@ -766,7 +776,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     setState(() => _preset = updated);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
+        content: AppText(
           imagePath == null ? 'Meal image removed' : 'Meal image updated',
         ),
       ),
@@ -805,6 +815,9 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
@@ -817,7 +830,7 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
               onChanged: (v) => setState(() => _query = v),
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Search foods...',
+                hintText: trOptional('Search foods...'),
                 prefixIcon: const Icon(Icons.search),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -833,7 +846,7 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
                 final food = _filtered[index];
                 return ListTile(
                   title: Text(food.name ?? '?'),
-                  subtitle: Text(
+                  subtitle: AppText(
                       '${food.nutriments.energyKcal100?.toInt() ?? '?'} kcal/100g'),
                   onTap: () => _pickAmount(food),
                 );
@@ -856,8 +869,8 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Amount',
+          decoration: InputDecoration(
+            labelText: tr('Amount'),
             suffixText: 'g',
             border: OutlineInputBorder(),
           ),
@@ -865,12 +878,12 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const AppText('Cancel'),
           ),
           TextButton(
             onPressed: () =>
                 Navigator.pop(ctx, controller.text.toDoubleOrNull()),
-            child: const Text('Add'),
+            child: const AppText('Add'),
           ),
         ],
       ),

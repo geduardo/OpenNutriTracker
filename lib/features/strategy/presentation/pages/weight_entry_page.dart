@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -64,6 +65,9 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).weightHistoryLabel),
@@ -101,7 +105,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                       children: [
                         Text(S.of(context).trendWeightLabel,
                             style: Theme.of(context).textTheme.bodyMedium),
-                        Text(
+                        AppText(
                           _formatWeight(_trendWeight!),
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
@@ -153,10 +157,10 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                                 _iconForSource(entry.source),
                                 color: Theme.of(context).colorScheme.primary,
                               ),
-                              title: Text(_formatWeight(entry.weightKg)),
-                              subtitle: Text(_subtitleForEntry(entry)),
+                              title: AppText(_formatWeight(entry.weightKg)),
+                              subtitle: AppText(_subtitleForEntry(entry)),
                               trailing: trendForDay != null
-                                  ? Text(
+                                  ? AppText(
                                       'trend: ${_toDisplay(trendForDay).toStringAsFixed(1)}',
                                       style:
                                           Theme.of(context).textTheme.bodySmall)
@@ -199,9 +203,8 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
               final entered =
                   double.tryParse(_weightController.text.replaceAll(',', '.'));
               if (entered != null && entered > 0) {
-                final weight = _usesImperialUnits
-                    ? UnitCalc.lbsToKg(entered)
-                    : entered;
+                final weight =
+                    _usesImperialUnits ? UnitCalc.lbsToKg(entered) : entered;
                 Navigator.pop(ctx);
                 final repo = locator<WeightEntryRepository>();
                 await repo.addEntry(WeightEntryEntity(
@@ -282,7 +285,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Health Connect access was not granted.'),
+            content: AppText('Health Connect access was not granted.'),
           ),
         );
         return;
@@ -300,7 +303,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_buildImportMessage(result)),
+          content: AppText(_buildImportMessage(result)),
         ),
       );
     } on Exception catch (error) {
@@ -310,7 +313,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Could not import Health Connect weights: $error'),
+          content: AppText('Could not import Health Connect weights: $error'),
         ),
       );
     } finally {
@@ -358,8 +361,8 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Health Connect unavailable'),
-        content: Text(
+        title: const AppText('Health Connect unavailable'),
+        content: AppText(
           status.updateRequired
               ? 'Health Connect is installed but needs an update before weights can be imported.'
               : 'Health Connect is not available on this device yet. Install it from Google Play to import your Withings weights.',
@@ -367,14 +370,14 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Close'),
+            child: const AppText('Close'),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
               await service.openHealthConnectStore();
             },
-            child: Text(status.updateRequired ? 'Update' : 'Install'),
+            child: AppText(status.updateRequired ? 'Update' : 'Install'),
           ),
         ],
       ),

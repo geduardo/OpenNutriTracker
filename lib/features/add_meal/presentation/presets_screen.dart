@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
@@ -97,17 +98,20 @@ class _PresetsScreenState extends State<PresetsScreen> {
         return true;
       }
 
-      return preset.items.any((item) =>
-          (item.meal.name?.toLowerCase().contains(query) ?? false));
+      return preset.items.any(
+          (item) => (item.meal.name?.toLowerCase().contains(query) ?? false));
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final filteredPresets = _filteredPresets;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saved meals'),
+        title: const AppText('Saved meals'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -116,8 +120,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: TextField(
-                    onChanged: (value) =>
-                        setState(() => _searchQuery = value),
+                    onChanged: (value) => setState(() => _searchQuery = value),
                     decoration: InputDecoration(
                       hintText: S.of(context).searchLabel,
                       prefixIcon: const Icon(Icons.search),
@@ -142,11 +145,12 @@ class _PresetsScreenState extends State<PresetsScreen> {
                                     color:
                                         Theme.of(context).colorScheme.outline),
                                 const SizedBox(height: 16),
-                                Text('No saved meals yet',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium),
+                                AppText('No saved meals yet',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium),
                                 const SizedBox(height: 8),
-                                Text(
+                                AppText(
                                     'Use Magic with "Meal breakdown" or build a meal in your library, then save it for reuse.',
                                     textAlign: TextAlign.center,
                                     style:
@@ -156,7 +160,9 @@ class _PresetsScreenState extends State<PresetsScreen> {
                           ),
                         )
                       : filteredPresets.isEmpty
-                          ? const Center(child: Text('No saved meals match that search'))
+                          ? const Center(
+                              child:
+                                  AppText('No saved meals match that search'))
                           : ListView.builder(
                               padding: const EdgeInsets.all(8),
                               itemCount: filteredPresets.length,
@@ -206,12 +212,12 @@ class _PresetsScreenState extends State<PresetsScreen> {
                     Text(preset.name,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
-                    Text(
+                    AppText(
                       '${_foodCountLabel(preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    AppText(
                       preset.items
                           .map((i) =>
                               '${MealEntity.fromMealDBO(i.meal).name ?? "?"} ${MealPortionHelper.formatStoredAmount(MealEntity.fromMealDBO(i.meal), i.amount, i.unit)}')
@@ -226,7 +232,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
-                tooltip: 'Log saved meal',
+                tooltip: trOptional('Log saved meal'),
                 onPressed: () => _logPreset(preset),
               ),
             ],
@@ -281,7 +287,8 @@ class _PresetsScreenState extends State<PresetsScreen> {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: Text(S.of(ctx).removeLastPresetItemTitle),
-                content: Text(S.of(ctx).removeLastPresetItemContent(preset.name)),
+                content:
+                    Text(S.of(ctx).removeLastPresetItemContent(preset.name)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
@@ -316,7 +323,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rename saved meal'),
+        title: const AppText('Rename saved meal'),
         content: TextField(
           controller: controller,
           decoration: const InputDecoration(
@@ -331,7 +338,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Rename'),
+            child: const AppText('Rename'),
           ),
         ],
       ),
@@ -414,7 +421,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$groupName logged!')),
+        SnackBar(content: AppText('$groupName logged!')),
       );
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
@@ -424,7 +431,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete saved meal?'),
+        title: const AppText('Delete saved meal?'),
         content: Text('Delete "${preset.name}"?'),
         actions: [
           TextButton(
@@ -432,7 +439,7 @@ class _PresetsScreenState extends State<PresetsScreen> {
               child: Text(S.of(ctx).dialogCancelLabel)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: const AppText('Delete')),
         ],
       ),
     );
@@ -446,9 +453,9 @@ class _PresetsScreenState extends State<PresetsScreen> {
 
   String _foodCountLabel(int count) {
     if (count == 1) {
-      return '1 food';
+      return tr('1 food');
     }
-    return '$count foods';
+    return tr('$count foods');
   }
 }
 
@@ -468,7 +475,7 @@ Future<void> saveAsPreset(
 
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Saved meal "$name" saved!')),
+      SnackBar(content: AppText('Saved meal "$name" saved!')),
     );
   }
 }
@@ -504,6 +511,9 @@ class _PresetDetailSheet extends StatefulWidget {
 class _PresetDetailSheetState extends State<_PresetDetailSheet> {
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final totalKcal = widget.preset.items.fold<double>(0, (sum, item) {
       final meal = MealEntity.fromMealDBO(item.meal);
       return sum + (item.amount * (meal.nutriments.energyPerUnit ?? 0));
@@ -539,7 +549,7 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
                     children: [
                       Text(widget.preset.name,
                           style: Theme.of(context).textTheme.titleLarge),
-                      Text(
+                      AppText(
                           '${_foodCountLabel(widget.preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
                           style: Theme.of(context).textTheme.bodyMedium),
                     ],
@@ -547,12 +557,12 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit),
-                  tooltip: 'Rename',
+                  tooltip: trOptional('Rename'),
                   onPressed: widget.onRename,
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  tooltip: 'Delete',
+                  tooltip: trOptional('Delete'),
                   onPressed: widget.onDelete,
                 ),
               ],
@@ -571,8 +581,8 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 title: Text(meal.name ?? '?'),
-                subtitle:
-                    Text('${MealPortionHelper.formatStoredAmount(meal, item.amount, item.unit)} · ${itemKcal.toInt()} kcal'),
+                subtitle: AppText(
+                    '${MealPortionHelper.formatStoredAmount(meal, item.amount, item.unit)} · ${itemKcal.toInt()} kcal'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -649,7 +659,7 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
                 Navigator.pop(context); // close bottom sheet too
               }
             },
-            child: const Text('Update'),
+            child: const AppText('Update'),
           ),
         ],
       ),
@@ -658,8 +668,8 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
 
   String _foodCountLabel(int count) {
     if (count == 1) {
-      return '1 food';
+      return tr('1 food');
     }
-    return '$count foods';
+    return tr('$count foods');
   }
 }

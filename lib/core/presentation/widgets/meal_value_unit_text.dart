@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/features/add_meal/domain/entity/meal_entity.dart';
@@ -23,11 +24,14 @@ class MealValueUnitText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final mealUnit = meal.mealUnit ?? S.of(context).gramMilliliterUnit;
     final unitToDisplay = displayUnit ?? _convertUnit(context, mealUnit);
     final convertedValue = _convertValue(value, mealUnit, unitToDisplay);
 
-    return Text(
+    return AppText(
       '$prefix${_formatValue(convertedValue)} $unitToDisplay',
       style: textStyle,
       overflow: TextOverflow.ellipsis,

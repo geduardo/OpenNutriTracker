@@ -1,3 +1,6 @@
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_targets.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/core/domain/entity/user_entity.dart';
 import 'package:opennutritracker/core/utils/calc/calorie_goal_calc.dart';
@@ -12,6 +15,12 @@ class GetKcalGoalUsecase {
 
   Future<double> getKcalGoal(
       {UserEntity? userEntity, double? kcalUserAdjustment}) async {
+    if (locator.isRegistered<PregnancyController>()) {
+      return PregnancyTargets(
+                  locator<PregnancyController>().data.profile, DateTime.now())
+              .energy ??
+          0;
+    }
     final snapshot = await _getAdaptiveStrategySnapshotUsecase.getSnapshot(
       userEntity: userEntity,
     );

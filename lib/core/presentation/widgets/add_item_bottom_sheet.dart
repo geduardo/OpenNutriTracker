@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:opennutritracker/core/domain/entity/intake_type_entity.dart';
@@ -26,6 +27,9 @@ class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -42,11 +46,11 @@ class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
           ),
           ListTile(
             leading: const Icon(Icons.calendar_month_outlined),
-            title: const Text('Log for day'),
-            subtitle: Text(DateFormat.yMMMMEEEEd().format(_selectedDay)),
+            title: const AppText('Log for day'),
+            subtitle: AppText(DateFormat.yMMMMEEEEd().format(_selectedDay)),
             trailing: TextButton(
               onPressed: _pickDay,
-              child: const Text('Change'),
+              child: const AppText('Change'),
             ),
           ),
           ListTile(
@@ -60,8 +64,10 @@ class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
             subtitle: Text(
               S.of(context).breakfastExample,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7)),
             ),
             // ignore: sized_box_for_whitespace
             leading: Container(
@@ -82,8 +88,10 @@ class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
             subtitle: Text(
               S.of(context).lunchExample,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7)),
             ),
             // ignore: sized_box_for_whitespace
             leading: Container(
@@ -104,8 +112,10 @@ class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
             subtitle: Text(
               S.of(context).dinnerExample,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7)),
             ),
             // ignore: sized_box_for_whitespace
             leading: Container(
@@ -126,8 +136,10 @@ class _AddItemBottomSheetState extends State<AddItemBottomSheet> {
             subtitle: Text(
               S.of(context).snackExample,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7)),
             ),
             // ignore: sized_box_for_whitespace
             leading: Container(

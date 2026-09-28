@@ -24,7 +24,10 @@ class AiNutritionResponseDTO {
               .toList() ??
           [],
       source: AiNutritionSource.values.firstWhere(
-        (e) => e.name == json['source'],
+        (e) =>
+            e.name == json['source'] ||
+            (e == AiNutritionSource.labelExtraction &&
+                json['source'] == 'label_extraction'),
         orElse: () => AiNutritionSource.estimation,
       ),
       clarification: json['clarification'] != null
@@ -71,6 +74,7 @@ class AiNutrimentsPer100gDTO {
   final double? sodiumMg;
   final double? saltG;
   final double? caffeineMg;
+  final Map<String, double> micronutrients;
 
   /// Sodium in mg per 100 g; labels that only list salt are converted here.
   double? get resolvedSodiumMg =>
@@ -87,6 +91,7 @@ class AiNutrimentsPer100gDTO {
     this.sodiumMg,
     this.saltG,
     this.caffeineMg,
+    this.micronutrients = const {},
   });
 
   factory AiNutrimentsPer100gDTO.fromJson(Map<String, dynamic> json) {
@@ -101,6 +106,19 @@ class AiNutrimentsPer100gDTO {
       sodiumMg: (json['sodium_mg'] as num?)?.toDouble(),
       saltG: (json['salt_g'] as num?)?.toDouble(),
       caffeineMg: (json['caffeine_mg'] as num?)?.toDouble(),
+      micronutrients: {
+        for (final key in const [
+          'iron_mg',
+          'calcium_mg',
+          'folate_dfe_ug',
+          'iodine_ug',
+          'choline_mg',
+          'vitamin_d_ug',
+          'vitamin_b12_ug'
+        ])
+          if (json[key] case final num value)
+            if (value.isFinite && value >= 0) key: value.toDouble(),
+      },
     );
   }
 }

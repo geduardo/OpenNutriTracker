@@ -1,15 +1,12 @@
-import 'package:flutter/foundation.dart';
+import 'pregnancy/pregnancy_gate.dart';
+import 'core/utils/app_language.dart';
+import 'pregnancy/pregnancy_theme.dart';
+import 'pregnancy/pregnancy_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:logging/logging.dart';
-import 'package:opennutritracker/core/data/data_source/user_data_source.dart';
-import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/domain/entity/app_theme_entity.dart';
-import 'package:opennutritracker/core/presentation/main_screen.dart';
 import 'package:opennutritracker/core/presentation/widgets/image_full_screen.dart';
-import 'package:opennutritracker/core/styles/color_schemes.dart';
-import 'package:opennutritracker/core/styles/fonts.dart';
-import 'package:opennutritracker/core/utils/env.dart';
+
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/logger_config.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
@@ -20,51 +17,29 @@ import 'package:opennutritracker/features/add_meal/presentation/magic_screen.dar
 import 'package:opennutritracker/features/add_meal/presentation/meal_entry_screen.dart';
 import 'package:opennutritracker/features/add_meal/presentation/presets_screen.dart';
 import 'package:opennutritracker/features/edit_meal/presentation/edit_meal_screen.dart';
-import 'package:opennutritracker/features/onboarding/onboarding_screen.dart';
 import 'package:opennutritracker/features/scanner/scanner_screen.dart';
 import 'package:opennutritracker/features/meal_detail/meal_detail_screen.dart';
-import 'package:opennutritracker/features/settings/settings_screen.dart';
 import 'package:opennutritracker/generated/l10n.dart';
 import 'package:provider/provider.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LoggerConfig.intiLogger();
   await initLocator();
-  final isUserInitialized = await locator<UserDataSource>().hasUserData();
-  final configRepo = locator<ConfigRepository>();
-  final hasAcceptedAnonymousData =
-      await configRepo.getConfigHasAcceptedAnonymousData();
-  final savedAppTheme = await configRepo.getConfigAppTheme();
-  final log = Logger('main');
-
-  // If the user has accepted anonymous data collection, run the app with
-  // sentry enabled, else run without it
-  if (kReleaseMode && hasAcceptedAnonymousData) {
-    log.info('Starting App with Sentry enabled ...');
-    _runAppWithSentryReporting(isUserInitialized, savedAppTheme);
-  } else {
-    log.info('Starting App ...');
-    runAppWithChangeNotifiers(isUserInitialized, savedAppTheme);
-  }
+  await AppLanguage.instance.load();
+  runApp(const IntegratedPregnancyApp());
 }
 
-void _runAppWithSentryReporting(
-    bool isUserInitialized, AppThemeEntity savedAppTheme) async {
-  await SentryFlutter.init((options) {
-    options.dsn = Env.sentryDns;
-    options.tracesSampleRate = 1.0;
-  },
-      appRunner: () =>
-          runAppWithChangeNotifiers(isUserInitialized, savedAppTheme));
+class IntegratedPregnancyApp extends StatelessWidget {
+  final AppLanguage? language;
+  const IntegratedPregnancyApp({super.key, this.language});
+  @override
+  Widget build(BuildContext context) => AppLanguageScope(
+      language: language ?? AppLanguage.instance,
+      child: ChangeNotifierProvider(
+          create: (_) => ThemeModeProvider(appTheme: AppThemeEntity.system),
+          child: const OpenNutriTrackerApp(userInitialized: true)));
 }
-
-void runAppWithChangeNotifiers(
-        bool userInitialized, AppThemeEntity savedAppTheme) =>
-    runApp(ChangeNotifierProvider(
-        create: (_) => ThemeModeProvider(appTheme: savedAppTheme),
-        child: OpenNutriTrackerApp(userInitialized: userInitialized)));
 
 class OpenNutriTrackerApp extends StatelessWidget {
   final bool userInitialized;
@@ -73,33 +48,25 @@ class OpenNutriTrackerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguageScope.of(context);
     return MaterialApp(
-      onGenerateTitle: (context) => S.of(context).appTitle,
+      title: 'Pregnancy Nutrition',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: lightColorScheme,
-          textTheme: appTextTheme),
-      darkTheme: ThemeData(
-          useMaterial3: true,
-          colorScheme: darkColorScheme,
-          textTheme: appTextTheme),
-      themeMode: Provider.of<ThemeModeProvider>(context).themeMode,
+      theme: pregnancyTheme(),
       localizationsDelegates: const [
         S.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: S.delegate.supportedLocales,
-      initialRoute: userInitialized
-          ? NavigationOptions.mainRoute
-          : NavigationOptions.onboardingRoute,
+      locale: language.locale,
+      supportedLocales: const [Locale('en'), Locale('es')],
+      localeListResolutionCallback: resolveAppLocale,
+      initialRoute: NavigationOptions.mainRoute,
       routes: {
-        NavigationOptions.mainRoute: (context) => const MainScreen(),
-        NavigationOptions.onboardingRoute: (context) =>
-            const OnboardingScreen(),
-        NavigationOptions.settingsRoute: (context) => const SettingsScreen(),
+        NavigationOptions.mainRoute: (context) => const PregnancyGate(),
+        NavigationOptions.onboardingRoute: (context) => const PregnancyGate(),
+        NavigationOptions.settingsRoute: (context) => const PregnancySettings(),
         NavigationOptions.mealEntryRoute: (context) => const MealEntryScreen(),
         NavigationOptions.addMealRoute: (context) => const AddMealScreen(),
         NavigationOptions.magicRoute: (context) => const MagicScreen(),

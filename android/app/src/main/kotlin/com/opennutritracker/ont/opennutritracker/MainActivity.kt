@@ -34,12 +34,11 @@ class MainActivity : FlutterFragmentActivity() {
             registerForActivityResult(
                 PermissionController.createRequestPermissionResultContract(),
             ) { grantedPermissions: Set<String> ->
-                val requestedPermissions = pendingRequestedPermissions
                 pendingRequestedPermissions = emptySet()
                 pendingPermissionResult?.success(
                     buildStatusMap(
                         permissionsGranted =
-                            grantedPermissions.containsAll(requestedPermissions),
+                            grantedPermissions.contains(HealthPermission.getReadPermission(WeightRecord::class)),
                         grantedPermissions = grantedPermissions,
                     ),
                 )
@@ -71,15 +70,23 @@ class MainActivity : FlutterFragmentActivity() {
         }
 
         lifecycleScope.launch {
-            val client = HealthConnectClient.getOrCreate(this@MainActivity)
-            val grantedPermissions = client.permissionController.getGrantedPermissions()
-            val requestedPermissions = requestedPermissions(client)
-            result.success(
-                buildStatusMap(
-                    permissionsGranted = grantedPermissions.containsAll(requestedPermissions),
-                    grantedPermissions = grantedPermissions,
-                ),
-            )
+            try {
+                val client = HealthConnectClient.getOrCreate(this@MainActivity)
+                val grantedPermissions = client.permissionController.getGrantedPermissions()
+                result.success(
+                    buildStatusMap(
+                        permissionsGranted = grantedPermissions.contains(HealthPermission.getReadPermission(WeightRecord::class)),
+                        grantedPermissions = grantedPermissions,
+                    ),
+                )
+
+            } catch (error: Exception) {
+                if (pendingPermissionResult === result) {
+                    pendingPermissionResult = null
+                    pendingRequestedPermissions = emptySet()
+                }
+                result.error("health_connect_error", "Health Connect could not complete the request.", null)
+            }
         }
     }
 
@@ -100,10 +107,19 @@ class MainActivity : FlutterFragmentActivity() {
         }
 
         lifecycleScope.launch {
-            val client = HealthConnectClient.getOrCreate(this@MainActivity)
-            pendingPermissionResult = result
-            pendingRequestedPermissions = requestedPermissions(client)
-            permissionsLauncher.launch(pendingRequestedPermissions)
+            try {
+                val client = HealthConnectClient.getOrCreate(this@MainActivity)
+                pendingPermissionResult = result
+                pendingRequestedPermissions = requestedPermissions(client)
+                permissionsLauncher.launch(pendingRequestedPermissions)
+
+            } catch (error: Exception) {
+                if (pendingPermissionResult === result) {
+                    pendingPermissionResult = null
+                    pendingRequestedPermissions = emptySet()
+                }
+                result.error("health_connect_error", "Health Connect could not complete the request.", null)
+            }
         }
     }
 
@@ -119,48 +135,58 @@ class MainActivity : FlutterFragmentActivity() {
         }
 
         lifecycleScope.launch {
-            val client = HealthConnectClient.getOrCreate(this@MainActivity)
-            val requestedPermissions = requestedPermissions(client)
-            val grantedPermissions = client.permissionController.getGrantedPermissions()
-            if (!grantedPermissions.containsAll(requestedPermissions)) {
-                result.error(
-                    "health_connect_permissions_missing",
-                    "Health Connect permissions were not granted.",
-                    null,
-                )
-                return@launch
-            }
-
-            val daysBack = call.argument<Int>("daysBack") ?: 3650
-            val endTime = Instant.now()
-            val startTime = endTime.minusSeconds(daysBack.toLong() * 24L * 60L * 60L)
-            val weights = mutableListOf<Map<String, Any?>>()
-            var pageToken: String? = null
-
-            do {
-                val response =
-                    client.readRecords(
-                        ReadRecordsRequest(
-                            recordType = WeightRecord::class,
-                            timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
-                            pageSize = 1000,
-                            pageToken = pageToken,
-                        ),
+            try {
+                val client = HealthConnectClient.getOrCreate(this@MainActivity)
+                val grantedPermissions = client.permissionController.getGrantedPermissions()
+                if (!grantedPermissions.contains(HealthPermission.getReadPermission(WeightRecord::class))) {
+                    result.error(
+                        "health_connect_permissions_missing",
+                        "Health Connect permissions were not granted.",
+                        null,
                     )
-
-                response.records.forEach { record ->
-                    weights.add(
-                        mapOf(
-                            "timeMillis" to record.time.toEpochMilli(),
-                            "weightKg" to record.weight.inKilograms,
-                            "sourcePackageName" to record.metadata.dataOrigin.packageName,
-                        ),
-                    )
+                    return@launch
                 }
-                pageToken = response.pageToken
-            } while (pageToken != null)
 
-            result.success(weights)
+                val requestedDays = (call.argument<Int>("daysBack") ?: 3650).coerceIn(1, 3650)
+                val hasHistory = grantedPermissions.contains(HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY)
+                val daysBack = if (hasHistory) requestedDays else minOf(requestedDays, 30)
+                val endTime = Instant.now()
+                val startTime = endTime.minusSeconds(daysBack.toLong() * 24L * 60L * 60L)
+                val weights = mutableListOf<Map<String, Any?>>()
+                var pageToken: String? = null
+
+                do {
+                    val response =
+                        client.readRecords(
+                            ReadRecordsRequest(
+                                recordType = WeightRecord::class,
+                                timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
+                                pageSize = 1000,
+                                pageToken = pageToken,
+                            ),
+                        )
+
+                    response.records.forEach { record ->
+                        weights.add(
+                            mapOf(
+                                "timeMillis" to record.time.toEpochMilli(),
+                                "weightKg" to record.weight.inKilograms,
+                                "sourcePackageName" to record.metadata.dataOrigin.packageName,
+                            ),
+                        )
+                    }
+                    pageToken = response.pageToken
+                } while (pageToken != null)
+
+                result.success(weights)
+
+            } catch (error: Exception) {
+                if (pendingPermissionResult === result) {
+                    pendingPermissionResult = null
+                    pendingRequestedPermissions = emptySet()
+                }
+                result.error("health_connect_error", "Health Connect could not complete the request.", null)
+            }
         }
     }
 
@@ -217,8 +243,8 @@ class MainActivity : FlutterFragmentActivity() {
             result.success(true)
         } catch (_: ActivityNotFoundException) {
             try {
-                startActivity(webIntent)
-                result.success(true)
+                    startActivity(webIntent)
+                    result.success(true)
             } catch (_: ActivityNotFoundException) {
                 result.success(false)
             }

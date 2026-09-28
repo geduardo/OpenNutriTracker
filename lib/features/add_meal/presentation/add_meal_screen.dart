@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -97,9 +98,13 @@ class _AddMealScreenState extends State<AddMealScreen>
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
         appBar: AppBar(
-          title: Text(_selectionMode ? 'Select food' : _mealType.getTypeName(context)),
+          title: AppText(
+              _selectionMode ? 'Select food' : _mealType.getTypeName(context)),
           actions: [
             if (!_selectionMode)
               BlocBuilder<AddMealBloc, AddMealState>(
@@ -169,8 +174,9 @@ class _AddMealScreenState extends State<AddMealScreen>
                                             usesImperialUnits:
                                                 state.usesImperialUnits,
                                             selectionMode: _selectionMode,
-                                            onSelected:
-                                                _selectionMode ? _selectMeal : null,
+                                            onSelected: _selectionMode
+                                                ? _selectMeal
+                                                : null,
                                           );
                                         }))
                                 : const NoResultsWidget();
@@ -217,8 +223,9 @@ class _AddMealScreenState extends State<AddMealScreen>
                                             usesImperialUnits:
                                                 state.usesImperialUnits,
                                             selectionMode: _selectionMode,
-                                            onSelected:
-                                                _selectionMode ? _selectMeal : null,
+                                            onSelected: _selectionMode
+                                                ? _selectMeal
+                                                : null,
                                           );
                                         }))
                                 : const NoResultsWidget();
@@ -346,7 +353,7 @@ class _AddMealScreenState extends State<AddMealScreen>
           if (recentPresets.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-              child: Text('Recent meals',
+              child: AppText('Recent meals',
                   style: Theme.of(context).textTheme.titleMedium),
             ),
             ...recentPresets.map(_buildRecentPresetCard),
@@ -354,8 +361,10 @@ class _AddMealScreenState extends State<AddMealScreen>
           if (recentFoods.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-              child: Text(
-                recentPresets.isNotEmpty ? 'Recent foods' : 'Recently used foods',
+              child: AppText(
+                recentPresets.isNotEmpty
+                    ? 'Recent foods'
+                    : 'Recently used foods',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -403,12 +412,12 @@ class _AddMealScreenState extends State<AddMealScreen>
             ),
           ),
           title: Text(preset.name),
-          subtitle: Text(
+          subtitle: AppText(
             '${_foodCountLabel(preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}',
           ),
           trailing: IconButton(
             icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Log meal',
+            tooltip: trOptional('Log meal'),
             onPressed: () => _logPreset(preset),
           ),
         ),
@@ -492,16 +501,16 @@ class _AddMealScreenState extends State<AddMealScreen>
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$groupName logged!')),
+      SnackBar(content: AppText('$groupName logged!')),
     );
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   String _foodCountLabel(int count) {
     if (count == 1) {
-      return '1 food';
+      return tr('1 food');
     }
-    return '$count foods';
+    return tr('$count foods');
   }
 }
 

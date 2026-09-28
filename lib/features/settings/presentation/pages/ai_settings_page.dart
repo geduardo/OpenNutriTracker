@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/settings/domain/entity/ai_settings_entity.dart';
@@ -64,7 +65,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI settings saved')),
+        const SnackBar(content: AppText('AI settings saved')),
       );
       Navigator.of(context).pop();
     } catch (error) {
@@ -72,7 +73,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save AI settings: $error')),
+        SnackBar(content: AppText('Failed to save AI settings: $error')),
       );
     } finally {
       if (mounted) {
@@ -83,13 +84,16 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI settings'),
+        title: const AppText('AI settings'),
         actions: [
           TextButton(
             onPressed: _isLoading || _isSaving ? null : _save,
-            child: Text(
+            child: AppText(
               _isSaving ? 'Saving...' : 'Save',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
@@ -104,7 +108,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text(
+                AppText(
                   'Keys are stored securely on this device. They are not bundled into app backups.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
@@ -159,7 +163,7 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
       enableSuggestions: false,
       autocorrect: false,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: tr(label),
         border: const OutlineInputBorder(),
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
@@ -194,20 +198,21 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(task.label, style: Theme.of(context).textTheme.titleMedium),
+            AppText(task.label, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            Text(task.description, style: Theme.of(context).textTheme.bodySmall),
+            AppText(task.description,
+                style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 16),
             DropdownButtonFormField<AiProviderType>(
               initialValue: settings.provider,
-              decoration: const InputDecoration(
-                labelText: 'Provider',
+              decoration: InputDecoration(
+                labelText: tr('Provider'),
                 border: OutlineInputBorder(),
               ),
               items: AiProviderType.values
                   .map((provider) => DropdownMenuItem(
                         value: provider,
-                        child: Text(provider.label),
+                        child: AppText(provider.label),
                       ))
                   .toList(),
               onChanged: (provider) {
@@ -226,8 +231,8 @@ class _AiSettingsPageState extends State<AiSettingsPage> {
             DropdownButtonFormField<String>(
               key: ValueKey('${task.name}-${settings.provider.storageValue}'),
               initialValue: settings.model,
-              decoration: const InputDecoration(
-                labelText: 'Model',
+              decoration: InputDecoration(
+                labelText: tr('Model'),
                 border: OutlineInputBorder(),
               ),
               items: settings.provider.models

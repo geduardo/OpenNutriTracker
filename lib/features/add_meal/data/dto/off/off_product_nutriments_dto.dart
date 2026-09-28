@@ -66,7 +66,27 @@ class OFFProductNutrimentsDTO {
 
   final dynamic caffeine_100g; // can be String, int, double or null (in grams)
 
+  @JsonKey(name: 'iron_100g')
+  final dynamic iron_mg;
+  @JsonKey(name: 'calcium_100g')
+  final dynamic calcium_mg;
+  @JsonKey(name: 'iodine_100g')
+  final dynamic iodine_ug;
+  @JsonKey(name: 'choline_100g')
+  final dynamic choline_mg;
+  @JsonKey(name: 'vitamin-d_100g')
+  final dynamic vitamin_d_ug;
+  @JsonKey(name: 'vitamin-b12_100g')
+  final dynamic vitamin_b12_ug;
+
   OFFProductNutrimentsDTO({
+    this.iron_mg,
+    this.calcium_mg,
+    this.iodine_ug,
+    this.choline_mg,
+    this.vitamin_d_ug,
+    this.vitamin_b12_ug,
+
     //required this.energy_kcal,
     required this.energy_kcal_100g,
     // required this.energy_kcal_serving,

@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
@@ -68,6 +69,9 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final today = DateUtils.dateOnly(DateTime.now());
     final rangeStart = DateUtils.dateOnly(
         DateTime(today.year, today.month, today.day - _range.days + 1));
@@ -97,7 +101,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
               return Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: ChoiceChip(
-                  label: Text(range.label),
+                  label: AppText(range.label),
                   selected: range == _range,
                   onSelected: (_) => setState(() => _range = range),
                   visualDensity: VisualDensity.compact,
@@ -141,26 +145,53 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
         const SizedBox(height: 16),
 
         // Macro charts
-        _buildMacroChart(context, 'Carbs', _carbsColor(context), days,
-            dayData, selectedDay, selectedTracked,
-            (t) => t.carbsTracked, (t) => t.carbsGoal),
+        _buildMacroChart(
+            context,
+            'Carbs',
+            _carbsColor(context),
+            days,
+            dayData,
+            selectedDay,
+            selectedTracked,
+            (t) => t.carbsTracked,
+            (t) => t.carbsGoal),
         const SizedBox(height: 12),
-        _buildMacroChart(context, 'Fat', _fatColor, days, dayData,
-            selectedDay, selectedTracked,
-            (t) => t.fatTracked, (t) => t.fatGoal),
+        _buildMacroChart(context, 'Fat', _fatColor, days, dayData, selectedDay,
+            selectedTracked, (t) => t.fatTracked, (t) => t.fatGoal),
         const SizedBox(height: 12),
-        _buildMacroChart(context, 'Protein', _proteinColor, days, dayData,
-            selectedDay, selectedTracked,
-            (t) => t.proteinTracked, (t) => t.proteinGoal),
+        _buildMacroChart(
+            context,
+            'Protein',
+            _proteinColor,
+            days,
+            dayData,
+            selectedDay,
+            selectedTracked,
+            (t) => t.proteinTracked,
+            (t) => t.proteinGoal),
         const SizedBox(height: 12),
-        _buildMacroChart(context, 'Sodium', _sodiumColor, days, dayData,
-            selectedDay, selectedTracked,
-            (t) => t.sodiumTracked, (t) => t.sodiumGoal,
+        _buildMacroChart(
+            context,
+            'Sodium',
+            _sodiumColor,
+            days,
+            dayData,
+            selectedDay,
+            selectedTracked,
+            (t) => t.sodiumTracked,
+            (t) => t.sodiumGoal,
             unit: 'mg'),
         const SizedBox(height: 12),
-        _buildMacroChart(context, 'Caffeine', _caffeineColor, days, dayData,
-            selectedDay, selectedTracked,
-            (t) => t.caffeineTracked, (t) => t.caffeineGoal,
+        _buildMacroChart(
+            context,
+            'Caffeine',
+            _caffeineColor,
+            days,
+            dayData,
+            selectedDay,
+            selectedTracked,
+            (t) => t.caffeineTracked,
+            (t) => t.caffeineGoal,
             unit: 'mg'),
       ],
     );
@@ -227,8 +258,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
       return BarChartGroupData(
         x: index,
         barRods: [
-          BarChartRodData(
-              toY: 0, width: barW, color: Colors.transparent),
+          BarChartRodData(toY: 0, width: barW, color: Colors.transparent),
         ],
       );
     }
@@ -258,8 +288,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
       rod = BarChartRodData(
         toY: totalKcal,
         width: barW,
-        color:
-            Theme.of(context).colorScheme.primary.withValues(alpha: opacity),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(2),
       );
     }
@@ -302,16 +331,14 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
         value = (getTracked(tracked) ?? 0).clamp(0, double.infinity);
       }
       if (value > maxValue) maxValue = value;
-      barGroups.add(
-          _buildSimpleBarGroup(i, value, color, days[i] == selectedDay));
+      barGroups
+          .add(_buildSimpleBarGroup(i, value, color, days[i] == selectedDay));
     }
 
-    final selectedValue = selectedTracked != null
-        ? (getTracked(selectedTracked) ?? 0)
-        : 0.0;
-    final selectedGoal = selectedTracked != null
-        ? (getGoal(selectedTracked) ?? goal)
-        : goal;
+    final selectedValue =
+        selectedTracked != null ? (getTracked(selectedTracked) ?? 0) : 0.0;
+    final selectedGoal =
+        selectedTracked != null ? (getGoal(selectedTracked) ?? goal) : goal;
 
     final ceiling = max(goal, maxValue);
     final header = _buildChartHeader(
@@ -344,8 +371,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
               gridData: _buildGridData(context, yStep),
               borderData: _buildBorderData(context),
               extraLinesData: goal > 0
-                  ? ExtraLinesData(
-                      horizontalLines: [_goalLine(context, goal)])
+                  ? ExtraLinesData(horizontalLines: [_goalLine(context, goal)])
                   : const ExtraLinesData(),
               barGroups: barGroups,
             ),
@@ -364,9 +390,8 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
         BarChartRodData(
           toY: value,
           width: _barWidth,
-          color: value > 0
-              ? color.withValues(alpha: opacity)
-              : Colors.transparent,
+          color:
+              value > 0 ? color.withValues(alpha: opacity) : Colors.transparent,
           borderRadius: BorderRadius.circular(2),
         ),
       ],
@@ -397,13 +422,13 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
           ),
           const SizedBox(width: 6),
         ],
-        Text(label,
+        AppText(label,
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
                 ?.copyWith(fontWeight: FontWeight.w600)),
         const Spacer(),
-        Text(
+        AppText(
           '$trackedText$goalText $unit',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -434,10 +459,8 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
   FlTitlesData _buildTitlesData(BuildContext context, List<DateTime> days,
       double maxY, double yInterval) {
     return FlTitlesData(
-      topTitles:
-          const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles:
-          const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
@@ -448,7 +471,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
             if (value <= 0 || value >= maxY) return const SizedBox();
             // Only show values that land exactly on a tick
             if ((value % yInterval).abs() > 0.01) return const SizedBox();
-            return Text(
+            return AppText(
               _formatYLabel(value),
               style: Theme.of(context).textTheme.labelSmall,
             );
@@ -481,7 +504,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
             final day = days[i];
             return Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(
+              child: AppText(
                 _formatDateLabel(day),
                 style: Theme.of(context).textTheme.labelSmall,
               ),
@@ -496,19 +519,33 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
   static String _formatYLabel(double value) {
     if (value >= 1000) {
       final k = value / 1000;
-      return k == k.roundToDouble() ? '${k.toInt()}k' : '${k.toStringAsFixed(1)}k';
+      return k == k.roundToDouble()
+          ? '${k.toInt()}k'
+          : '${k.toStringAsFixed(1)}k';
     }
     return value.toInt().toString();
   }
 
   /// Format x-axis date label depending on selected range.
   String _formatDateLabel(DateTime day) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun',
-                     'Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     switch (_range) {
       case HistogramRange.oneWeek:
         // "Mon 6" style
-        const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         return '${weekdays[day.weekday - 1]} ${day.day}';
       case HistogramRange.oneMonth:
         // Just the day number to avoid overlap
@@ -555,8 +592,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
       drawVerticalLine: false,
       horizontalInterval: yInterval,
       getDrawingHorizontalLine: (value) => FlLine(
-        color:
-            Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
         strokeWidth: 1,
       ),
     );
@@ -582,8 +618,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
   HorizontalLine _goalLine(BuildContext context, double y) {
     return HorizontalLine(
       y: y,
-      color:
-          Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
+      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
       strokeWidth: 1.5,
       dashArray: [6, 4],
     );
@@ -615,7 +650,7 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
               color: color, borderRadius: BorderRadius.circular(2)),
         ),
         const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
+        AppText(label, style: Theme.of(context).textTheme.labelSmall),
       ],
     );
   }
@@ -627,15 +662,11 @@ class _DiaryHistogramChartState extends State<DiaryHistogramChart> {
         Container(
           width: 14,
           height: 1.5,
-          color: Theme.of(context)
-              .colorScheme
-              .outline
-              .withValues(alpha: 0.7),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
         ),
         const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
+        AppText(label, style: Theme.of(context).textTheme.labelSmall),
       ],
     );
   }
 }
-

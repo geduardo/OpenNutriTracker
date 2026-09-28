@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'ai_output_language.dart';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -48,12 +49,19 @@ class GeminiProvider implements AiProvider {
                 'protein_g': {'type': 'NUMBER'},
                 'carbohydrates_g': {'type': 'NUMBER'},
                 'fat_g': {'type': 'NUMBER'},
-                'saturated_fat_g': {'type': 'NUMBER'},
-                'sugars_g': {'type': 'NUMBER'},
-                'fiber_g': {'type': 'NUMBER'},
+                'saturated_fat_g': {'type': 'NUMBER', 'nullable': true},
+                'sugars_g': {'type': 'NUMBER', 'nullable': true},
+                'fiber_g': {'type': 'NUMBER', 'nullable': true},
                 'sodium_mg': {'type': 'NUMBER', 'nullable': true},
                 'salt_g': {'type': 'NUMBER', 'nullable': true},
-                'caffeine_mg': {'type': 'NUMBER'},
+                'caffeine_mg': {'type': 'NUMBER', 'nullable': true},
+                'iron_mg': {'type': 'NUMBER', 'nullable': true},
+                'calcium_mg': {'type': 'NUMBER', 'nullable': true},
+                'folate_dfe_ug': {'type': 'NUMBER', 'nullable': true},
+                'iodine_ug': {'type': 'NUMBER', 'nullable': true},
+                'choline_mg': {'type': 'NUMBER', 'nullable': true},
+                'vitamin_d_ug': {'type': 'NUMBER', 'nullable': true},
+                'vitamin_b12_ug': {'type': 'NUMBER', 'nullable': true},
               },
               'required': [
                 'energy_kcal',
@@ -127,7 +135,7 @@ class GeminiProvider implements AiProvider {
     );
 
     final parts = <Map<String, dynamic>>[
-      {'text': prompt},
+      {'text': '$prompt\n\n${aiOutputLanguageInstruction()}'},
     ];
 
     if (imageBytes.isNotEmpty) {
@@ -152,14 +160,16 @@ class GeminiProvider implements AiProvider {
 
     _log.fine('Sending request to Gemini API');
 
-    final response = await http.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': _apiKey,
-      },
-      body: body,
-    ).timeout(_timeout);
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': _apiKey,
+          },
+          body: body,
+        )
+        .timeout(_timeout);
 
     if (response.statusCode != 200) {
       _log.severe('Gemini API error: ${response.statusCode} ${response.body}');
@@ -192,6 +202,7 @@ Rules:
 - Be accurate with portions — use visual cues like plate size, utensils, etc.
 - Include caffeine_mg only when the food/drink actually contains caffeine (coffee, tea, cola, chocolate, energy drinks, etc.). Omit it for caffeine-free items.
 $aiEstimationSaltRules
+$aiPregnancyEstimateRules
 - If you cannot identify the food or need more info, return empty items with a clarification object
 - If there are multiple items, set meal_name to a concise name for the overall meal (e.g. "Spaghetti Bolognese", "Chicken Caesar Salad")''';
   }
@@ -210,6 +221,7 @@ Rules:
 - estimated_weight_g should be the serving size from the label
 - Extract all available nutrients, including caffeine_mg if listed
 $aiLabelSaltRules
+$aiPregnancyLabelRules
 - If you cannot read the label clearly, return empty items with a clarification object''';
   }
 }

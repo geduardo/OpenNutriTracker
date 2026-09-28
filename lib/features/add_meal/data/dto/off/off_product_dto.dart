@@ -13,6 +13,7 @@ class OFFProductDTO {
   final String? product_name_en;
   final String? product_name_fr;
   final String? product_name_de;
+  final String? product_name_es;
 
   final String? brands;
 
@@ -27,25 +28,31 @@ class OFFProductDTO {
   final String? quantity;
   final dynamic product_quantity; // Can either be int or String
   final dynamic serving_quantity; // Can either be int or String
-  final String? serving_size;  // E.g. 2 Tbsp (32 g)
+  final String? serving_size; // E.g. 2 Tbsp (32 g)
 
   final OFFProductNutrimentsDTO nutriments;
 
   String? getLocaleName(SupportedLanguage supportedLanguage) {
     String? localeName;
     switch (supportedLanguage) {
+      case SupportedLanguage.es:
+        localeName = product_name_es;
+        break;
       case SupportedLanguage.en:
         localeName = product_name_en;
         break;
       case SupportedLanguage.de:
         localeName = product_name_de;
         break;
-      }
+    }
 
     // If local language is not available, return available language
     if (localeName == null || localeName.isEmpty) {
-      localeName =
-          product_name ?? product_name_en ?? product_name_fr ?? product_name_de;
+      localeName = product_name ??
+          product_name_en ??
+          product_name_es ??
+          product_name_fr ??
+          product_name_de;
     }
     return localeName;
   }
@@ -56,6 +63,7 @@ class OFFProductDTO {
       required this.product_name_en,
       required this.product_name_fr,
       required this.product_name_de,
+      this.product_name_es,
       required this.brands,
       required this.image_front_thumb_url,
       required this.image_front_url,

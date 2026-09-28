@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
@@ -82,6 +83,9 @@ class _StrategyPageState extends State<StrategyPage> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -115,9 +119,7 @@ class _StrategyPageState extends State<StrategyPage> {
                 child: _buildMetricCard(
                   context,
                   S.of(context).trendWeightLabel,
-                  _trendWeight != null
-                      ? _formatWeight(_trendWeight!)
-                      : '-',
+                  _trendWeight != null ? _formatWeight(_trendWeight!) : '-',
                   Icons.monitor_weight_outlined,
                   subtitle: 'smoothed',
                 ),
@@ -150,7 +152,7 @@ class _StrategyPageState extends State<StrategyPage> {
                 await _computeState();
               },
               icon: const Icon(Icons.monitor_weight),
-              label: Text('Weight History ($_totalWeighIns entries)'),
+              label: AppText('Weight History ($_totalWeighIns entries)'),
             ),
           ),
         ],
@@ -165,12 +167,12 @@ class _StrategyPageState extends State<StrategyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               'This week\'s target',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            Text(
+            AppText(
               _calorieTarget != null
                   ? '${_calorieTarget!.toInt()} kcal/day'
                   : '-',
@@ -206,7 +208,7 @@ class _StrategyPageState extends State<StrategyPage> {
               ],
             ),
             const SizedBox(height: 12),
-            Text(
+            AppText(
               _buildTargetStatusText(state),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context)
@@ -232,10 +234,10 @@ class _StrategyPageState extends State<StrategyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('To improve the estimate',
+            AppText('To improve the estimate',
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
-            Text(
+            AppText(
               _buildAttentionText(state),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -260,16 +262,16 @@ class _StrategyPageState extends State<StrategyPage> {
           children: [
             Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 4),
-            Text(
+            AppText(
               value,
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            Text(label, style: Theme.of(context).textTheme.bodySmall),
+            AppText(label, style: Theme.of(context).textTheme.bodySmall),
             if (subtitle != null)
-              Text(
+              AppText(
                 subtitle,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context)
@@ -309,7 +311,7 @@ class _StrategyPageState extends State<StrategyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Why this target',
+            AppText('Why this target',
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             _buildBreakdownRow(
@@ -362,7 +364,7 @@ class _StrategyPageState extends State<StrategyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Estimator inputs',
+            AppText('Estimator inputs',
                 style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             _qualityRow(
@@ -410,7 +412,7 @@ class _StrategyPageState extends State<StrategyPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               'Weekly weight change',
               style: Theme.of(context).textTheme.titleSmall,
             ),
@@ -453,9 +455,9 @@ class _StrategyPageState extends State<StrategyPage> {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+            child: AppText(label, style: Theme.of(context).textTheme.bodySmall),
           ),
-          Text(
+          AppText(
             value,
             style: Theme.of(context)
                 .textTheme
@@ -593,7 +595,7 @@ class _StrategyPageState extends State<StrategyPage> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Text(
+          AppText(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: color,
@@ -628,9 +630,9 @@ class _StrategyPageState extends State<StrategyPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall),
+                AppText(label, style: Theme.of(context).textTheme.bodySmall),
                 if (subtitle != null)
-                  Text(
+                  AppText(
                     subtitle,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: Theme.of(context)
@@ -643,7 +645,7 @@ class _StrategyPageState extends State<StrategyPage> {
             ),
           ),
           const SizedBox(width: 12),
-          Text(value, style: valueStyle),
+          AppText(value, style: valueStyle),
         ],
       ),
     );
@@ -675,13 +677,13 @@ class _StrategyPageState extends State<StrategyPage> {
       children: [
         SizedBox(
           width: 72,
-          child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+          child: AppText(label, style: Theme.of(context).textTheme.bodySmall),
         ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 primary,
                 style: Theme.of(context)
                     .textTheme
@@ -689,7 +691,7 @@ class _StrategyPageState extends State<StrategyPage> {
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               if (secondary != null)
-                Text(
+                AppText(
                   secondary,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

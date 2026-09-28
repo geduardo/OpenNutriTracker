@@ -1,3 +1,6 @@
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_dashboard.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
 import 'package:opennutritracker/core/domain/entity/tracked_day_entity.dart';
@@ -54,7 +57,9 @@ class DayInfoWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (trackedDay == null)
+        if (locator.isRegistered<PregnancyController>())
+          PregnancyDashboard(day: selectedDay, intakes: _allIntakes.toList())
+        else if (trackedDay == null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(S.of(context).nothingAddedLabel,
@@ -154,8 +159,7 @@ class DayInfoWidget extends StatelessWidget {
     yield* snackIntake;
   }
 
-  double _sumKcal() =>
-      _allIntakes.fold<double>(0, (s, i) => s + i.totalKcal);
+  double _sumKcal() => _allIntakes.fold<double>(0, (s, i) => s + i.totalKcal);
 
   double _sumCarbs() =>
       _allIntakes.fold<double>(0, (s, i) => s + i.totalCarbsGram);

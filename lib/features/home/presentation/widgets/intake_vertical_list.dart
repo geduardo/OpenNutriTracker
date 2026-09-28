@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
@@ -124,6 +125,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Column(
       children: [
         Container(
@@ -134,7 +138,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
               Icon(widget.listIcon,
                   size: 24, color: Theme.of(context).colorScheme.onSurface),
               const SizedBox(width: 4.0),
-              Text(
+              AppText(
                 widget.title,
                 style: Theme.of(context)
                     .textTheme
@@ -142,7 +146,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                     ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
               const Spacer(),
-              Text(
+              AppText(
                 '${totalKcal.round()} ${S.of(context).kcalLabel}',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: Theme.of(context)
@@ -331,7 +335,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                             .tertiaryContainer
                             .withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(20)),
-                    child: Text(
+                    child: AppText(
                       '${group.totalKcal.toInt()} ${S.of(context).kcalLabel}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context)
@@ -342,7 +346,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                   Container(
                     padding: const EdgeInsets.all(8.0),
                     alignment: Alignment.bottomLeft,
-                    child: Text(
+                    child: AppText(
                       group.name ?? '?',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w500,
@@ -396,9 +400,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(group.name ?? 'Meal',
+                        AppText(group.name ?? 'Meal',
                             style: Theme.of(ctx).textTheme.titleLarge),
-                        Text(
+                        AppText(
                             '${group.totalKcal.toInt()} ${S.of(ctx).kcalLabel}',
                             style: Theme.of(ctx).textTheme.bodyMedium),
                       ],
@@ -406,7 +410,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.scale_outlined),
-                    tooltip: 'Edit meal portion',
+                    tooltip: trOptional('Edit meal portion'),
                     onPressed: () {
                       Navigator.pop(ctx);
                       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -419,7 +423,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                   if (linkedPreset != null)
                     IconButton(
                       icon: const Icon(Icons.open_in_new),
-                      tooltip: 'View meal details',
+                      tooltip: trOptional('View meal details'),
                       onPressed: () async {
                         Navigator.pop(ctx);
                         await _openPresetDetail(linkedPreset);
@@ -461,9 +465,9 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
               ...group.intakes.map((intake) => ListTile(
                     dense: true,
                     title: Text(intake.meal.name ?? '?'),
-                    subtitle: Text(
+                    subtitle: AppText(
                         'P: ${intake.totalProteinsGram.toInt()}g  C: ${intake.totalCarbsGram.toInt()}g  F: ${intake.totalFatsGram.toInt()}g'),
-                    trailing: Text(
+                    trailing: AppText(
                         '${MealPortionHelper.formatStoredAmount(intake.meal, intake.amount, intake.unit)} · ${intake.totalKcal.round()} ${S.of(ctx).kcalLabel}'),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -526,7 +530,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
       locator<DiaryBloc>().add(const LoadDiaryYearEvent());
       locator<CalendarDayBloc>().add(RefreshCalendarDayEvent());
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('$newGroupName updated.')),
+        SnackBar(content: AppText('$newGroupName updated.')),
       );
     });
   }

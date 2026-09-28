@@ -18,6 +18,8 @@ class MealNutrimentsEntity extends Equatable {
   final double? fiber100;
   final double? sodiumMg100;
   final double? caffeineMg100;
+  final Map<String, double> micronutrients100;
+  final String? nutritionDataKind;
 
   double? get energyPerUnit => _getValuePerUnit(energyKcal100);
   double? get sodiumMgPerUnit => _getValuePerUnit(sodiumMg100);
@@ -40,7 +42,9 @@ class MealNutrimentsEntity extends Equatable {
       required this.saturatedFat100,
       required this.fiber100,
       this.sodiumMg100,
-      this.caffeineMg100});
+      this.caffeineMg100,
+      this.micronutrients100 = const {},
+      this.nutritionDataKind});
 
   factory MealNutrimentsEntity.empty() => const MealNutrimentsEntity(
       energyKcal100: null,
@@ -64,7 +68,9 @@ class MealNutrimentsEntity extends Equatable {
         saturatedFat100: nutriments.saturatedFat100,
         fiber100: nutriments.fiber100,
         sodiumMg100: nutriments.sodiumMg100,
-        caffeineMg100: nutriments.caffeineMg100);
+        caffeineMg100: nutriments.caffeineMg100,
+        micronutrients100: nutriments.micronutrients100,
+        nutritionDataKind: nutriments.nutritionDataKind);
   }
 
   factory MealNutrimentsEntity.fromOffNutriments(
@@ -88,7 +94,28 @@ class MealNutrimentsEntity extends Equatable {
           sodiumG: (offNutriments.sodium_100g as Object?).asDoubleOrNull(),
         ),
         caffeineMg100: _offGramsToMg(
-            (offNutriments.caffeine_100g as Object?).asDoubleOrNull()));
+            (offNutriments.caffeine_100g as Object?).asDoubleOrNull()),
+        nutritionDataKind: 'database',
+        micronutrients100: {
+          if ((offNutriments.iron_mg as Object?).asDoubleOrNull()
+              case final double value)
+            if (value.isFinite && value >= 0) 'iron_mg': value * 1000,
+          if ((offNutriments.calcium_mg as Object?).asDoubleOrNull()
+              case final double value)
+            if (value.isFinite && value >= 0) 'calcium_mg': value * 1000,
+          if ((offNutriments.iodine_ug as Object?).asDoubleOrNull()
+              case final double value)
+            if (value.isFinite && value >= 0) 'iodine_ug': value * 1000000,
+          if ((offNutriments.choline_mg as Object?).asDoubleOrNull()
+              case final double value)
+            if (value.isFinite && value >= 0) 'choline_mg': value * 1000,
+          if ((offNutriments.vitamin_d_ug as Object?).asDoubleOrNull()
+              case final double value)
+            if (value.isFinite && value >= 0) 'vitamin_d_ug': value * 1000000,
+          if ((offNutriments.vitamin_b12_ug as Object?).asDoubleOrNull()
+              case final double value)
+            if (value.isFinite && value >= 0) 'vitamin_b12_ug': value * 1000000,
+        });
   }
 
   /// Sodium in mg per 100 g from OFF values in grams. Salt is the value
@@ -152,8 +179,8 @@ class MealNutrimentsEntity extends Equatable {
         ?.amount;
 
     final caffeineTotal = fdcNutriment
-        .firstWhereOrNull((nutriment) =>
-            nutriment.nutrientId == FDCConst.fdcTotalCaffeineId)
+        .firstWhereOrNull(
+            (nutriment) => nutriment.nutrientId == FDCConst.fdcTotalCaffeineId)
         ?.amount;
 
     return MealNutrimentsEntity(
@@ -165,8 +192,36 @@ class MealNutrimentsEntity extends Equatable {
         saturatedFat100: saturatedFatTotal,
         fiber100: fiberTotal,
         sodiumMg100: sodiumTotal,
-        caffeineMg100: caffeineTotal);
+        caffeineMg100: caffeineTotal,
+        nutritionDataKind: 'database',
+        micronutrients100: {
+          for (final entry in const {
+            'iron_mg': 1089,
+            'calcium_mg': 1087,
+            'folate_dfe_ug': 1190,
+            'iodine_ug': 1100,
+            'choline_mg': 1180,
+            'vitamin_d_ug': 1114,
+            'vitamin_b12_ug': 1178,
+          }.entries)
+            if (amountFor(entry.value) case final double value)
+              if (value.isFinite && value >= 0) entry.key: value,
+        });
   }
+
+  MealNutrimentsEntity withMicronutrients(Map<String, double> values) =>
+      MealNutrimentsEntity(
+          energyKcal100: energyKcal100,
+          carbohydrates100: carbohydrates100,
+          fat100: fat100,
+          proteins100: proteins100,
+          sugars100: sugars100,
+          saturatedFat100: saturatedFat100,
+          fiber100: fiber100,
+          sodiumMg100: sodiumMg100,
+          caffeineMg100: caffeineMg100,
+          micronutrients100: values,
+          nutritionDataKind: nutritionDataKind);
 
   static double? _getValuePerUnit(double? valuePer100) {
     if (valuePer100 != null) {
@@ -177,6 +232,17 @@ class MealNutrimentsEntity extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [energyKcal100, carbohydrates100, fat100, proteins100];
+  List<Object?> get props => [
+        energyKcal100,
+        carbohydrates100,
+        fat100,
+        proteins100,
+        sugars100,
+        saturatedFat100,
+        fiber100,
+        sodiumMg100,
+        caffeineMg100,
+        micronutrients100,
+        nutritionDataKind
+      ];
 }

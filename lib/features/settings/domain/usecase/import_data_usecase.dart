@@ -1,3 +1,6 @@
+import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_model.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -82,6 +85,12 @@ class ImportDataUsecase {
     // Dry run: throws before any image or record is written.
     BackupArchiveParser.parse(archive);
 
+    final pregnancyFile = archive.findFile('PregnancyJournal.json');
+    final pregnancy = pregnancyFile == null
+        ? null
+        : PregnancyData.fromJson(
+            jsonDecode(utf8.decode(pregnancyFile.content as List<int>))
+                as Map<String, dynamic>);
     await _writeSafetyBackup();
 
     final imagePathMap = await _restoreImages(archive);
@@ -89,6 +98,9 @@ class ImportDataUsecase {
         BackupArchiveParser.parse(archive, imagePathMap: imagePathMap);
 
     await _writeBackup(backup);
+    if (pregnancy != null && locator.isRegistered<PregnancyController>()) {
+      await locator<PregnancyController>().save(pregnancy);
+    }
     // The restored config carries the schema version of the exporting app.
     await _migrationRunner.runMigrations();
     return backup;

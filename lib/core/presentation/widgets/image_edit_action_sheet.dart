@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
 enum ImageEditAction { camera, gallery, remove }
@@ -14,18 +15,18 @@ Future<ImageEditAction?> showImageEditActionSheet(
         children: [
           ListTile(
             leading: const Icon(Icons.camera_alt),
-            title: const Text('Take photo'),
+            title: const AppText('Take photo'),
             onTap: () => Navigator.pop(ctx, ImageEditAction.camera),
           ),
           ListTile(
             leading: const Icon(Icons.photo_library),
-            title: const Text('Choose from gallery'),
+            title: const AppText('Choose from gallery'),
             onTap: () => Navigator.pop(ctx, ImageEditAction.gallery),
           ),
           if (hasImage)
             ListTile(
               leading: const Icon(Icons.delete_outline),
-              title: const Text('Remove image'),
+              title: const AppText('Remove image'),
               onTap: () => Navigator.pop(ctx, ImageEditAction.remove),
             ),
         ],

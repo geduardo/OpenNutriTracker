@@ -1,4 +1,5 @@
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
+import 'package:opennutritracker/core/utils/env.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/fdc_data_source.dart';
 import 'package:opennutritracker/features/add_meal/data/data_sources/off_data_source.dart';
@@ -36,6 +37,9 @@ class ProductsRepository {
 
   Future<List<MealEntity>> getSupabaseFDCFoodsByString(
       String searchString) async {
+    if (Env.supabaseProjectUrl.isEmpty || Env.supabaseProjectAnonKey.isEmpty) {
+      return getFDCFoodsByString(searchString);
+    }
     final spFdcWordResponse =
         await _spBackendDataSource.fetchSearchWordResults(searchString);
     final products = spFdcWordResponse

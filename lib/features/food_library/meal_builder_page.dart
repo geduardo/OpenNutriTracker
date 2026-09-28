@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/data/data_source/intake_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
@@ -53,7 +54,8 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
 
   double get _draftBaseAmount => !_hasDraft
       ? 0
-      : MealPortionHelper.toBaseAmount(_draftMeal!, _draftQuantity, _draftUnit!);
+      : MealPortionHelper.toBaseAmount(
+          _draftMeal!, _draftQuantity, _draftUnit!);
 
   double get _draftTotalKcal => !_hasDraft
       ? 0
@@ -61,13 +63,16 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create meal'),
+        title: const AppText('Create meal'),
         actions: [
           TextButton(
             onPressed: _items.isEmpty || _isSaving ? null : _saveMeal,
-            child: Text(
+            child: AppText(
               'Save',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
@@ -80,21 +85,21 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addItem,
         icon: const Icon(Icons.add),
-        label: const Text('Add food'),
+        label: const AppText('Add food'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Meal name',
-              hintText: 'Chicken rice bowl, breakfast plate...',
+            decoration: InputDecoration(
+              labelText: tr('Meal name'),
+              hintText: trOptional('Chicken rice bowl, breakfast plate...'),
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
-          Text(
+          AppText(
             '${_foodCountLabel(_items.length)} · ${_totalKcal.toInt()} kcal',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -115,7 +120,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
                       color: Theme.of(context).colorScheme.outline,
                     ),
                     const SizedBox(height: 12),
-                    Text(
+                    AppText(
                       'Add foods from your library, a barcode, Magic, or by creating one manually.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
@@ -136,7 +141,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   title: Text(meal.name ?? '?'),
-                  subtitle: Text(
+                  subtitle: AppText(
                     '${MealPortionHelper.formatStoredAmount(meal, item.amount, item.unit)} · ${itemKcal.toInt()} kcal',
                   ),
                   trailing: Row(
@@ -196,8 +201,8 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
               controller: _draftQuantityController,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Quantity',
+              decoration: InputDecoration(
+                labelText: tr('Quantity'),
                 border: OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
@@ -209,7 +214,8 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
               children: units
                   .map(
                     (unit) => ChoiceChip(
-                      label: Text(MealPortionHelper.dropdownLabel(meal, unit)),
+                      label:
+                          AppText(MealPortionHelper.dropdownLabel(meal, unit)),
                       selected: _draftUnit == unit,
                       onSelected: (_) => _setDraftUnit(unit),
                     ),
@@ -217,7 +223,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
                   .toList(),
             ),
             const SizedBox(height: 12),
-            Text(
+            AppText(
               '${MealPortionHelper.formatStoredAmount(meal, _draftBaseAmount, _draftUnit!)} · ${_draftTotalKcal.toInt()} kcal',
               style: Theme.of(context).textTheme.titleSmall,
             ),
@@ -227,14 +233,14 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _clearDraft,
-                    child: const Text('Cancel'),
+                    child: const AppText('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
                     onPressed: _draftQuantity > 0 ? _applyDraft : null,
-                    child: Text(_draftEditIndex == null ? 'Add' : 'Update'),
+                    child: AppText(_draftEditIndex == null ? 'Add' : 'Update'),
                   ),
                 ),
               ],
@@ -254,22 +260,22 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.search),
-              title: const Text('Pick from existing foods'),
+              title: const AppText('Pick from existing foods'),
               onTap: () => Navigator.pop(ctx, 'existing'),
             ),
             ListTile(
               leading: const Icon(Icons.qr_code_scanner),
-              title: const Text('Scan barcode'),
+              title: const AppText('Scan barcode'),
               onTap: () => Navigator.pop(ctx, 'barcode'),
             ),
             ListTile(
               leading: const Icon(Icons.auto_awesome),
-              title: const Text('Use Magic photo/text'),
+              title: const AppText('Use Magic photo/text'),
               onTap: () => Navigator.pop(ctx, 'magic'),
             ),
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Create manual food'),
+              title: const AppText('Create manual food'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
           ],
@@ -448,7 +454,8 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
     }
 
     final seededQuantity = initialBaseAmount != null
-        ? MealPortionHelper.fromBaseAmount(meal, initialBaseAmount, selectedUnit)
+        ? MealPortionHelper.fromBaseAmount(
+            meal, initialBaseAmount, selectedUnit)
         : initialQuantity ??
             (selectedUnit == MealPortionHelper.servingUnit ? 1 : 100);
 
@@ -575,7 +582,7 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a meal name first.')),
+        const SnackBar(content: AppText('Add a meal name first.')),
       );
       return;
     }
@@ -605,9 +612,9 @@ class _MealBuilderPageState extends State<MealBuilderPage> {
 
   String _foodCountLabel(int count) {
     if (count == 1) {
-      return '1 food';
+      return tr('1 food');
     }
-    return '$count foods';
+    return tr('$count foods');
   }
 }
 
@@ -639,6 +646,9 @@ class _FoodSelectionSheetState extends State<_FoodSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
@@ -651,7 +661,7 @@ class _FoodSelectionSheetState extends State<_FoodSelectionSheet> {
               onChanged: (value) => setState(() => _query = value),
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Search foods...',
+                hintText: trOptional('Search foods...'),
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -667,7 +677,7 @@ class _FoodSelectionSheetState extends State<_FoodSelectionSheet> {
                 final food = _filtered[index];
                 return ListTile(
                   title: Text(food.name ?? '?'),
-                  subtitle: Text(
+                  subtitle: AppText(
                     '${food.nutriments.energyKcal100?.toInt() ?? '?'} kcal/100${MealPortionHelper.resolveBaseUnit(food)}',
                   ),
                   onTap: () => Navigator.pop(context, food),

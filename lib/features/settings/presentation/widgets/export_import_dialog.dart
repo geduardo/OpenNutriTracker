@@ -1,3 +1,4 @@
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
@@ -48,9 +49,10 @@ class ExportImportDialog extends StatelessWidget {
                         Icon(Icons.check_circle,
                             color: Theme.of(context).colorScheme.primary),
                         SizedBox(width: 8),
-                        Text(
+                        Expanded(
+                            child: Text(
                           S.of(context).exportImportSuccessLabel,
-                        ),
+                        )),
                       ],
                     );
                   } else if (state is ExportImportError) {
@@ -114,6 +116,8 @@ class ExportImportDialog extends StatelessWidget {
     _homeBloc.add(const LoadItemsEvent());
     _diaryBloc.add(const LoadDiaryYearEvent());
     _calendarDayBloc.add(RefreshCalendarDayEvent());
-    _profileBloc.add(LoadProfileEvent());
+    if (!locator.isRegistered<PregnancyController>()) {
+      _profileBloc.add(LoadProfileEvent());
+    }
   }
 }

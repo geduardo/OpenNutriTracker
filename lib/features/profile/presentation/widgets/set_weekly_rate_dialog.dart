@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/goal_strategy_dbo.dart';
 import 'package:opennutritracker/features/strategy/domain/service/strategy_rate_policy.dart';
@@ -34,6 +35,9 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final signedKgPerWeek = StrategyRatePolicy.signedKgPerWeek(
       mode: widget.mode,
       pctPerWeek: _selectedPct,
@@ -41,14 +45,14 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
     );
 
     return AlertDialog(
-      title: const Text('Desired Weekly Change'),
+      title: const AppText('Desired Weekly Change'),
       content: SizedBox(
         width: 360,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            AppText(
               _formatRate(signedKgPerWeek),
               style: Theme.of(context)
                   .textTheme
@@ -56,7 +60,7 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            Text(
+            AppText(
               '${_selectedPct.toStringAsFixed(2)}% of body weight per week',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -75,7 +79,7 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
             ),
             Row(
               children: [
-                Text(
+                AppText(
                   _formatRate(
                     StrategyRatePolicy.signedKgPerWeek(
                       mode: widget.mode,
@@ -87,7 +91,7 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const Spacer(),
-                Text(
+                AppText(
                   _formatRate(
                     StrategyRatePolicy.signedKgPerWeek(
                       mode: widget.mode,
@@ -101,7 +105,7 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
+            AppText(
               'This rate sets the weekly target the calorie controller tries to achieve.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -111,11 +115,11 @@ class _SetWeeklyRateDialogState extends State<SetWeeklyRateDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const AppText('Cancel'),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _selectedPct),
-          child: const Text('Save'),
+          child: const AppText('Save'),
         ),
       ],
     );

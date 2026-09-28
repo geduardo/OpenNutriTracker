@@ -1,3 +1,5 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_targets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:opennutritracker/core/domain/entity/intake_entity.dart';
@@ -85,13 +87,16 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final totalKcal = _items.fold<double>(
         0, (sum, item) => sum + item.per100g.energyKcal * item.weightG / 100);
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text(_mode == MagicMode.singleItem ? 'Review food' : 'Review meal'),
+        title: AppText(
+            _mode == MagicMode.singleItem ? 'Review food' : 'Review meal'),
       ),
       body: Column(
         children: [
@@ -111,7 +116,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
                         .withValues(alpha: 0.7),
                   ),
                   Center(
-                    child: Text(
+                    child: AppText(
                       '${totalKcal.toInt()} ${S.of(context).kcalLabel} total',
                       style: Theme.of(context).textTheme.titleLarge,
                       textAlign: TextAlign.center,
@@ -125,7 +130,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               color: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(
+              child: AppText(
                 '${totalKcal.toInt()} ${S.of(context).kcalLabel} total',
                 style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
@@ -155,15 +160,15 @@ class _AiResultScreenState extends State<AiResultScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: Text(_isSaving
+                label: AppText(_isSaving
                     ? 'Saving...'
                     : _selectionMode
                         ? _mode == MagicMode.singleItem
                             ? 'Use food'
                             : 'Use foods (${_items.length})'
                         : _mode == MagicMode.singleItem
-                        ? 'Add food'
-                        : 'Add all (${_items.length} foods)'),
+                            ? 'Add food'
+                            : 'Add all (${_items.length} foods)'),
               ),
             ),
           ),
@@ -177,7 +182,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _isSaving ? null : _saveAsPreset,
                   icon: const Icon(Icons.playlist_add),
-                  label: const Text('Save as meal'),
+                  label: const AppText('Save as meal'),
                 ),
               ),
             ),
@@ -209,8 +214,30 @@ class _AiResultScreenState extends State<AiResultScreen> {
             ),
             const SizedBox(height: 8),
 
+            ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: const AppText('Pregnancy nutrients'),
+                subtitle: AppText(
+                    _response.source == AiNutritionSource.labelExtraction
+                        ? 'Read from label • verify amounts'
+                        : 'AI estimates • review before logging'),
+                children: [
+                  for (final ref in pregnancyMicroReferences)
+                    ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: AppText(ref.name),
+                        trailing: AppText(item
+                                    .per100g.micronutrients[ref.key] ==
+                                null
+                            ? 'Unknown'
+                            : '${(item.per100g.micronutrients[ref.key]! * item.weightG / 100).toStringAsFixed(1)} ${ref.unit}')),
+                ]),
             // Editable weight
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 SizedBox(
                   width: 80,
@@ -227,7 +254,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (value) {
-                      final parsed = double.tryParse(value.replaceAll(',', '.'));
+                      final parsed =
+                          double.tryParse(value.replaceAll(',', '.'));
                       if (parsed != null) {
                         setState(() => _items[index].weightG = parsed);
                       }
@@ -235,9 +263,9 @@ class _AiResultScreenState extends State<AiResultScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                Text('${itemKcal.toInt()} kcal',
+                AppText('${itemKcal.toInt()} kcal',
                     style: Theme.of(context).textTheme.bodyLarge),
-                const Spacer(),
+
                 // Macros summary
                 _macroChip('P', item.per100g.proteinG * item.weightG / 100),
                 _macroChip(
@@ -263,7 +291,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(confidence,
+      child: AppText(confidence,
           style: TextStyle(
               fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
@@ -272,7 +300,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
   Widget _macroChip(String label, double grams) {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
-      child: Text('$label ${grams.toInt()}g',
+      child: AppText('$label ${grams.toInt()}g',
           style: Theme.of(context).textTheme.bodySmall),
     );
   }
@@ -300,11 +328,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Save & add as meal'),
+        title: const AppText('Save & add as meal'),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Meal name',
+          decoration: InputDecoration(
+            labelText: tr('Meal name'),
             border: OutlineInputBorder(),
           ),
           autofocus: true,
@@ -312,11 +340,11 @@ class _AiResultScreenState extends State<AiResultScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const AppText('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, nameController.text.trim()),
-            child: const Text('Save & add'),
+            child: const AppText('Save & add'),
           ),
         ],
       ),
@@ -442,7 +470,8 @@ class _AiResultScreenState extends State<AiResultScreen> {
         );
 
         await addIntakeUsecase.addIntake(intake);
-        await addTrackedDayUsecase.addDayCaloriesTracked(_day, intake.totalKcal);
+        await addTrackedDayUsecase.addDayCaloriesTracked(
+            _day, intake.totalKcal);
         await addTrackedDayUsecase.addDayMacrosTracked(_day,
             carbsTracked: intake.totalCarbsGram,
             fatTracked: intake.totalFatsGram,
@@ -470,7 +499,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error saving: $e')));
+            .showSnackBar(SnackBar(content: AppText('Error saving: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -492,6 +521,10 @@ class _AiResultScreenState extends State<AiResultScreen> {
       fiber100: item.per100g.fiberG,
       sodiumMg100: item.per100g.resolvedSodiumMg,
       caffeineMg100: item.per100g.caffeineMg,
+      micronutrients100: item.per100g.micronutrients,
+      nutritionDataKind: _response.source == AiNutritionSource.labelExtraction
+          ? 'label'
+          : 'ai_estimate',
     );
 
     return MealEntity(

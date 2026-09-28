@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 
 class MealGroupNameData {
@@ -108,16 +109,19 @@ class _MealMultiplierDialogState extends State<_MealMultiplierDialog> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     final scaledKcal =
         _selectedMultiplier > 0 ? widget.totalKcal * _selectedMultiplier : 0.0;
 
     return AlertDialog(
-      title: const Text('Meal portion'),
+      title: const AppText('Meal portion'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('How much of "${widget.mealName}" do you want to log?'),
+          AppText('How much of "${widget.mealName}" do you want to log?'),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -125,7 +129,7 @@ class _MealMultiplierDialogState extends State<_MealMultiplierDialog> {
             children: _options
                 .map(
                   (value) => ChoiceChip(
-                    label: Text('${formatMealMultiplier(value)}x'),
+                    label: AppText('${formatMealMultiplier(value)}x'),
                     selected: (_selectedMultiplier - value).abs() < 0.001,
                     onSelected: (_) => _syncMultiplier(value),
                   ),
@@ -137,8 +141,8 @@ class _MealMultiplierDialogState extends State<_MealMultiplierDialog> {
             controller: _controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Custom multiplier',
+            decoration: InputDecoration(
+              labelText: tr('Custom multiplier'),
               suffixText: 'x',
               border: OutlineInputBorder(),
             ),
@@ -150,7 +154,7 @@ class _MealMultiplierDialogState extends State<_MealMultiplierDialog> {
             },
           ),
           const SizedBox(height: 12),
-          Text(
+          AppText(
             _selectedMultiplier > 0
                 ? '${scaledKcal.toInt()} kcal total'
                 : 'Enter a value greater than 0',
@@ -161,13 +165,13 @@ class _MealMultiplierDialogState extends State<_MealMultiplierDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const AppText('Cancel'),
         ),
         FilledButton(
           onPressed: _selectedMultiplier > 0
               ? () => Navigator.pop(context, _selectedMultiplier)
               : null,
-          child: Text(widget.confirmLabel),
+          child: AppText(widget.confirmLabel),
         ),
       ],
     );

@@ -17,6 +17,12 @@ MealNutrimentsDBO _$MealNutrimentsDBOFromJson(Map<String, dynamic> json) =>
       fiber100: (json['fiber100'] as num?)?.toDouble(),
       sodiumMg100: (json['sodiumMg100'] as num?)?.toDouble(),
       caffeineMg100: (json['caffeineMg100'] as num?)?.toDouble(),
+      micronutrients100:
+          (json['micronutrients100'] as Map<String, dynamic>?)?.map(
+                (k, e) => MapEntry(k, (e as num).toDouble()),
+              ) ??
+              const {},
+      nutritionDataKind: json['nutritionDataKind'] as String?,
     );
 
 Map<String, dynamic> _$MealNutrimentsDBOToJson(MealNutrimentsDBO instance) =>
@@ -30,4 +36,6 @@ Map<String, dynamic> _$MealNutrimentsDBOToJson(MealNutrimentsDBO instance) =>
       'fiber100': instance.fiber100,
       'sodiumMg100': instance.sodiumMg100,
       'caffeineMg100': instance.caffeineMg100,
+      'micronutrients100': instance.micronutrients100,
+      'nutritionDataKind': instance.nutritionDataKind,
     };

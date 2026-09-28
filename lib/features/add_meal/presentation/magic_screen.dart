@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -65,8 +66,11 @@ class _MagicScreenState extends State<MagicScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Magic')),
+      appBar: AppBar(title: const AppText('Magic')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -81,17 +85,21 @@ class _MagicScreenState extends State<MagicScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isLoading ? null : () => _pickImage(ImageSource.camera),
+                    onPressed: _isLoading
+                        ? null
+                        : () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt),
-                    label: const Text('Camera'),
+                    label: const AppText('Camera'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isLoading ? null : () => _pickImage(ImageSource.gallery),
+                    onPressed: _isLoading
+                        ? null
+                        : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
-                    label: const Text('Gallery'),
+                    label: const AppText('Gallery'),
                   ),
                 ),
               ],
@@ -104,8 +112,9 @@ class _MagicScreenState extends State<MagicScreen> {
               enabled: !_isLoading,
               maxLines: 3,
               minLines: 1,
-              decoration: const InputDecoration(
-                hintText: 'Describe your food (optional with photo)...',
+              decoration: InputDecoration(
+                hintText:
+                    trOptional('Describe your food (optional with photo)...'),
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.edit_note),
               ),
@@ -117,12 +126,12 @@ class _MagicScreenState extends State<MagicScreen> {
               segments: const [
                 ButtonSegment(
                   value: MagicMode.singleItem,
-                  label: Text('Single item'),
+                  label: AppText('Single item'),
                   icon: Icon(Icons.restaurant),
                 ),
                 ButtonSegment(
                   value: MagicMode.mealBreakdown,
-                  label: Text('Meal breakdown'),
+                  label: AppText('Meal breakdown'),
                   icon: Icon(Icons.list_alt),
                 ),
               ],
@@ -140,7 +149,7 @@ class _MagicScreenState extends State<MagicScreen> {
             if (_errorMessage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
+                child: AppText(
                   _errorMessage!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                   textAlign: TextAlign.center,
@@ -149,7 +158,8 @@ class _MagicScreenState extends State<MagicScreen> {
 
             // Submit button
             FilledButton.icon(
-              onPressed: _canSubmit && !_isLoading && _hasAiKey ? _submit : null,
+              onPressed:
+                  _canSubmit && !_isLoading && _hasAiKey ? _submit : null,
               icon: _isLoading
                   ? const SizedBox(
                       width: 20,
@@ -157,7 +167,7 @@ class _MagicScreenState extends State<MagicScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.auto_awesome),
-              label: Text(_isLoading ? 'Analyzing...' : 'Analyze'),
+              label: AppText(_isLoading ? 'Analyzing...' : 'Analyze'),
             ),
           ],
         ),
@@ -213,10 +223,11 @@ class _MagicScreenState extends State<MagicScreen> {
               Icon(Icons.add_a_photo,
                   size: 40, color: Theme.of(context).colorScheme.outline),
               const SizedBox(height: 8),
-              Text('Add a photo',
-                  style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+              AppText('Add a photo',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.outline)),
               const SizedBox(height: 4),
-              Text('Tap to open camera',
+              AppText('Tap to open camera',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
@@ -263,13 +274,13 @@ class _MagicScreenState extends State<MagicScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     _hasAiKey
                         ? 'Using ${_foodEstimationSettings.provider.label} / ${_foodEstimationSettings.model}'
                         : 'AI is not configured',
                     style: theme.textTheme.titleSmall,
                   ),
-                  Text(
+                  AppText(
                     _hasAiKey
                         ? 'Change API keys and models in Settings > AI settings.'
                         : 'Add an OpenAI or Gemini API key in Settings > AI settings.',
@@ -389,13 +400,16 @@ class _MagicScreenState extends State<MagicScreen> {
       }
     } on TimeoutException {
       if (mounted) {
-        setState(() => _errorMessage = 'Request timed out. Check your internet connection.');
+        setState(() => _errorMessage =
+            'Request timed out. Check your internet connection.');
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = e.toString().contains('SocketException') || e.toString().contains('HandshakeException')
-            ? 'No internet connection.'
-            : 'Error: $e');
+        setState(() => _errorMessage =
+            e.toString().contains('SocketException') ||
+                    e.toString().contains('HandshakeException')
+                ? 'No internet connection.'
+                : 'Error: $e');
       }
     } finally {
       if (mounted) {
@@ -411,12 +425,12 @@ class _MagicScreenState extends State<MagicScreen> {
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
-          title: const Text('Quick question'),
+          title: const AppText('Quick question'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(clarification.question),
+              AppText(clarification.question),
               if (clarification.suggestedAnswers != null &&
                   clarification.suggestedAnswers!.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -433,8 +447,8 @@ class _MagicScreenState extends State<MagicScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
-                decoration: const InputDecoration(
-                  hintText: 'Or type your answer...',
+                decoration: InputDecoration(
+                  hintText: trOptional('Or type your answer...'),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -443,12 +457,12 @@ class _MagicScreenState extends State<MagicScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: const AppText('Cancel'),
             ),
             TextButton(
               onPressed: () =>
                   Navigator.of(context).pop(controller.text.trim()),
-              child: const Text('Submit'),
+              child: const AppText('Submit'),
             ),
           ],
         );

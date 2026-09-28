@@ -1,3 +1,4 @@
+import 'package:opennutritracker/core/presentation/widgets/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_multiplier_dialog.dart';
@@ -143,6 +144,9 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
 
   @override
   Widget build(BuildContext context) {
+    Localizations.localeOf(
+        context); // Rebuild non-Text labels when language changes.
+
     return Column(
       children: [
         // Search bar
@@ -169,7 +173,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
                 child: OutlinedButton.icon(
                   onPressed: _createFood,
                   icon: const Icon(Icons.restaurant),
-                  label: const Text('New food'),
+                  label: const AppText('New food'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -177,7 +181,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
                 child: FilledButton.icon(
                   onPressed: _createMeal,
                   icon: const Icon(Icons.playlist_add),
-                  label: const Text('New meal'),
+                  label: const AppText('New meal'),
                 ),
               ),
             ],
@@ -186,8 +190,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
         TabBar(
           controller: _tabController,
           tabs: [
-            Tab(text: 'Foods (${_filteredFoods.length})'),
-            Tab(text: 'Saved meals (${_filteredPresets.length})'),
+            Tab(text: tr('Foods (${_filteredFoods.length})')),
+            Tab(text: tr('Saved meals (${_filteredPresets.length})')),
           ],
         ),
         Expanded(
@@ -209,8 +213,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     final foods = _filteredFoods;
     if (foods.isEmpty) {
       return Center(
-        child:
-            Text('No foods yet', style: Theme.of(context).textTheme.bodyLarge),
+        child: AppText('No foods yet',
+            style: Theme.of(context).textTheme.bodyLarge),
       );
     }
     return ListView.builder(
@@ -242,14 +246,14 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
             ),
           ),
           title: Text(food.name ?? '?'),
-          subtitle: Text(
+          subtitle: AppText(
               '${kcal?.toInt() ?? '?'} kcal/100g${food.brands != null ? ' · ${food.brands}' : ''}'),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
-                tooltip: 'Log this food',
+                tooltip: trOptional('Log this food'),
                 onPressed: () => _quickLogFood(food),
               ),
               const Icon(Icons.chevron_right),
@@ -273,7 +277,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     final presets = _filteredPresets;
     if (presets.isEmpty) {
       return Center(
-        child: Text('No saved meals yet',
+        child: AppText('No saved meals yet',
             style: Theme.of(context).textTheme.bodyLarge),
       );
     }
@@ -302,14 +306,14 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
             ),
           ),
           title: Text(preset.name),
-          subtitle: Text(
+          subtitle: AppText(
               '${_foodCountLabel(preset.items.length)} · ${totalKcal.toInt()} ${S.of(context).kcalLabel}'),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
-                tooltip: 'Log this saved meal',
+                tooltip: trOptional('Log this saved meal'),
                 onPressed: () => _quickLogPreset(preset),
               ),
               const Icon(Icons.chevron_right),
@@ -412,8 +416,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text('${food.name} added to ${mealType.getTypeName(context)}')),
+            content: AppText(
+                '${food.name} added to ${mealType.getTypeName(context)}')),
       );
     }
   }
@@ -472,7 +476,7 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
+            content: AppText(
                 '$groupName added to ${mealType.getTypeName(context)}')),
       );
     }
@@ -512,9 +516,9 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
 
   String _foodCountLabel(int count) {
     if (count == 1) {
-      return '1 food';
+      return tr('1 food');
     }
-    return '$count foods';
+    return tr('$count foods');
   }
 
   Future<_FoodCreationSource?> _pickFoodCreationSource() {
@@ -526,26 +530,26 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
           children: [
             ListTile(
               leading: const Icon(Icons.search),
-              title: const Text('Search database'),
-              subtitle: const Text('USDA, products, and recent foods'),
+              title: const AppText('Search database'),
+              subtitle: const AppText('USDA, products, and recent foods'),
               onTap: () => Navigator.pop(ctx, _FoodCreationSource.search),
             ),
             ListTile(
               leading: const Icon(Icons.qr_code_scanner),
-              title: const Text('Scan barcode'),
-              subtitle: const Text('Create from a product scan'),
+              title: const AppText('Scan barcode'),
+              subtitle: const AppText('Create from a product scan'),
               onTap: () => Navigator.pop(ctx, _FoodCreationSource.barcode),
             ),
             ListTile(
               leading: const Icon(Icons.auto_awesome),
-              title: const Text('Magic'),
-              subtitle: const Text('Photo or text estimate'),
+              title: const AppText('Magic'),
+              subtitle: const AppText('Photo or text estimate'),
               onTap: () => Navigator.pop(ctx, _FoodCreationSource.magic),
             ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Create manually'),
-              subtitle: const Text('Start from an empty food'),
+              title: const AppText('Create manually'),
+              subtitle: const AppText('Start from an empty food'),
               onTap: () => Navigator.pop(ctx, _FoodCreationSource.manual),
             ),
           ],
@@ -653,7 +657,8 @@ class _FoodLibraryPageState extends State<FoodLibraryPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('New food accepts one AI food. Use New meal for multi-item results.'),
+            content: AppText(
+                'New food accepts one AI food. Use New meal for multi-item results.'),
           ),
         );
       }

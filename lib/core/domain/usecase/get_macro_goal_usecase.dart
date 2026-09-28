@@ -1,3 +1,6 @@
+import 'package:opennutritracker/pregnancy/pregnancy_controller.dart';
+import 'package:opennutritracker/pregnancy/pregnancy_targets.dart';
+import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/data/repository/config_repository.dart';
 import 'package:opennutritracker/core/data/repository/user_repository.dart';
 import 'package:opennutritracker/core/utils/calc/macro_calc.dart';
@@ -17,6 +20,11 @@ class GetMacroGoalUsecase {
       this._weightEntryRepository, this._userRepository);
 
   Future<double> getCarbsGoal(double totalCalorieGoal) async {
+    if (locator.isRegistered<PregnancyController>()) {
+      final target = PregnancyTargets(
+          locator<PregnancyController>().data.profile, DateTime.now());
+      return target.carbs;
+    }
     final adaptiveTargets = await _getAdaptiveTargets(totalCalorieGoal);
     if (adaptiveTargets != null) {
       return adaptiveTargets.carbsG;
@@ -28,6 +36,11 @@ class GetMacroGoalUsecase {
   }
 
   Future<double> getFatsGoal(double totalCalorieGoal) async {
+    if (locator.isRegistered<PregnancyController>()) {
+      final target = PregnancyTargets(
+          locator<PregnancyController>().data.profile, DateTime.now());
+      return target.fat ?? 0;
+    }
     final adaptiveTargets = await _getAdaptiveTargets(totalCalorieGoal);
     if (adaptiveTargets != null) {
       return adaptiveTargets.fatG;
@@ -39,6 +52,11 @@ class GetMacroGoalUsecase {
   }
 
   Future<double> getProteinsGoal(double totalCalorieGoal) async {
+    if (locator.isRegistered<PregnancyController>()) {
+      final target = PregnancyTargets(
+          locator<PregnancyController>().data.profile, DateTime.now());
+      return target.protein;
+    }
     final adaptiveTargets = await _getAdaptiveTargets(totalCalorieGoal);
     if (adaptiveTargets != null) {
       return adaptiveTargets.proteinG;
