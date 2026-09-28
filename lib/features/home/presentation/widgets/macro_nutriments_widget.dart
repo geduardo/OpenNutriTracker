@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/generated/l10n.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
 /// Compact horizontal strip of macro indicators shown on the home dashboard.
@@ -50,6 +51,7 @@ class MacroNutrientsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +69,8 @@ class MacroNutrientsView extends StatelessWidget {
           child: _MacroIndicator(
             intake: totalFatsIntake,
             goal: totalFatsGoal,
-            label: 'Fat',
+            label: _capitalize(s.fatLabel),
+            unit: s.gramUnit,
             color: _fatColor,
           ),
         ),
@@ -75,7 +78,8 @@ class MacroNutrientsView extends StatelessWidget {
           child: _MacroIndicator(
             intake: totalProteinsIntake,
             goal: totalProteinsGoal,
-            label: 'Protein',
+            label: _capitalize(s.proteinLabel),
+            unit: s.gramUnit,
             color: _proteinColor,
           ),
         ),
@@ -83,7 +87,8 @@ class MacroNutrientsView extends StatelessWidget {
           child: _MacroIndicator(
             intake: totalSodiumIntake,
             goal: totalSodiumGoal,
-            label: 'Sodium',
+            label: _capitalize(s.sodiumLabel),
+            unit: 'mg',
             color: _sodiumColor,
           ),
         ),
@@ -92,17 +97,32 @@ class MacroNutrientsView extends StatelessWidget {
   }
 }
 
+String _capitalize(String value) =>
+    value.isEmpty ? value : value[0].toUpperCase() + value.substring(1);
+
+String _remainingText(BuildContext context, double intake, double goal,
+    String unit) {
+  final s = S.of(context);
+  if (goal > 0 && intake > goal) {
+    return s.amountOverLabel('${(intake - goal).round()} $unit');
+  }
+  final remaining = goal > 0 ? goal - intake : 0.0;
+  return s.amountLeftLabel('${remaining.round()} $unit');
+}
+
 /// Single-color macro indicator (fat / protein / sodium).
 class _MacroIndicator extends StatelessWidget {
   final double intake;
   final double goal;
   final String label;
+  final String unit;
   final Color color;
 
   const _MacroIndicator({
     required this.intake,
     required this.goal,
     required this.label,
+    required this.unit,
     required this.color,
   });
 
@@ -110,7 +130,6 @@ class _MacroIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasGoal = goal > 0;
     final isOver = hasGoal && intake > goal;
-    final remaining = hasGoal ? (goal - intake) : 0;
     final percent = _percent(intake, goal);
     final overPercent =
         isOver ? ((intake - goal) / goal).clamp(0.0, 1.0) : 0.0;
@@ -154,7 +173,7 @@ class _MacroIndicator extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            '${intake.toInt()}/${goal.toInt()}',
+            '${intake.round()}/${goal.round()} $unit',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: isOver ? errorColor : onSurface,
                   fontWeight: FontWeight.w600,
@@ -166,9 +185,7 @@ class _MacroIndicator extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            isOver
-                ? '+${(intake - goal).toInt()} over'
-                : '${remaining.toInt()} left',
+            _remainingText(context, intake, goal, unit),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: onSurface.withValues(alpha: 0.6),
                 ),
@@ -209,7 +226,7 @@ class _CarbsIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasGoal = carbsGoal > 0;
     final isOver = hasGoal && carbsIntake > carbsGoal;
-    final remaining = hasGoal ? (carbsGoal - carbsIntake) : 0;
+    final s = S.of(context);
     // Sugars arc is scaled against the carbs goal (not the sugar daily limit)
     // so it lines up with the carbs ring as a true sub-segment.
     final sugarsPercent = _percent(sugarsIntake, carbsGoal);
@@ -271,7 +288,7 @@ class _CarbsIndicator extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            '${carbsIntake.toInt()}/${carbsGoal.toInt()}',
+            '${carbsIntake.round()}/${carbsGoal.round()} ${s.gramUnit}',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: isOver ? errorColor : onSurface,
                   fontWeight: FontWeight.w600,
@@ -283,9 +300,7 @@ class _CarbsIndicator extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            isOver
-                ? '+${(carbsIntake - carbsGoal).toInt()} over'
-                : '${remaining.toInt()} left',
+            _remainingText(context, carbsIntake, carbsGoal, s.gramUnit),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: onSurface.withValues(alpha: 0.6),
                 ),
@@ -294,16 +309,15 @@ class _CarbsIndicator extends StatelessWidget {
           ),
         ),
         Text(
-          'Carbs',
+          _capitalize(s.carbsLabel),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: onSurface.withValues(alpha: 0.7),
               ),
         ),
         Text(
-          'sugars ${sugarsIntake.toInt()}g',
+          s.sugarsAmountLabel('${sugarsIntake.round()} ${s.gramUnit}'),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: sugarsColor,
-                fontSize: 10,
               ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

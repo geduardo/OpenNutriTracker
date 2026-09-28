@@ -68,7 +68,8 @@ class _DashboardWidgetState extends State<DashboardWidget> {
     final errorColor = Theme.of(context).colorScheme.error;
     final centerColor =
         isOver ? errorColor : Theme.of(context).colorScheme.onSurface;
-    final centerLabel = S.of(context).kcalLeftLabel;
+    final centerLabel =
+        isOver ? S.of(context).kcalOverLabel : S.of(context).kcalLeftLabel;
 
     final onSurface = Theme.of(context).colorScheme.onSurface;
 
@@ -110,7 +111,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                         Icons.keyboard_arrow_up_outlined,
                         color: onSurface,
                       ),
-                      Text('${widget.totalKcalSupplied.toInt()}',
+                      Text('${widget.totalKcalSupplied.round()}',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -142,7 +143,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                               AnimatedFlipCounter(
                                   duration:
                                       const Duration(milliseconds: 1000),
-                                  value: widget.totalKcalLeft.toInt(),
+                                  value: widget.totalKcalLeft.abs().round(),
                                   textStyle: Theme.of(context)
                                       .textTheme
                                       .headlineMedium
@@ -158,7 +159,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '/ ${widget.totalKcalDaily.toInt()} kcal',
+                                '/ ${widget.totalKcalDaily.round()} ${S.of(context).kcalLabel}',
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelMedium
@@ -194,12 +195,12 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                         Icons.flag_outlined,
                         color: onSurface,
                       ),
-                      Text('${widget.totalKcalDaily.toInt()}',
+                      Text('${widget.totalKcalDaily.round()}',
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
                               ?.copyWith(color: onSurface)),
-                      Text('Goal',
+                      Text(S.of(context).goalLabel,
                           style: Theme.of(context)
                               .textTheme
                               .titleSmall

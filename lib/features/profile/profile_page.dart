@@ -81,12 +81,12 @@ class _ProfilePageState extends State<ProfilePage> {
           bmiValue: userBMIEntity.bmiValue,
           nutritionalStatus: userBMIEntity.nutritionalStatus,
           helperText:
-              'Based on your true weight: ${_formatWeight(trueWeightKg, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
+              'Based on your trend weight: ${_formatWeight(trueWeightKg, usesImperialUnits)} ${usesImperialUnits ? S.of(context).lbsLabel : S.of(context).kgLabel}',
         ),
         const SizedBox(height: 32.0),
         ListTile(
           title: Text(
-            'True Weight',
+            S.of(context).trendWeightLabel,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           subtitle: Text(

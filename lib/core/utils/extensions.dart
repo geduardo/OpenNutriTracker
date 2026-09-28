@@ -34,12 +34,10 @@ extension CastString on String {
     }
   }
 
+  /// Parses user input that may use a decimal comma ("12,5"); returns null
+  /// for empty or invalid text.
   double? toDoubleOrNull() {
-    if (isEmpty) {
-      return null;
-    } else {
-      return double.parse(this);
-    }
+    return double.tryParse(trim().replaceAll(',', '.'));
   }
 }
 

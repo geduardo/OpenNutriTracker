@@ -30,17 +30,13 @@ class ExportImportDialog extends StatelessWidget {
                 bloc: exportImportBloc,
                 builder: (context, state) {
                   if (state is ExportImportInitial) {
-                    return const Column(
+                    return Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Backup export includes your diary, foods, saved meals, profile, strategy data, and local images.',
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          'Restoring replaces the data contained in the backup. A safety copy of the current data is saved on the device first.',
-                        ),
+                        Text(S.of(context).backupContentsDescription),
+                        const SizedBox(height: 12),
+                        Text(S.of(context).restoreDescription),
                       ],
                     );
                   } else if (state is ExportImportLoadingState) {
@@ -66,7 +62,7 @@ class ExportImportDialog extends StatelessWidget {
                         Expanded(
                           child: Text(
                             state.invalidBackup
-                                ? 'This file is not a valid backup. Nothing was changed.'
+                                ? S.of(context).invalidBackupLabel
                                 : S.of(context).exportImportErrorLabel,
                           ),
                         ),
@@ -83,17 +79,15 @@ class ExportImportDialog extends StatelessWidget {
           onPressed: () {
             exportImportBloc.add(ExportDataEvent());
           },
-          child: const Text('Create backup'),
+          child: Text(S.of(context).createBackupLabel),
         ),
         TextButton(
           onPressed: () async {
             final confirmed = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('Restore backup?'),
-                content: const Text(
-                  'The data contained in the backup replaces the matching data on this device. A safety copy is saved first.',
-                ),
+                title: Text(S.of(ctx).restoreBackupDialogTitle),
+                content: Text(S.of(ctx).restoreBackupDialogContent),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
@@ -101,7 +95,7 @@ class ExportImportDialog extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Restore'),
+                    child: Text(S.of(ctx).restoreLabel),
                   ),
                 ],
               ),
@@ -110,7 +104,7 @@ class ExportImportDialog extends StatelessWidget {
               exportImportBloc.add(ImportDataEvent());
             }
           },
-          child: const Text('Restore backup'),
+          child: Text(S.of(context).restoreBackupLabel),
         ),
       ],
     );

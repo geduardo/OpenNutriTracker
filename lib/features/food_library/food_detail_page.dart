@@ -5,6 +5,7 @@ import 'package:opennutritracker/core/presentation/widgets/image_edit_action_she
 import 'package:opennutritracker/core/data/data_source/local_food_data_source.dart';
 import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
+import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/food_image_storage.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
@@ -51,6 +52,9 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   @override
   void initState() {
     super.initState();
+    // Create-food flows start from an unsaved food, so Save is available
+    // before any field is edited.
+    _hasChanges = widget.popOnSave || widget.returnSavedFood;
     final n = widget.food.nutriments;
     _nameController = TextEditingController(text: widget.food.name ?? '');
     _brandsController = TextEditingController(text: widget.food.brands ?? '');
@@ -222,8 +226,9 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
       child: TextField(
         controller: controller,
         onChanged: (_) => setState(() => _hasChanges = true),
-        keyboardType:
-            suffix != null ? TextInputType.number : TextInputType.text,
+        keyboardType: suffix != null
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           suffixText: suffix,
@@ -327,17 +332,17 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
     }
 
     final updatedNutriments = MealNutrimentsEntity(
-      energyKcal100: double.tryParse(_kcalController.text),
-      proteins100: double.tryParse(_proteinController.text),
-      carbohydrates100: double.tryParse(_carbsController.text),
-      fat100: double.tryParse(_fatController.text),
-      sugars100: double.tryParse(_sugarController.text),
+      energyKcal100: _kcalController.text.toDoubleOrNull(),
+      proteins100: _proteinController.text.toDoubleOrNull(),
+      carbohydrates100: _carbsController.text.toDoubleOrNull(),
+      fat100: _fatController.text.toDoubleOrNull(),
+      sugars100: _sugarController.text.toDoubleOrNull(),
       saturatedFat100: widget.food.nutriments.saturatedFat100,
-      fiber100: double.tryParse(_fiberController.text),
-      sodiumMg100: double.tryParse(_sodiumController.text),
-      caffeineMg100: double.tryParse(_caffeineController.text),
+      fiber100: _fiberController.text.toDoubleOrNull(),
+      sodiumMg100: _sodiumController.text.toDoubleOrNull(),
+      caffeineMg100: _caffeineController.text.toDoubleOrNull(),
     );
-    final servingQuantity = double.tryParse(_servingQuantityController.text);
+    final servingQuantity = _servingQuantityController.text.toDoubleOrNull();
     final servingSize = MealPortionHelper.buildServingDisplayLabel(
       label: _servingLabelController.text,
       amount: servingQuantity ?? 0,

@@ -12,6 +12,7 @@ import 'package:opennutritracker/core/presentation/widgets/intake_card.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_multiplier_dialog.dart';
 import 'package:opennutritracker/core/presentation/widgets/placeholder_card.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
+import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
 import 'package:opennutritracker/core/utils/navigation_options.dart';
 import 'package:opennutritracker/core/utils/vertical_list_popup_menu_selections.dart';
 import 'package:opennutritracker/features/add_meal/presentation/meal_entry_screen.dart';
@@ -141,15 +142,15 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                     ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
               const Spacer(),
-              if (totalKcal > 0) ...[
-                Text(
-                  '${totalKcal.toInt()} ${S.of(context).kcalLabel}',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7)),
-                ),
+              Text(
+                '${totalKcal.round()} ${S.of(context).kcalLabel}',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7)),
+              ),
+              if (widget.intakeList.isNotEmpty) ...[
                 PopupMenuButton<VerticalListPopupMenuSelections>(
                     onSelected:
                         (VerticalListPopupMenuSelections selection) async {
@@ -190,7 +191,8 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                               value: VerticalListPopupMenuSelections.onDelete,
                               child: Text(S.of(context).deleteAllLabel)),
                         ]),
-              ],
+              ] else
+                const SizedBox(width: 48),
             ],
           ),
         ),
@@ -370,7 +372,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -425,9 +427,28 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                     ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
+                    tooltip: S.of(ctx).deleteLabel,
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: ctx,
+                        builder: (dialogCtx) => AlertDialog(
+                          title: Text(S.of(dialogCtx).deleteMealGroupTitle),
+                          content: Text(S.of(dialogCtx).deleteMealGroupContent(
+                              group.intakes.length, group.name ?? '')),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx, false),
+                              child: Text(S.of(dialogCtx).dialogCancelLabel),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(dialogCtx, true),
+                              child: Text(S.of(dialogCtx).deleteLabel),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed != true || !ctx.mounted) return;
                       Navigator.pop(ctx);
-                      // Delete all intakes in the group
                       for (final intake in group.intakes) {
                         widget.onDeleteIntakeCallback(
                             intake, widget.trackedDayEntity);
@@ -443,7 +464,7 @@ class _IntakeVerticalListState extends State<IntakeVerticalList> {
                     subtitle: Text(
                         'P: ${intake.totalProteinsGram.toInt()}g  C: ${intake.totalCarbsGram.toInt()}g  F: ${intake.totalFatsGram.toInt()}g'),
                     trailing: Text(
-                        '${intake.amount.toInt()}g · ${intake.totalKcal.toInt()} kcal'),
+                        '${MealPortionHelper.formatStoredAmount(intake.meal, intake.amount, intake.unit)} · ${intake.totalKcal.round()} ${S.of(ctx).kcalLabel}'),
                     onTap: () {
                       Navigator.pop(ctx);
                       WidgetsBinding.instance.addPostFrameCallback((_) {

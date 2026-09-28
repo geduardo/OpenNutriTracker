@@ -88,8 +88,8 @@ class BMIOverview extends StatelessWidget {
     Color theme;
     switch (nutritionalStatus) {
       case UserNutritionalStatus.underWeight:
-        theme = Theme.of(context).colorScheme.errorContainer
-          ..withValues(alpha: 0.1);
+        theme =
+            Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.1);
         break;
       case UserNutritionalStatus.normalWeight:
         theme = Theme.of(context)

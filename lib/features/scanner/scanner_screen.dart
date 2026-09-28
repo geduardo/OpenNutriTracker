@@ -33,11 +33,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
   late ScannerScreenArguments _args;
 
   late ScannerBloc _scannerBloc;
+  final _cameraController = MobileScannerController();
+  bool _barcodeHandled = false;
 
   @override
   void initState() {
     _scannerBloc = locator<ScannerBloc>();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _cameraController.dispose();
+    super.dispose();
   }
 
   @override
@@ -95,7 +103,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Scaffold _getScannerContent(BuildContext context) {
-    final cameraController = MobileScannerController();
+    final cameraController = _cameraController;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).scanProductLabel),
@@ -124,17 +132,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body: MobileScanner(
           controller: cameraController,
           onDetect: (capture) {
-            final List<Barcode> barcodes = capture.barcodes;
-            for (final barcode in barcodes) {
-              if (barcode.rawValue != null &&
+            if (_barcodeHandled) return;
+            for (final barcode in capture.barcodes) {
+              final barcodeResult = barcode.rawValue;
+              if (barcodeResult != null &&
                   barcode.type == BarcodeType.product) {
-                final barcodeResult = barcode.rawValue;
-                if (barcodeResult != null) {
-                  _scannedBarcode = barcodeResult;
-                  log.fine('Barcode found: $barcodeResult');
-                  _scannerBloc
-                      .add(ScannerLoadProductEvent(barcode: barcodeResult));
-                }
+                _barcodeHandled = true;
+                _scannedBarcode = barcodeResult;
+                log.fine('Barcode found: $barcodeResult');
+                _scannerBloc
+                    .add(ScannerLoadProductEvent(barcode: barcodeResult));
+                return;
               }
             }
           }),

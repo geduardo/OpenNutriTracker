@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
 import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
@@ -10,6 +11,7 @@ import 'package:opennutritracker/features/strategy/domain/entity/weight_entry_en
 import 'package:opennutritracker/features/strategy/domain/service/health_connect_weight_service.dart';
 import 'package:opennutritracker/features/strategy/domain/service/trend_weight_service.dart';
 import 'package:opennutritracker/features/strategy/domain/usecase/sync_health_connect_weights_usecase.dart';
+import 'package:opennutritracker/generated/l10n.dart';
 
 class WeightEntryPage extends StatefulWidget {
   const WeightEntryPage({super.key});
@@ -64,7 +66,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weight History'),
+        title: Text(S.of(context).weightHistoryLabel),
         actions: [
           if (Platform.isAndroid)
             IconButton(
@@ -76,12 +78,13 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.health_and_safety_outlined),
-              tooltip: 'Import from Health Connect',
+              tooltip: S.of(context).importFromHealthConnectLabel,
             ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addWeight,
+        tooltip: S.of(context).logWeightLabel,
         child: const Icon(Icons.add),
       ),
       body: _isLoading
@@ -96,7 +99,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                     color: Theme.of(context).colorScheme.primaryContainer,
                     child: Column(
                       children: [
-                        Text('Trend Weight',
+                        Text(S.of(context).trendWeightLabel,
                             style: Theme.of(context).textTheme.bodyMedium),
                         Text(
                           _formatWeight(_trendWeight!),
@@ -104,7 +107,8 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                         ),
                         if (_entries.isNotEmpty)
                           Text(
-                            'Last weigh-in: ${_formatWeight(_entries.last.weightKg)}',
+                            S.of(context).lastWeighInLabel(
+                                _formatWeight(_entries.last.weightKg)),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                       ],
@@ -127,7 +131,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                                     CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.health_and_safety_outlined),
-                        label: const Text('Import from Health Connect'),
+                        label: Text(S.of(context).importFromHealthConnectLabel),
                       ),
                     ),
                   ),
@@ -135,7 +139,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                 // Weight history list
                 Expanded(
                   child: _entries.isEmpty
-                      ? const Center(child: Text('No weight entries yet'))
+                      ? Center(child: Text(S.of(context).noWeightEntriesLabel))
                       : ListView.builder(
                           itemCount: _entries.length,
                           itemBuilder: (context, index) {
@@ -175,7 +179,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Log Weight'),
+        title: Text(S.of(context).logWeightLabel),
         content: TextField(
           controller: _weightController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -188,7 +192,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(S.of(ctx).dialogCancelLabel),
           ),
           TextButton(
             onPressed: () async {
@@ -209,7 +213,7 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
                 _loadData(syncHealthConnect: false);
               }
             },
-            child: const Text('Save'),
+            child: Text(S.of(ctx).buttonSaveLabel),
           ),
         ],
       ),
@@ -220,16 +224,16 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete?'),
-        content: Text(
-            'Delete ${_formatWeight(entry.weightKg)} on ${_formatDate(entry.day)}?'),
+        title: Text(S.of(ctx).deleteLabel),
+        content: Text(S.of(ctx).deleteWeightEntryContent(
+            _formatWeight(entry.weightKg), _formatDate(entry.day))),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(S.of(ctx).dialogCancelLabel)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: Text(S.of(ctx).deleteLabel)),
         ],
       ),
     );
@@ -414,6 +418,5 @@ class _WeightEntryPageState extends State<WeightEntryPage> {
     return 'Imported ${result.importedCount} weights$skippedSuffix.';
   }
 
-  String _formatDate(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
+  String _formatDate(DateTime d) => DateFormat.yMd().format(d);
 }

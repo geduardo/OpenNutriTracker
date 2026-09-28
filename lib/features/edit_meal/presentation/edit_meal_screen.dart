@@ -339,9 +339,13 @@ class _EditMealScreenState extends State<EditMealScreen> {
           _fatTextController.text,
           _proteinTextController.text);
 
+      // The scanner flow replaces the add-meal route, so fall back to the
+      // first route instead of clearing the whole stack.
       Navigator.of(context).pushNamedAndRemoveUntil(
           NavigationOptions.mealDetailRoute,
-          ModalRoute.withName(NavigationOptions.addMealRoute),
+          (route) =>
+              route.settings.name == NavigationOptions.addMealRoute ||
+              route.isFirst,
           arguments: MealDetailScreenArguments(
               newMealEntity, _intakeTypeEntity, _day, usesImperialUnits));
     } catch (exception, stacktrace) {
@@ -364,7 +368,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
   }
 
   String _convertToImperial(String value, String unit) {
-    final double quantityValue = double.tryParse(value) ?? 0.0;
+    final double quantityValue = value.toDoubleOrNull() ?? 0.0;
     switch (unit) {
       case 'g':
         return (UnitCalc.gToOz(quantityValue)).toStringAsFixed(2);
@@ -376,7 +380,7 @@ class _EditMealScreenState extends State<EditMealScreen> {
   }
 
   String _convertToMetric(String value, String unit) {
-    final double quantityValue = double.tryParse(value) ?? 0.0;
+    final double quantityValue = value.toDoubleOrNull() ?? 0.0;
     switch (unit) {
       case 'g':
         return (UnitCalc.ozToG(quantityValue)).toStringAsFixed(2);

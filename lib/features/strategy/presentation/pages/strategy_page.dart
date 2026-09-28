@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:opennutritracker/core/domain/usecase/get_config_usecase.dart';
+import 'package:opennutritracker/core/utils/calc/unit_calc.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/check_in_record_dbo.dart';
 import 'package:opennutritracker/features/strategy/data/dbo/goal_strategy_dbo.dart';
@@ -10,6 +12,7 @@ import 'package:opennutritracker/features/strategy/domain/usecase/get_adaptive_s
 import 'package:opennutritracker/features/strategy/domain/usecase/sync_health_connect_weights_usecase.dart';
 import 'package:opennutritracker/features/strategy/presentation/pages/weight_entry_page.dart';
 import 'package:opennutritracker/features/strategy/presentation/widgets/weight_trend_chart.dart';
+import 'package:opennutritracker/generated/l10n.dart';
 
 class StrategyPage extends StatefulWidget {
   const StrategyPage({super.key});
@@ -28,6 +31,15 @@ class _StrategyPageState extends State<StrategyPage> {
   int _totalWeighIns = 0;
   List<WeightEntryEntity> _weightEntries = [];
   bool _isLoading = true;
+  bool _usesImperialUnits = false;
+
+  String get _weightUnit => _usesImperialUnits ? 'lb' : 'kg';
+
+  double _toDisplayWeight(double kg) =>
+      _usesImperialUnits ? UnitCalc.kgToLbs(kg) : kg;
+
+  String _formatWeight(double kg) =>
+      '${_toDisplayWeight(kg).toStringAsFixed(1)} $_weightUnit';
 
   @override
   void initState() {
@@ -40,12 +52,14 @@ class _StrategyPageState extends State<StrategyPage> {
 
     final snapshot = await locator<GetAdaptiveStrategySnapshotUsecase>()
         .getSnapshot(forceCurrentWeekRebuild: forceCurrentWeekRebuild);
+    final config = await locator<GetConfigUsecase>().getConfig();
 
     if (!mounted) {
       return;
     }
 
     setState(() {
+      _usesImperialUnits = config.usesImperialUnits;
       _strategy = snapshot.strategy;
       _expenditureState = snapshot.expenditureState;
       _trendWeight = snapshot.trendWeightKg;
@@ -100,9 +114,9 @@ class _StrategyPageState extends State<StrategyPage> {
               Expanded(
                 child: _buildMetricCard(
                   context,
-                  'True Weight',
+                  S.of(context).trendWeightLabel,
                   _trendWeight != null
-                      ? '${_trendWeight!.toStringAsFixed(1)} kg'
+                      ? _formatWeight(_trendWeight!)
                       : '-',
                   Icons.monitor_weight_outlined,
                   subtitle: 'smoothed',
@@ -523,7 +537,7 @@ class _StrategyPageState extends State<StrategyPage> {
       StrategyGoalModeDBO.gain =>
         'Gain ${strategy.targetRatePctPerWeek.toStringAsFixed(2)}%/week',
       StrategyGoalModeDBO.maintain => strategy.targetWeightKg != null
-          ? 'Maintain ${strategy.targetWeightKg!.toStringAsFixed(1)} kg'
+          ? 'Maintain ${_formatWeight(strategy.targetWeightKg!)}'
           : 'Maintain weight',
     };
   }
@@ -540,7 +554,7 @@ class _StrategyPageState extends State<StrategyPage> {
       StrategyGoalModeDBO.gain =>
         'surplus for ${strategy.targetRatePctPerWeek.toStringAsFixed(2)}%/week',
       StrategyGoalModeDBO.maintain => strategy.targetWeightKg != null
-          ? 'keeping you near ${strategy.targetWeightKg!.toStringAsFixed(1)} kg'
+          ? 'keeping you near ${_formatWeight(strategy.targetWeightKg!)}'
           : 'keeping you near maintenance',
     };
   }
@@ -651,7 +665,7 @@ class _StrategyPageState extends State<StrategyPage> {
         : kgPerWeek < 0
             ? '-'
             : '';
-    return '$sign${kgPerWeek.abs().toStringAsFixed(2)} kg/week';
+    return '$sign${_toDisplayWeight(kgPerWeek.abs()).toStringAsFixed(2)} $_weightUnit/week';
   }
 
   Widget _rateRow(

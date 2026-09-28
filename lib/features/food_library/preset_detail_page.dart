@@ -10,6 +10,7 @@ import 'package:opennutritracker/core/data/data_source/meal_preset_data_source.d
 import 'package:opennutritracker/core/data/dbo/local_food_record_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/meal_preset_dbo.dart';
+import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/food_image_storage.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
@@ -252,7 +253,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
           ),
           TextButton(
             onPressed: () {
-              final v = double.tryParse(controller.text);
+              final v = controller.text.toDoubleOrNull();
               if (v == null) {
                 Navigator.pop(ctx);
                 return;
@@ -435,7 +436,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
               const SizedBox(height: 8),
               TextField(
                 controller: amountController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                     labelText: 'Amount (g)', border: OutlineInputBorder()),
               ),
@@ -444,7 +445,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: kcalController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       labelText: 'kcal/100g',
                       border: OutlineInputBorder(),
@@ -454,7 +455,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: proteinController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       labelText: 'P g/100g',
                       border: OutlineInputBorder(),
@@ -466,7 +467,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: carbsController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       labelText: 'C g/100g',
                       border: OutlineInputBorder(),
@@ -476,7 +477,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
                 Expanded(
                     child: TextField(
                   controller: fatController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       labelText: 'F g/100g',
                       border: OutlineInputBorder(),
@@ -502,10 +503,10 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     if (name.isEmpty) return;
 
     final nutriments = MealNutrimentsEntity(
-      energyKcal100: double.tryParse(kcalController.text),
-      proteins100: double.tryParse(proteinController.text),
-      carbohydrates100: double.tryParse(carbsController.text),
-      fat100: double.tryParse(fatController.text),
+      energyKcal100: kcalController.text.toDoubleOrNull(),
+      proteins100: proteinController.text.toDoubleOrNull(),
+      carbohydrates100: carbsController.text.toDoubleOrNull(),
+      fat100: fatController.text.toDoubleOrNull(),
       sugars100: null,
       saturatedFat100: null,
       fiber100: null,
@@ -533,7 +534,7 @@ class _PresetDetailPageState extends State<PresetDetailPage> {
     final updatedItems = List<MealPresetItemDBO>.from(_preset.items)
       ..add(MealPresetItemDBO(
         meal: foodRecord.meal,
-        amount: double.tryParse(amountController.text) ?? 100,
+        amount: amountController.text.toDoubleOrNull() ?? 100,
         unit: 'g',
         foodId: foodRecord.id,
       ));
@@ -853,7 +854,7 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
         title: Text(food.name ?? '?'),
         content: TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           autofocus: true,
           decoration: const InputDecoration(
             labelText: 'Amount',
@@ -868,7 +869,7 @@ class _FoodPickerSheetState extends State<_FoodPickerSheet> {
           ),
           TextButton(
             onPressed: () =>
-                Navigator.pop(ctx, double.tryParse(controller.text)),
+                Navigator.pop(ctx, controller.text.toDoubleOrNull()),
             child: const Text('Add'),
           ),
         ],

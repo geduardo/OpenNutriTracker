@@ -105,7 +105,7 @@ class _OnboardingSecondPageBodyState extends State<OnboardingSecondPageBody> {
             child: TextFormField(
                 onChanged: (text) {
                   if (_weightFormKey.currentState!.validate()) {
-                    _parsedWeight = double.tryParse(text);
+                    _parsedWeight = double.tryParse(text.replaceAll(',', '.'));
                     checkCorrectInput();
                   } else {
                     checkCorrectInput();

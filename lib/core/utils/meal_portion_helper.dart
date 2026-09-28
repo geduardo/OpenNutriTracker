@@ -73,6 +73,8 @@ class MealPortionHelper {
         return 'tsp';
       case 'fl.oz':
         return 'fl oz';
+      case 'g/ml':
+        return resolveBaseUnit(meal);
       default:
         return unit;
     }

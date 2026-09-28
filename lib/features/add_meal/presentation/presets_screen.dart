@@ -9,6 +9,7 @@ import 'package:opennutritracker/core/domain/usecase/add_tracked_day_usecase.dar
 import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart';
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_multiplier_dialog.dart';
+import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
@@ -276,12 +277,31 @@ class _PresetsScreenState extends State<PresetsScreen> {
           final updatedItems = List<MealPresetItemDBO>.from(preset.items);
           updatedItems.removeAt(index);
           if (updatedItems.isEmpty) {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(S.of(ctx).removeLastPresetItemTitle),
+                content: Text(S.of(ctx).removeLastPresetItemContent(preset.name)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(S.of(ctx).dialogCancelLabel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(S.of(ctx).deleteLabel),
+                  ),
+                ],
+              ),
+            );
+            if (confirmed != true) return;
             await dataSource.deletePreset(preset.id);
           } else {
             final updated = MealPresetDBO(
               id: preset.id,
               name: preset.name,
               items: updatedItems,
+              imagePath: preset.imagePath,
             );
             await dataSource.updatePreset(updated);
           }
@@ -558,10 +578,12 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit, size: 18),
+                      tooltip: S.of(context).editItemDialogTitle,
                       onPressed: () => _editItemAmount(index, item),
                     ),
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline, size: 18),
+                      tooltip: S.of(context).deleteLabel,
                       onPressed: () {
                         widget.onRemoveItem(index);
                         Navigator.pop(context);
@@ -617,7 +639,7 @@ class _PresetDetailSheetState extends State<_PresetDetailSheet> {
           ),
           TextButton(
             onPressed: () {
-              final newAmount = double.tryParse(controller.text);
+              final newAmount = controller.text.toDoubleOrNull();
               if (newAmount != null && newAmount > 0) {
                 widget.onUpdateItem(
                   index,

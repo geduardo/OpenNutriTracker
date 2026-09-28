@@ -8,6 +8,7 @@ import 'package:opennutritracker/core/domain/usecase/get_kcal_goal_usecase.dart'
 import 'package:opennutritracker/core/domain/usecase/get_macro_goal_usecase.dart';
 import 'package:opennutritracker/core/presentation/widgets/food_image.dart';
 import 'package:opennutritracker/core/presentation/widgets/meal_value_unit_text.dart';
+import 'package:opennutritracker/core/utils/extensions.dart';
 import 'package:opennutritracker/core/utils/id_generator.dart';
 import 'package:opennutritracker/core/utils/locator.dart';
 import 'package:opennutritracker/core/utils/meal_portion_helper.dart';
@@ -88,7 +89,7 @@ class MealItemCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis),
             subtitle: mealEntity.mealQuantity != null
                 ? MealValueUnitText(
-                    value: double.parse(mealEntity.mealQuantity ?? "0"),
+                    value: (mealEntity.mealQuantity ?? '').toDoubleOrNull() ?? 0,
                     meal: mealEntity,
                     usesImperialUnits: usesImperialUnits)
                 : const SizedBox(),
@@ -128,6 +129,7 @@ class MealItemCard extends StatelessWidget {
 
     final quantityController = TextEditingController(text: defaultAmountStr);
     final kcalPer100 = mealEntity.nutriments.energyKcal100 ?? 0;
+    var isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -182,8 +184,11 @@ class MealItemCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: amount > 0
-                        ? () => _quickAdd(ctx, amount)
+                    onPressed: amount > 0 && !isSaving
+                        ? () {
+                            setSheetState(() => isSaving = true);
+                            _quickAdd(ctx, amount);
+                          }
                         : null,
                     icon: const Icon(Icons.add),
                     label: Text(S.of(ctx).addLabel),

@@ -19,15 +19,15 @@ class MealEntryScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(args.mealType.getTypeName(context)),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _EntryOption(
               icon: Icons.auto_awesome,
-              label: 'Magic',
-              subtitle: 'Photo, text, or both',
+              label: S.of(context).aiEntryLabel,
+              subtitle: S.of(context).aiEntrySubtitle,
               color: Theme.of(context).colorScheme.primary,
               onTap: () => Navigator.of(context).pushNamed(
                 NavigationOptions.magicRoute,
@@ -39,7 +39,7 @@ class MealEntryScreen extends StatelessWidget {
             _EntryOption(
               icon: Icons.search,
               label: S.of(context).searchLabel,
-              subtitle: 'Food database',
+              subtitle: S.of(context).searchEntrySubtitle,
               color: Theme.of(context).colorScheme.secondary,
               onTap: () => Navigator.of(context).pushNamed(
                 NavigationOptions.addMealRoute,
@@ -51,7 +51,7 @@ class MealEntryScreen extends StatelessWidget {
             _EntryOption(
               icon: Icons.qr_code_scanner,
               label: S.of(context).scanProductLabel,
-              subtitle: 'Barcode',
+              subtitle: S.of(context).barcodeEntrySubtitle,
               color: Theme.of(context).colorScheme.tertiary,
               onTap: () => Navigator.of(context).pushNamed(
                 NavigationOptions.scannerRoute,
@@ -63,7 +63,7 @@ class MealEntryScreen extends StatelessWidget {
             _EntryOption(
               icon: Icons.history,
               label: S.of(context).recentlyAddedLabel,
-              subtitle: 'Quick re-log',
+              subtitle: S.of(context).recentEntrySubtitle,
               color: Theme.of(context).colorScheme.outline,
               onTap: () => Navigator.of(context).pushNamed(
                 NavigationOptions.addMealRoute,
@@ -75,8 +75,8 @@ class MealEntryScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _EntryOption(
               icon: Icons.playlist_play,
-              label: 'Saved meals',
-              subtitle: 'Reusable meals',
+              label: S.of(context).savedMealsLabel,
+              subtitle: S.of(context).savedMealsEntrySubtitle,
               color: Theme.of(context).colorScheme.inversePrimary,
               onTap: () => Navigator.of(context).pushNamed(
                 NavigationOptions.presetsRoute,

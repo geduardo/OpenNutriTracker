@@ -35,7 +35,7 @@ class EditMealBloc extends Bloc<EditMealEvent, EditMealState> {
       String carbsText,
       String fatText,
       String proteinText) {
-    final baseQuantityDouble = double.tryParse(baseQuantity);
+    final baseQuantityDouble = baseQuantity.toDoubleOrNull();
 
     final double factorTo100g =
         baseQuantityDouble != null ? (100 / baseQuantityDouble) : 1;

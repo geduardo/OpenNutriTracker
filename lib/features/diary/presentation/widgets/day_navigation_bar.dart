@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:opennutritracker/generated/l10n.dart';
 
 /// Compact header that lets the user navigate days on the diary page.
 ///
@@ -17,6 +18,7 @@ class DayNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final today = DateUtils.dateOnly(DateTime.now());
     final selected = DateUtils.dateOnly(selectedDate);
     final isToday = DateUtils.isSameDay(selected, today);
@@ -26,13 +28,10 @@ class DayNavigationBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: Row(
         children: [
-          Semantics(
-            label: 'Previous day',
-            button: true,
-            child: IconButton(
-              icon: const Icon(Icons.chevron_left),
-              onPressed: () => _shiftDay(-1),
-            ),
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            tooltip: s.previousDayLabel,
+            onPressed: () => _shiftDay(-1),
           ),
           Expanded(
             child: InkWell(
@@ -51,7 +50,7 @@ class DayNavigationBar extends StatelessWidget {
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      _relativeLabel(selected, today),
+                      _relativeLabel(s, selected, today),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: Theme.of(context)
                                 .colorScheme
@@ -66,34 +65,27 @@ class DayNavigationBar extends StatelessWidget {
           if (!isToday)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Semantics(
-                label: 'Jump to today',
-                button: true,
+              child: Tooltip(
+                message: s.jumpToTodayLabel,
                 child: TextButton(
                   onPressed: () => onDateChanged(today),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
-                  child: const Text('Today'),
+                  child: Text(s.todayLabel),
                 ),
               ),
             ),
-          Semantics(
-            label: 'Next day',
-            button: true,
-            child: IconButton(
-              icon: const Icon(Icons.chevron_right),
-              onPressed: canGoForward ? () => _shiftDay(1) : null,
-            ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right),
+            tooltip: s.nextDayLabel,
+            onPressed: canGoForward ? () => _shiftDay(1) : null,
           ),
-          Semantics(
-            label: 'Pick a date',
-            button: true,
-            child: IconButton(
-              icon: const Icon(Icons.calendar_today_outlined),
-              onPressed: () => _pickDate(context),
-            ),
+          IconButton(
+            icon: const Icon(Icons.calendar_today_outlined),
+            tooltip: s.pickDateLabel,
+            onPressed: () => _pickDate(context),
           ),
         ],
       ),
@@ -117,11 +109,13 @@ class DayNavigationBar extends StatelessWidget {
     }
   }
 
-  static String _relativeLabel(DateTime selected, DateTime today) {
-    final diffDays = selected.difference(today).inDays;
-    if (diffDays == 0) return 'Today';
-    if (diffDays == -1) return 'Yesterday';
-    if (diffDays == 1) return 'Tomorrow';
+  /// Compares calendar dates; `difference().inDays` is off by one across a
+  /// daylight-saving change.
+  static String _relativeLabel(S s, DateTime selected, DateTime today) {
+    if (DateUtils.isSameDay(selected, today)) return s.todayLabel;
+    if (DateUtils.isSameDay(selected, DateUtils.addDaysToDate(today, -1))) {
+      return s.yesterdayLabel;
+    }
     return DateFormat.EEEE().format(selected);
   }
 }

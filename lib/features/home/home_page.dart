@@ -187,8 +187,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               visible: _isDragging,
               child: Container(
                 height: 70,
-                color: Theme.of(context).colorScheme.error
-                  ..withValues(alpha: 0.3),
+                color:
+                    Theme.of(context).colorScheme.error.withValues(alpha: 0.3),
                 child: DragTarget<IntakeEntity>(
                   onAcceptWithDetails: (data) {
                     _confirmDelete(context, data.data);
@@ -199,11 +199,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     });
                   },
                   builder: (context, candidateData, rejectedData) {
-                    return const Center(
+                    return Center(
                       child: Icon(
                         Icons.delete_outline,
                         size: 36,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     );
                   },

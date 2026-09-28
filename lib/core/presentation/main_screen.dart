@@ -33,8 +33,9 @@ class _MainScreenState extends State<MainScreen> {
     ];
     _appbarPages = [
       const HomeAppbar(),
-      MainAppbar(title: 'Library', iconData: Icons.restaurant_menu),
-      MainAppbar(title: 'Strategy', iconData: Icons.insights),
+      MainAppbar(
+          title: S.of(context).libraryLabel, iconData: Icons.restaurant_menu),
+      MainAppbar(title: S.of(context).strategyLabel, iconData: Icons.insights),
       MainAppbar(title: S.of(context).diaryLabel, iconData: Icons.book),
       MainAppbar(
           title: S.of(context).profileLabel, iconData: Icons.account_circle)
@@ -67,12 +68,12 @@ class _MainScreenState extends State<MainScreen> {
               icon: _selectedPageIndex == 1
                   ? const Icon(Icons.restaurant_menu)
                   : const Icon(Icons.restaurant_menu_outlined),
-              label: 'Library'),
+              label: S.of(context).libraryLabel),
           NavigationDestination(
               icon: _selectedPageIndex == 2
                   ? const Icon(Icons.insights)
                   : const Icon(Icons.insights_outlined),
-              label: 'Strategy'),
+              label: S.of(context).strategyLabel),
           NavigationDestination(
               icon: _selectedPageIndex == 3
                   ? const Icon(Icons.book)
