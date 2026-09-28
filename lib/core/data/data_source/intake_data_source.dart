@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:opennutritracker/core/data/dbo/intake_dbo.dart';
 import 'package:opennutritracker/core/data/dbo/intake_type_dbo.dart';
+import 'package:opennutritracker/core/data/dbo/meal_dbo.dart';
 
 class IntakeDataSource {
   final log = Logger('IntakeDataSource');
@@ -56,6 +57,36 @@ class IntakeDataSource {
 
   Future<void> clear() async {
     await _intakeBox.clear();
+  }
+
+  /// Older importers appended intakes without clearing, leaving several
+  /// records with the same id. Keeps the last one; returns how many were
+  /// removed.
+  Future<int> removeDuplicateIds() async {
+    final lastKeyById = <String, dynamic>{};
+    for (final key in _intakeBox.keys) {
+      final intake = _intakeBox.get(key);
+      if (intake != null) lastKeyById[intake.id] = key;
+    }
+    final keysToKeep = lastKeyById.values.toSet();
+    final duplicateKeys =
+        _intakeBox.keys.where((key) => !keysToKeep.contains(key)).toList();
+    await _intakeBox.deleteAll(duplicateKeys);
+    return duplicateKeys.length;
+  }
+
+  /// Replaces the meal of every intake for which [transform] returns a new
+  /// meal. Returns the number of updated intakes.
+  Future<int> updateMeals(MealDBO? Function(MealDBO meal) transform) async {
+    var updated = 0;
+    for (final intake in _intakeBox.values.toList()) {
+      final newMeal = transform(intake.meal);
+      if (newMeal == null) continue;
+      intake.meal = newMeal;
+      await intake.save();
+      updated++;
+    }
+    return updated;
   }
 
   Future<List<IntakeDBO>> getAllIntakesByDate(

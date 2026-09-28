@@ -223,8 +223,18 @@ Future<void> initLocator() async {
   // Strategy repositories
   locator.registerLazySingleton(() => WeightEntryRepository(locator()));
 
-  locator.registerLazySingleton(
-      () => MigrationRunner(locator(), locator(), locator(), locator()));
+  locator.registerLazySingleton(() => hiveDBProvider);
+  locator.registerLazySingleton(() => MigrationRunner(
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+        locator(),
+      ));
 
   await _initializeConfig(locator());
   await locator<MigrationRunner>().runMigrations();

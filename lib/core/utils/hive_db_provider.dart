@@ -46,8 +46,15 @@ class HiveDBProvider extends ChangeNotifier {
   late Box<GoalStrategyDBO> goalStrategyBox;
   late Box<CheckInRecordDBO> checkInRecordBox;
 
+  /// Box used by builds from 5-7 Apr 2026 before local foods moved to
+  /// [localFoodBoxName].
+  static const legacyLocalFoodBoxName = 'LocalFoodBox';
+
+  late HiveAesCipher _cipher;
+
   Future<void> initHiveDB(Uint8List encryptionKey) async {
     final encryptionCypher = HiveAesCipher(encryptionKey);
+    _cipher = encryptionCypher;
     await Hive.initFlutter();
     Hive.registerAdapter(ConfigDBOAdapter());
     Hive.registerAdapter(IntakeDBOAdapter());
@@ -96,6 +103,25 @@ class HiveDBProvider extends ChangeNotifier {
         encryptionCipher: encryptionCypher);
     checkInRecordBox = await Hive.openBox(checkInRecordBoxName,
         encryptionCipher: encryptionCypher);
+  }
+
+  /// Reads foods left in the legacy box. The box is kept on disk until
+  /// [deleteLegacyLocalFoodBox] is called after they were migrated.
+  Future<List<MealDBO>> readLegacyLocalFoods() async {
+    if (!await Hive.boxExists(legacyLocalFoodBoxName)) {
+      return const [];
+    }
+    final box = await Hive.openBox<MealDBO>(legacyLocalFoodBoxName,
+        encryptionCipher: _cipher);
+    final foods = box.values.toList();
+    await box.close();
+    return foods;
+  }
+
+  Future<void> deleteLegacyLocalFoodBox() async {
+    if (await Hive.boxExists(legacyLocalFoodBoxName)) {
+      await Hive.deleteBoxFromDisk(legacyLocalFoodBoxName);
+    }
   }
 
   static generateNewHiveEncryptionKey() => Hive.generateSecureKey();

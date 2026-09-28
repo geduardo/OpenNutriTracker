@@ -39,6 +39,35 @@ class MealPresetDataSource {
     }
   }
 
+  /// Replaces the meal of every preset item for which [transform] returns a
+  /// new meal. Returns the number of updated presets.
+  Future<int> updateMeals(MealDBO? Function(MealDBO meal) transform) async {
+    var updated = 0;
+    for (final preset in _presetBox.values.toList()) {
+      var changed = false;
+      final items = preset.items.map((item) {
+        final newMeal = transform(item.meal);
+        if (newMeal == null) return item;
+        changed = true;
+        return MealPresetItemDBO(
+          meal: newMeal,
+          amount: item.amount,
+          unit: item.unit,
+          foodId: item.foodId,
+        );
+      }).toList();
+      if (!changed) continue;
+      await updatePreset(MealPresetDBO(
+        id: preset.id,
+        name: preset.name,
+        items: items,
+        imagePath: preset.imagePath,
+      ));
+      updated++;
+    }
+    return updated;
+  }
+
   Future<void> syncFoodSnapshot(String foodId, MealDBO updatedMeal) async {
     final presets = _presetBox.values.toList();
     for (final preset in presets) {

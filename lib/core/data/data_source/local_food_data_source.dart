@@ -132,6 +132,28 @@ class LocalFoodDataSource {
     return records.map((record) => record.meal).toList(growable: false);
   }
 
+  /// Replaces the meal of every record for which [transform] returns a new
+  /// meal. Returns the number of updated records.
+  Future<int> updateMeals(MealDBO? Function(MealDBO meal) transform) async {
+    var updated = 0;
+    for (final record in _localFoodBox.values.toList()) {
+      final newMeal = transform(record.meal);
+      if (newMeal == null) continue;
+      await _localFoodBox.put(
+        record.id,
+        LocalFoodRecordDBO(
+          id: record.id,
+          meal: newMeal,
+          aliases: record.aliases,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt,
+        ),
+      );
+      updated++;
+    }
+    return updated;
+  }
+
   Future<void> replaceAllRecords(List<LocalFoodRecordDBO> records) async {
     await _localFoodBox.clear();
     await _aliasBox.clear();

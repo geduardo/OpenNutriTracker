@@ -37,6 +37,38 @@ class TrackedDayDataSource {
     return _trackedDayBox.values.toList();
   }
 
+  /// Re-stores every tracked day under the current key format and merges
+  /// records that describe the same date (created when the old,
+  /// language-dependent keys stopped matching). New keys are written before
+  /// old ones are deleted. Returns the number of merged duplicates.
+  Future<int> rekeyByDay() async {
+    final byKey = <String, TrackedDayDBO>{};
+    var merged = 0;
+    for (final trackedDay in _trackedDayBox.values) {
+      final key = trackedDay.day.toParsedDay();
+      final existing = byKey[key];
+      if (existing != null) {
+        merged++;
+        final keepExisting = existing.manuallyMarked == true ||
+            (trackedDay.manuallyMarked != true &&
+                existing.caloriesTracked >= trackedDay.caloriesTracked);
+        if (keepExisting) continue;
+      }
+      byKey[key] = TrackedDayDBO.fromJson(trackedDay.toJson());
+    }
+
+    final staleKeys =
+        _trackedDayBox.keys.where((key) => !byKey.containsKey(key)).toList();
+    if (staleKeys.isEmpty && merged == 0) {
+      return 0;
+    }
+
+    await _trackedDayBox.putAll(byKey);
+    await _trackedDayBox.deleteAll(staleKeys);
+    log.info('Re-keyed ${byKey.length} tracked days, merged $merged');
+    return merged;
+  }
+
   Future<void> clear() async {
     await _trackedDayBox.clear();
   }

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 extension Cast on Object? {
   double? asDoubleOrNull() {
@@ -12,8 +11,12 @@ extension Cast on Object? {
     } else if (this is double) {
       value = this as double;
     } else if (this is String) {
-      final stringValue = this as String;
-      value = double.parse(stringValue);
+      // OFF sometimes sends values such as "", "<0.5" or "1,5".
+      final cleaned = (this as String)
+          .trim()
+          .replaceAll(RegExp(r'^[<>~≈]+'), '')
+          .replaceAll(',', '.');
+      value = double.tryParse(cleaned);
     } else {
       value = null;
     }
@@ -58,7 +61,10 @@ extension DisplayDouble on double? {
 }
 
 extension FormatString on DateTime {
-  String toParsedDay() => DateFormat.yMd().format(this);
+  /// Storage key for a calendar day. Fixed ASCII format, independent of the
+  /// app language.
+  String toParsedDay() =>
+      '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 }
 
 extension ColorExtension on Color {
